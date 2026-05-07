@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import StepReview from './StepReview.vue'
-import { stepComponents } from './steps'
+import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './steps'
 import { listSteps, type Step } from '@/composables/useFormWalker'
 import type { Adoption } from '@/schemas'
 
@@ -43,14 +43,18 @@ watch(
 const currentComponent = computed(() => {
   const step = currentStep.value
   if (!step) return undefined
-  return stepComponents[step.field]
+  return stepComponents[step.field as StepKey]
 })
 
 function humanize(field: string): string {
-  return field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+  return (
+    stepLabelMap[field as StepKey] ??
+    field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+  )
 }
 
 const stepLabels = computed(() => [...steps.value.map((s) => s.field), 'review'])
+console.log("stepLabels", stepLabels.value)
 
 const activeIndex = computed(() => {
   if (phase.value === 'review') return stepLabels.value.length - 1
@@ -149,63 +153,72 @@ function submit() {
       </li>
     </ol>
 
-    <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.field) }, null, 2) }}</pre>
-    <form v-if="phase === 'fill'" @submit.prevent="goNext" class="step">
-      <component
-        v-if="currentStep && currentComponent"
-        :is="currentComponent"
-        :key="currentStep.path"
-        :path="currentStep.path"
-      />
-      <div class="actions">
-        <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
-        <button type="submit">
-          {{ stepIndex === steps.length - 1 ? 'Review' : 'Next' }}
-        </button>
-      </div>
-    </form>
+    <div class="content">
+      <form v-if="phase === 'fill'" @submit.prevent="goNext" class="step">
+        <component
+          v-if="currentStep && currentComponent"
+          :is="currentComponent"
+          :key="currentStep.path"
+          :path="currentStep.path"
+        />
+        <div class="actions">
+          <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
+          <button type="submit">
+            {{ stepIndex === steps.length - 1 ? 'Review' : 'Next' }}
+          </button>
+        </div>
+      </form>
 
-    <template v-else>
-      <StepReview :data="form.values" />
-      <div class="actions">
-        <button type="button" @click="goBack">Back</button>
-        <button type="button" @click="submit">Submit</button>
-      </div>
-    </template>
+      <template v-else>
+        <StepReview :data="form.values" />
+        <div class="actions">
+          <button type="button" @click="goBack">Back</button>
+          <button type="button" @click="submit">Submit</button>
+        </div>
+      </template>
+
+      <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.field) }, null, 2) }}</pre>
+    </div>
   </section>
 </template>
 
 <style scoped>
 .form {
-  max-width: 720px;
+  max-width: 960px;
   margin: 2rem auto;
   font-family: system-ui, sans-serif;
   text-align: left;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 .stepper {
   display: flex;
+  flex-direction: column;
   gap: 0.3rem;
   list-style: none;
   padding: 0;
-  margin: 0 0 1.5rem;
-  flex-wrap: wrap;
+  margin: 0;
+  flex: 0 0 180px;
 }
 .stepper li {
-  flex: 1 1 0;
-  min-width: 0;
   list-style: none;
+}
+.content {
+  flex: 1;
+  min-width: 0;
 }
 .stepper button {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.4rem 0.5rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: none;
   background: #1f1f1f;
   color: #888;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -245,7 +258,7 @@ function submit() {
   background: #111;
   color: #0f0;
   padding: 0.5rem;
-  margin: 0 0 1rem;
+  margin: 1rem 0 1rem;
   font-size: 0.7rem;
   border-radius: 4px;
   white-space: pre-wrap;

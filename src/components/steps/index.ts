@@ -31,8 +31,12 @@ import StepOwner from './StepOwner.vue'
 /**
  * Maps a Zod schema field name to its rendering component. The form walker
  * yields steps keyed by field name; this lookup picks the matching component.
+ *
+ * `satisfies` (rather than a `Record<string, Component>` annotation) preserves
+ * the literal key union, so `StepKey` and `stepLabels` can be constrained to
+ * exactly the registered step names.
  */
-export const stepComponents: Record<string, Component> = {
+export const stepComponents = {
   owner: StepOwner,
   animalType: StepAnimalType,
   size: StepSize,
@@ -61,4 +65,45 @@ export const stepComponents: Record<string, Component> = {
   cageSize: StepCageSize,
   yearsOwnedPets: StepYearsOwnedPets,
   previousAnimal: StepPreviousAnimal,
+} satisfies Record<string, Component>
+
+export type StepKey = keyof typeof stepComponents
+type LabelKey = StepKey | 'review'
+
+/**
+ * Human-readable stepper labels keyed by field name (plus the synthetic
+ * 'review' phase). Add an entry here to override the default camelCase
+ * humanization in the stepper. Keys are constrained to registered step names —
+ * typos or stale entries fail to compile.
+ */
+export const stepLabels: Partial<Record<LabelKey, string>> = {
+  animalType: 'Animal',
+  size: 'Dog size',
+  temperament: 'Temperament',
+  trainingGoal: 'Training goal',
+  sport: 'Sport',
+  housing: 'Housing',
+  noiseLevel: 'Noise sensitivity',
+  yardAccess: 'Yard access',
+  noDogAtHome: 'No dog at home',
+  lifestyle: 'Indoor or outdoor',
+  scratchPost: 'Scratch post',
+  numberOfPosts: 'Number of posts',
+  postType: 'Post material',
+  alternative: 'Alternative outlet',
+  territory: 'Territory',
+  trafficTraining: 'Traffic training',
+  predatorProtection: 'Predator protection',
+  species: 'Parrot species',
+  socialNeed: 'Social needs',
+  dailyInteraction: 'Daily interaction',
+  enrichment: 'Enrichment',
+  companions: 'Companions',
+  humanTime: 'Human time',
+  feedingHours: 'Feeding hours',
+  cageSize: 'Cage shape',
+  yearsOwnedPets: 'Years with pets ❤️',
+  previousAnimal: 'Previous pet',
+  owner: 'Owner',
+  review: 'Review',
 }
