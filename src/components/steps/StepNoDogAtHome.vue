@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
+import type { FieldValue } from '@/schemas'
 const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<boolean>(() => props.path)
+const { value, errorMessage } = useField<FieldValue<'noDogAtHome'> | undefined>(() => props.path)
 </script>
 
 <template>
@@ -10,7 +11,7 @@ const { value, errorMessage } = useField<boolean>(() => props.path)
     <input
       type="checkbox"
       :checked="value === true"
-      @change="value = ($event.target as HTMLInputElement).checked"
+      @change="value = ($event.target as HTMLInputElement).checked ? true : undefined"
     />
     <span>I confirm</span>
   </label>

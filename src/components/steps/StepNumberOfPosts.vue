@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
+import type { FieldValue } from '@/schemas'
 const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<number>(() => props.path)
+const { value, errorMessage } = useField<FieldValue<'numberOfPosts'>>(() => props.path)
 </script>
 
 <template>

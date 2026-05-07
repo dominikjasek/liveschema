@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
-import { cageSizes } from '@/schemas'
+import { cageSizes, type FieldValue } from '@/schemas'
 const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<string>(() => props.path)
+const { value, errorMessage } = useField<FieldValue<'cageSize'>>(() => props.path)
 </script>
 
 <template>

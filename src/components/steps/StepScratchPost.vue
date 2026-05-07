@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
-import { scratchPostOptions } from '@/schemas'
+import { scratchPostOptions, type FieldValue } from '@/schemas'
 const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<string>(() => props.path)
+const { value, errorMessage } = useField<FieldValue<'scratchPost'>>(() => props.path)
 </script>
 
 <template>
