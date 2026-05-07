@@ -62,6 +62,12 @@ export function step2SchemaFor<T extends AnimalType>(type: T): Step2SchemaByType
   return step2SchemasByType[type]
 }
 
-export type Adoption = {
-  [T in AnimalType]: { animalType: T } & z.infer<Step2SchemaByType[T]> & z.infer<typeof step3Schema>
-}[AnimalType]
+export const adoptionSchema = z
+  .discriminatedUnion('animalType', [
+    z.object({ animalType: z.literal('dog'), details: dogDetailsSchema }),
+    z.object({ animalType: z.literal('cat'), details: catDetailsSchema }),
+    z.object({ animalType: z.literal('parrot'), details: parrotDetailsSchema }),
+  ])
+  .and(step3Schema)
+
+export type Adoption = z.infer<typeof adoptionSchema>
