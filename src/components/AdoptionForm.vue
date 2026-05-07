@@ -4,15 +4,22 @@ import { useForm } from 'vee-validate'
 import StepReview from './StepReview.vue'
 import { stepComponents } from './steps'
 import { listSteps, type Step } from '@/composables/useFormWalker'
+import type { Adoption } from '@/schemas'
 
 type Phase = 'fill' | 'review'
 
 const phase = ref<Phase>('fill')
 const stepIndex = ref(0)
 
-const form = useForm<Record<string, unknown>>({
+const form = useForm<Adoption>({
   keepValuesOnUnmount: true,
 })
+
+// ✅ this works
+if (form.values.animalType === "dog") {
+  form.values.branch?.size
+}
+
 
 const steps = computed<Step[]>(() => listSteps(form.values))
 
@@ -96,9 +103,25 @@ function jumpTo(i: number) {
   }
 }
 
+function flattenBranches(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(input)) {
+    const isPlainObject = v !== null && typeof v === 'object' && !Array.isArray(v)
+    if (k === 'branch' && isPlainObject) {
+      Object.assign(out, flattenBranches(v as Record<string, unknown>))
+    } else if (isPlainObject) {
+      out[k] = flattenBranches(v as Record<string, unknown>)
+    } else {
+      out[k] = v
+    }
+  }
+  return out
+}
+
 function submit() {
+  const payload = flattenBranches(form.values as Record<string, unknown>) as Adoption
   // eslint-disable-next-line no-alert
-  alert(`Adoption submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
+  alert(`Adoption submitted!\n\n${JSON.stringify(payload, null, 2)}`)
 }
 </script>
 

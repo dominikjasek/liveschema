@@ -3,6 +3,8 @@ import { useField } from 'vee-validate'
 import { trainingGoals, type FieldValue } from '@/schemas'
 const props = defineProps<{ path: string }>()
 const { value, errorMessage } = useField<FieldValue<'trainingGoal'>>(() => props.path)
+
+
 </script>
 
 <template>
