@@ -26,14 +26,14 @@ import StepFeedingHours from './StepFeedingHours.vue'
 import StepCageSize from './StepCageSize.vue'
 import StepYearsOwnedPets from './StepYearsOwnedPets.vue'
 import StepPreviousAnimal from './StepPreviousAnimal.vue'
-import StepOwnerName from './StepOwnerName.vue'
-import StepOwnerEmail from './StepOwnerEmail.vue'
+import StepOwner from './StepOwner.vue'
 
 /**
  * Maps a Zod schema field name to its rendering component. The form walker
  * yields steps keyed by field name; this lookup picks the matching component.
  */
 export const stepComponents: Record<string, Component> = {
+  owner: StepOwner,
   animalType: StepAnimalType,
   size: StepSize,
   temperament: StepTemperament,
@@ -61,6 +61,4 @@ export const stepComponents: Record<string, Component> = {
   cageSize: StepCageSize,
   yearsOwnedPets: StepYearsOwnedPets,
   previousAnimal: StepPreviousAnimal,
-  ownerName: StepOwnerName,
-  ownerEmail: StepOwnerEmail,
 }

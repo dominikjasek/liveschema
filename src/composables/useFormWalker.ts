@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { adoptionSchema } from '@/schemas'
+import { adoptionSchema, isLeafStep } from '@/schemas'
 
 export type Step = {
   field: string
@@ -85,7 +85,14 @@ function walkObject(
       }
       continue
     }
-    if (
+    if (isLeafStep(fieldSchema)) {
+      out.push({
+        field: key,
+        path: [...path, key].join('.'),
+        schema: fieldSchema as z.ZodType,
+        value: getAt(value, key),
+      })
+    } else if (
       fieldSchema instanceof z.ZodObject ||
       fieldSchema instanceof z.ZodDiscriminatedUnion ||
       fieldSchema instanceof z.ZodIntersection

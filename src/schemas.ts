@@ -36,6 +36,10 @@ export const previousAnimalOptions = ['dog', 'cat', 'parrot', 'none'] as const
 // ---------------------------------------------------------------------------
 
 export const fieldSchemas = {
+  owner: z.object({
+    ownerName: z.string().min(1, 'Required'),
+    ownerEmail: z.email('Invalid email'),
+  }),
   animalType: z.enum(animalTypes),
   size: z.enum(dogSizes),
   temperament: z.enum(temperaments),
@@ -63,12 +67,29 @@ export const fieldSchemas = {
   cageSize: z.enum(cageSizes),
   yearsOwnedPets: z.coerce.number().int().min(0).max(80),
   previousAnimal: z.enum(previousAnimalOptions),
-  ownerName: z.string().min(1, 'Required'),
-  ownerEmail: z.email('Invalid email'),
+  
 } as const
 
 export type FieldName = keyof typeof fieldSchemas
 export type FieldValue<K extends FieldName> = z.infer<(typeof fieldSchemas)[K]>
+
+// ---------------------------------------------------------------------------
+// Leaf-step marker. The walker normally descends into compound z.objects, but
+// some compounds want to be rendered as a single form step (multiple fields in
+// one component, e.g. owner name + email). Wrap them with `leafStep(...)` and
+// the walker emits them whole instead of recursing.
+// ---------------------------------------------------------------------------
+
+const leafStepRegistry = new WeakSet<object>()
+
+function leafStep<T extends z.ZodType>(schema: T): T {
+  leafStepRegistry.add(schema as unknown as object)
+  return schema
+}
+
+export function isLeafStep(schema: unknown): boolean {
+  return typeof schema === 'object' && schema !== null && leafStepRegistry.has(schema)
+}
 
 // ---------------------------------------------------------------------------
 // Tree-shaped schema. Discriminator fields stay as z.literal(...) inside each
@@ -81,14 +102,9 @@ const dogLargeBranch = z.discriminatedUnion('temperament', [
   z.object({ temperament: z.literal('energetic'), sport: fieldSchemas.sport }),
 ])
 
-const dogSmallBranch = z.discriminatedUnion('housing', [
-  z.object({ housing: z.literal('apartment'), noiseLevel: fieldSchemas.noiseLevel }),
-  z.object({ housing: z.literal('house'), yardAccess: fieldSchemas.yardAccess }),
-])
-
 const dogBranch = z.discriminatedUnion('size', [
   z.object({ size: z.literal('large'), branch: dogLargeBranch }),
-  z.object({ size: z.literal('small'), branch: dogSmallBranch }),
+  z.object({ size: z.literal('small') }),
 ])
 
 const catIndoorYesBranch = z.object({
@@ -147,8 +163,7 @@ export const experienceSchema = z.object({
 })
 
 export const ownerSchema = z.object({
-  ownerName: fieldSchemas.ownerName,
-  ownerEmail: fieldSchemas.ownerEmail,
+  owner: leafStep(fieldSchemas.owner),
 })
 
 export const adoptionSchema = z.intersection(

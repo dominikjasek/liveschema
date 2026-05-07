@@ -64,7 +64,14 @@ async function goNext() {
   const value = getAtPath(form.values, step.path)
   const result = step.schema.safeParse(value)
   if (!result.success) {
-    form.setFieldError(step.path as never, result.error.issues[0]?.message ?? 'Invalid')
+    // Compound steps (e.g. owner = name + email) can produce multiple errors;
+    // attach each to its own nested path so the per-field component shows it.
+    for (const issue of result.error.issues) {
+      const issuePath = issue.path.length
+        ? `${step.path}.${issue.path.join('.')}`
+        : step.path
+      form.setFieldError(issuePath as never, issue.message)
+    }
     return
   }
   // Persist the parsed (potentially coerced) value back into form state.
