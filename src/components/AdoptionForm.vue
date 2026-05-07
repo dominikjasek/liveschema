@@ -1,84 +1,142 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import StepAnimalType from './StepAnimalType.vue'
-import StepDetails from './StepDetails.vue'
-import StepLiving from './StepLiving.vue'
 import StepReview from './StepReview.vue'
-import {
-  step1Schema,
-  step2SchemaFor,
-  step3Schema,
-} from '@/schemas'
-import { type FormShape } from '@/composables/useTypedForm'
+import { stepComponents } from './steps'
+import { listSteps, type Step } from '@/composables/useFormWalker'
 
-const currentStep = ref(0)
+type Phase = 'fill' | 'review'
 
-let form!: ReturnType<typeof useForm<FormShape>>
+const phase = ref<Phase>('fill')
+const stepIndex = ref(0)
 
-const stepSchemas = computed(() => [
-  toTypedSchema(step1Schema),
-  toTypedSchema(step2SchemaFor(form?.values.animalType ?? 'dog')),
-  toTypedSchema(step3Schema),
-])
-
-const currentSchema = computed(() => stepSchemas.value[currentStep.value])
-
-form = useForm<FormShape>({
-  validationSchema: currentSchema as never,
+const form = useForm<Record<string, unknown>>({
   keepValuesOnUnmount: true,
 })
 
-const isReview = computed(() => currentStep.value === 3)
+const steps = computed<Step[]>(() => listSteps(form.values))
 
-const goNext = form.handleSubmit(() => {
-  currentStep.value++
+const currentStep = computed<Step | undefined>(() => {
+  if (phase.value !== 'fill') return undefined
+  return steps.value[stepIndex.value]
 })
 
-function goBack() {
-  if (currentStep.value > 0) currentStep.value--
+// When an upstream choice changes, the walker yields a different ordered list
+// of steps, and the active stepIndex may now point past the last reachable
+// step. Clamp it.
+watch(
+  () => steps.value.length,
+  (len) => {
+    if (phase.value === 'fill' && stepIndex.value >= len) {
+      stepIndex.value = Math.max(0, len - 1)
+    }
+  },
+)
+
+const currentComponent = computed(() => {
+  const step = currentStep.value
+  if (!step) return undefined
+  return stepComponents[step.field]
+})
+
+function humanize(field: string): string {
+  return field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
 }
 
-const adoption = computed(() => {
-  return form.values
+const stepLabels = computed(() => [...steps.value.map((s) => s.field), 'review'])
+
+const activeIndex = computed(() => {
+  if (phase.value === 'review') return stepLabels.value.length - 1
+  return stepIndex.value
 })
 
+async function goNext() {
+  if (phase.value !== 'fill') return
+  const step = currentStep.value
+  if (!step) return
+  const value = getAtPath(form.values, step.path)
+  const result = step.schema.safeParse(value)
+  if (!result.success) {
+    form.setFieldError(step.path as never, result.error.issues[0]?.message ?? 'Invalid')
+    return
+  }
+  // Persist the parsed (potentially coerced) value back into form state.
+  form.setFieldValue(step.path as never, result.data as never)
+  if (stepIndex.value < steps.value.length - 1) {
+    stepIndex.value++
+  } else {
+    phase.value = 'review'
+  }
+}
+
+function getAtPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, key) => {
+    if (acc === null || typeof acc !== 'object') return undefined
+    return (acc as Record<string, unknown>)[key]
+  }, obj)
+}
+
+function goBack() {
+  if (phase.value === 'review') {
+    phase.value = 'fill'
+    stepIndex.value = steps.value.length - 1
+    return
+  }
+  if (stepIndex.value > 0) stepIndex.value--
+}
+
+function jumpTo(i: number) {
+  const labels = stepLabels.value
+  if (i > activeIndex.value) return
+  if (i === labels.length - 1) {
+    phase.value = 'review'
+  } else {
+    phase.value = 'fill'
+    stepIndex.value = i
+  }
+}
 
 function submit() {
-  if (!adoption.value) return
   // eslint-disable-next-line no-alert
-  alert(`Adoption submitted!\n\n${JSON.stringify(adoption.value, null, 2)}`)
+  alert(`Adoption submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
 }
 </script>
 
 <template>
   <section class="form">
     <ol class="stepper">
-      <li v-for="(label, i) in ['Animal', 'Details', 'House', 'Review']" :key="label">
+      <li v-for="(label, i) in stepLabels" :key="i">
         <button
           type="button"
-          :class="{ active: currentStep === i, done: currentStep > i }"
-          @click="currentStep = i"
+          :class="{ active: activeIndex === i, done: activeIndex > i }"
+          :disabled="i > activeIndex"
+          :title="humanize(label)"
+          @click="jumpTo(i)"
         >
-          {{ label }}
+          <span class="step-num">{{ i + 1 }}</span>
+          <span class="step-label">{{ humanize(label) }}</span>
         </button>
       </li>
     </ol>
 
-    <form v-if="!isReview" @submit.prevent="goNext" class="step">
-      <StepAnimalType v-if="currentStep === 0" />
-      <StepDetails v-else-if="currentStep === 1" />
-      <StepLiving v-else-if="currentStep === 2" />
-
+    <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.field) }, null, 2) }}</pre>
+    <form v-if="phase === 'fill'" @submit.prevent="goNext" class="step">
+      <component
+        v-if="currentStep && currentComponent"
+        :is="currentComponent"
+        :key="currentStep.path"
+        :path="currentStep.path"
+      />
       <div class="actions">
-        <button v-if="currentStep > 0" type="button" @click="goBack">Back</button>
-        <button type="submit">Next</button>
+        <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
+        <button type="submit">
+          {{ stepIndex === steps.length - 1 ? 'Review' : 'Next' }}
+        </button>
       </div>
     </form>
 
-    <template v-else-if="adoption">
-      <StepReview :data="adoption" />
+    <template v-else>
+      <StepReview :data="form.values" />
       <div class="actions">
         <button type="button" @click="goBack">Back</button>
         <button type="button" @click="submit">Submit</button>
@@ -89,41 +147,51 @@ function submit() {
 
 <style scoped>
 .form {
-  max-width: 520px;
+  max-width: 720px;
   margin: 2rem auto;
   font-family: system-ui, sans-serif;
   text-align: left;
 }
 .stepper {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.3rem;
   list-style: none;
   padding: 0;
   margin: 0 0 1.5rem;
-  counter-reset: step;
+  flex-wrap: wrap;
 }
 .stepper li {
-  flex: 1;
-  counter-increment: step;
+  flex: 1 1 0;
+  min-width: 0;
   list-style: none;
 }
 .stepper button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 6px;
   border: none;
   background: #1f1f1f;
   color: #888;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.stepper button::before {
-  content: counter(step) '. ';
-  font-weight: 600;
+.step-num {
+  font-weight: 700;
+  flex-shrink: 0;
 }
-.stepper button:hover {
+.step-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.stepper button:hover:not(:disabled) {
   filter: brightness(1.2);
 }
 .stepper button.active {
@@ -134,9 +202,23 @@ function submit() {
   background: #2f4f2f;
   color: #ddd;
 }
+.stepper button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
 .actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+.debug {
+  background: #111;
+  color: #0f0;
+  padding: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-x: auto;
 }
 </style>
