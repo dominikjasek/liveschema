@@ -1,73 +1,44 @@
 import { z } from 'zod'
 
 export const animalTypes = ['dog', 'cat', 'parrot'] as const
-export const livingSituations = ['house', 'apartment', 'farm'] as const
-export const sizes = ['small', 'medium', 'large'] as const
+export const dogSizes = ['large', 'small'] as const
+export const catSexes = ['male', 'female'] as const
+export const parrotSpeechOptions = ['speaks', 'silent'] as const
+export const houseSizes = ['small', 'medium', 'large'] as const
 
 export type AnimalType = (typeof animalTypes)[number]
-export type LivingSituation = (typeof livingSituations)[number]
-export type Size = (typeof sizes)[number]
+export type DogSize = (typeof dogSizes)[number]
+export type CatSex = (typeof catSexes)[number]
+export type ParrotSpeech = (typeof parrotSpeechOptions)[number]
+export type HouseSize = (typeof houseSizes)[number]
 
 export const step1Schema = z.object({
   animalType: z.enum(animalTypes, { message: 'Pick an animal' }),
 })
 
-export const step3Schema = z.object({
-  living: z.enum(livingSituations, { message: 'Pick a living situation' }),
+export const dogDetailsSchema = z.object({
+  dogSize: z.enum(dogSizes, { message: 'Pick a size' }),
 })
 
-const baseDetails = {
-  name: z.string().min(1, 'Name is required').max(40),
-  age: z
-    .number({ message: 'Age is required' })
-    .int('Whole years only')
-    .min(0)
-    .max(50),
-}
+export const catDetailsSchema = z.object({
+  catSex: z.enum(catSexes, { message: 'Pick a sex' }),
+})
 
-const apartmentMaxSize: Size = 'medium'
-const sizeIndex = (s: Size) => sizes.indexOf(s)
+export const parrotDetailsSchema = z.object({
+  parrotSpeech: z.enum(parrotSpeechOptions, { message: 'Pick speaking ability' }),
+})
 
-function sizeAllowed(size: Size, living: LivingSituation | undefined): boolean {
-  if (living === 'apartment') return sizeIndex(size) <= sizeIndex(apartmentMaxSize)
-  return true
-}
+export const dogStep2Schema = z.object({ details: dogDetailsSchema })
+export const catStep2Schema = z.object({ details: catDetailsSchema })
+export const parrotStep2Schema = z.object({ details: parrotDetailsSchema })
 
-export const dogDetailsSchema = (living: LivingSituation | undefined) =>
-  z.object({
-    ...baseDetails,
-    size: z
-      .enum(sizes, { message: 'Pick a size' })
-      .refine((s) => sizeAllowed(s, living), {
-        message: `A large dog won't fit in an apartment`,
-      }),
-    goodWithKids: z.boolean(),
-  })
+export const step3Schema = z.object({
+  houseSize: z.enum(houseSizes, { message: 'Pick a house size' }),
+})
 
-export const catDetailsSchema = (living: LivingSituation | undefined) =>
-  z.object({
-    ...baseDetails,
-    indoor:
-      living === 'apartment'
-        ? z.literal(true, { message: 'Apartment cats must be indoor' })
-        : z.boolean(),
-    declawed: z.boolean(),
-  })
-
-export const parrotDetailsSchema = (living: LivingSituation | undefined) =>
-  z.object({
-    ...baseDetails,
-    size: z
-      .enum(sizes, { message: 'Pick a size' })
-      .refine((s) => sizeAllowed(s, living), {
-        message: `A large parrot needs more space than an apartment`,
-      }),
-    talks: z.boolean(),
-  })
-
-export type DogDetails = z.infer<ReturnType<typeof dogDetailsSchema>>
-export type CatDetails = z.infer<ReturnType<typeof catDetailsSchema>>
-export type ParrotDetails = z.infer<ReturnType<typeof parrotDetailsSchema>>
+export type DogDetails = z.infer<typeof dogDetailsSchema>
+export type CatDetails = z.infer<typeof catDetailsSchema>
+export type ParrotDetails = z.infer<typeof parrotDetailsSchema>
 
 export type DetailsByType = {
   dog: DogDetails
@@ -75,16 +46,22 @@ export type DetailsByType = {
   parrot: ParrotDetails
 }
 
-export function detailsSchemaFor<T extends AnimalType>(
-  type: T,
-  living: LivingSituation | undefined,
-) {
-  if (type === 'dog') return dogDetailsSchema(living) as unknown as z.ZodType<DetailsByType[T]>
-  if (type === 'cat') return catDetailsSchema(living) as unknown as z.ZodType<DetailsByType[T]>
-  return parrotDetailsSchema(living) as unknown as z.ZodType<DetailsByType[T]>
+type Step2SchemaByType = {
+  dog: typeof dogStep2Schema
+  cat: typeof catStep2Schema
+  parrot: typeof parrotStep2Schema
 }
 
-export type Adoption =
-  | { animalType: 'dog'; living: LivingSituation; details: DogDetails }
-  | { animalType: 'cat'; living: LivingSituation; details: CatDetails }
-  | { animalType: 'parrot'; living: LivingSituation; details: ParrotDetails }
+const step2SchemasByType: Step2SchemaByType = {
+  dog: dogStep2Schema,
+  cat: catStep2Schema,
+  parrot: parrotStep2Schema,
+}
+
+export function step2SchemaFor<T extends AnimalType>(type: T): Step2SchemaByType[T] {
+  return step2SchemasByType[type]
+}
+
+export type Adoption = {
+  [T in AnimalType]: { animalType: T } & z.infer<Step2SchemaByType[T]> & z.infer<typeof step3Schema>
+}[AnimalType]
