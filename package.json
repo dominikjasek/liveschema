@@ -1,28 +1,13 @@
 {
-  "name": "zod-form-flow-demo",
+  "name": "zod-form-flow-monorepo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "pnpm --filter vue-demo dev",
+    "dev:vue": "pnpm --filter vue-demo dev",
+    "dev:vanilla": "pnpm --filter vanilla-demo dev",
+    "build": "pnpm -r build"
   },
-  "dependencies": {
-    "@vee-validate/zod": "^4.15.1",
-    "vee-validate": "^4.15.1",
-    "vue": "^3.5.32",
-    "zod": "^4.4.3",
-    "zod-form-flow": "*"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.6",
-    "@vue/tsconfig": "^0.9.1",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.10",
-    "vue-tsc": "^3.2.8"
-  }
+  "packageManager": "pnpm@9.0.0"
 }
