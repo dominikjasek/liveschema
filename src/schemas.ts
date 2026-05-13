@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { leafStep } from 'zod-form-flow'
+
+export { isLeafStep } from 'zod-form-flow'
 
 // ---------------------------------------------------------------------------
 // Option tuples — primitive data, exported for component option rendering.
@@ -72,24 +75,6 @@ export const fieldSchemas = {
 
 export type FieldName = keyof typeof fieldSchemas
 export type FieldValue<K extends FieldName> = z.infer<(typeof fieldSchemas)[K]>
-
-// ---------------------------------------------------------------------------
-// Leaf-step marker. The walker normally descends into compound z.objects, but
-// some compounds want to be rendered as a single form step (multiple fields in
-// one component, e.g. owner name + email). Wrap them with `leafStep(...)` and
-// the walker emits them whole instead of recursing.
-// ---------------------------------------------------------------------------
-
-const leafStepRegistry = new WeakSet<object>()
-
-function leafStep<T extends z.ZodType>(schema: T): T {
-  leafStepRegistry.add(schema as unknown as object)
-  return schema
-}
-
-export function isLeafStep(schema: unknown): boolean {
-  return typeof schema === 'object' && schema !== null && leafStepRegistry.has(schema)
-}
 
 // ---------------------------------------------------------------------------
 // Tree-shaped schema. Discriminator fields stay as z.literal(...) inside each
