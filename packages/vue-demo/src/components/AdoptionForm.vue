@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import StepReview from './StepReview.vue'
 import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './steps'
-import { listSteps, type Step } from '@/composables/useFormWalker'
+import { listSteps, type FormStep } from '@/composables/useFormWalker'
 import type { Adoption } from '@/schemas'
 
 type Phase = 'fill' | 'review'
@@ -15,15 +15,11 @@ const form = useForm<Adoption>({
   keepValuesOnUnmount: true,
 })
 
-// ✅ this works
-if (form.values.animalType === "dog") {
-  form.values.branch?.size
-}
+const steps = computed<FormStep[]>(() =>
+  listSteps(form.values as Record<string, unknown>),
+)
 
-
-const steps = computed<Step[]>(() => listSteps(form.values))
-
-const currentStep = computed<Step | undefined>(() => {
+const currentStep = computed<FormStep | undefined>(() => {
   if (phase.value !== 'fill') return undefined
   return steps.value[stepIndex.value]
 })
@@ -43,7 +39,7 @@ watch(
 const currentComponent = computed(() => {
   const step = currentStep.value
   if (!step) return undefined
-  return stepComponents[step.field as StepKey]
+  return stepComponents[step.key as StepKey]
 })
 
 function humanize(field: string): string {
@@ -53,8 +49,7 @@ function humanize(field: string): string {
   )
 }
 
-const stepLabels = computed(() => [...steps.value.map((s) => s.field), 'review'])
-console.log("stepLabels", stepLabels.value)
+const stepLabels = computed(() => [...steps.value.map((s) => s.key), 'review'])
 
 const activeIndex = computed(() => {
   if (phase.value === 'review') return stepLabels.value.length - 1
@@ -65,33 +60,24 @@ async function goNext() {
   if (phase.value !== 'fill') return
   const step = currentStep.value
   if (!step) return
-  const value = getAtPath(form.values, step.path)
+  const value = (form.values as Record<string, unknown>)[step.key]
   const result = step.schema.safeParse(value)
   if (!result.success) {
-    // Compound steps (e.g. owner = name + email) can produce multiple errors;
-    // attach each to its own nested path so the per-field component shows it.
     for (const issue of result.error.issues) {
       const issuePath = issue.path.length
-        ? `${step.path}.${issue.path.join('.')}`
-        : step.path
+        ? `${step.key}.${issue.path.join('.')}`
+        : step.key
       form.setFieldError(issuePath as never, issue.message)
     }
     return
   }
   // Persist the parsed (potentially coerced) value back into form state.
-  form.setFieldValue(step.path as never, result.data as never)
+  form.setFieldValue(step.key as never, result.data as never)
   if (stepIndex.value < steps.value.length - 1) {
     stepIndex.value++
   } else {
     phase.value = 'review'
   }
-}
-
-function getAtPath(obj: unknown, path: string): unknown {
-  return path.split('.').reduce<unknown>((acc, key) => {
-    if (acc === null || typeof acc !== 'object') return undefined
-    return (acc as Record<string, unknown>)[key]
-  }, obj)
 }
 
 function goBack() {
@@ -114,25 +100,9 @@ function jumpTo(i: number) {
   }
 }
 
-function flattenBranches(input: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(input)) {
-    const isPlainObject = v !== null && typeof v === 'object' && !Array.isArray(v)
-    if (k === 'branch' && isPlainObject) {
-      Object.assign(out, flattenBranches(v as Record<string, unknown>))
-    } else if (isPlainObject) {
-      out[k] = flattenBranches(v as Record<string, unknown>)
-    } else {
-      out[k] = v
-    }
-  }
-  return out
-}
-
 function submit() {
-  const payload = flattenBranches(form.values as Record<string, unknown>) as Adoption
   // eslint-disable-next-line no-alert
-  alert(`Adoption submitted!\n\n${JSON.stringify(payload, null, 2)}`)
+  alert(`Adoption submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
 }
 </script>
 
@@ -158,8 +128,8 @@ function submit() {
         <component
           v-if="currentStep && currentComponent"
           :is="currentComponent"
-          :key="currentStep.path"
-          :path="currentStep.path"
+          :key="currentStep.key"
+          :path="currentStep.key"
         />
         <div class="actions">
           <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
@@ -177,7 +147,7 @@ function submit() {
         </div>
       </template>
 
-      <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.field) }, null, 2) }}</pre>
+      <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.key) }, null, 2) }}</pre>
     </div>
   </section>
 </template>

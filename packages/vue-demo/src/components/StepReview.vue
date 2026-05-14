@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { listSteps } from '@/composables/useFormWalker'
 
-const props = defineProps<{ data: unknown }>()
+const props = defineProps<{ data: Record<string, unknown> }>()
 
 const reviewItems = () =>
   listSteps(props.data).map((step) => ({
-    field: step.field,
+    key: step.key,
     value: step.value,
   }))
 
@@ -23,8 +23,8 @@ function humanize(field: string): string {
 <template>
   <h2>Review</h2>
   <dl class="review">
-    <template v-for="item in reviewItems()" :key="item.field">
-      <dt>{{ humanize(item.field) }}</dt>
+    <template v-for="item in reviewItems()" :key="item.key">
+      <dt>{{ humanize(item.key) }}</dt>
       <dd>{{ display(item.value) }}</dd>
     </template>
   </dl>

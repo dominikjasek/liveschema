@@ -1,9 +1,8 @@
-import { listSteps as listStepsBase, schemaAtPath, type Step } from 'zod-form-flow'
-import { adoptionSchema } from '@/schemas'
+import { listFormSteps, type FormStep } from 'zod-form-flow'
+import { form } from '@/schemas'
 
-export type { Step }
-export { schemaAtPath }
+export type { FormStep }
 
-export function listSteps(values: unknown): Step[] {
-  return listStepsBase(adoptionSchema, values)
+export function listSteps(values: Record<string, unknown>): FormStep[] {
+  return listFormSteps(form, values)
 }

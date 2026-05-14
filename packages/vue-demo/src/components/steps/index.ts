@@ -26,18 +26,17 @@ import StepFeedingHours from './StepFeedingHours.vue'
 import StepCageSize from './StepCageSize.vue'
 import StepYearsOwnedPets from './StepYearsOwnedPets.vue'
 import StepPreviousAnimal from './StepPreviousAnimal.vue'
-import StepOwner from './StepOwner.vue'
+import StepOwnerName from './StepOwnerName.vue'
+import StepOwnerEmail from './StepOwnerEmail.vue'
 
 /**
- * Maps a Zod schema field name to its rendering component. The form walker
- * yields steps keyed by field name; this lookup picks the matching component.
- *
- * `satisfies` (rather than a `Record<string, Component>` annotation) preserves
- * the literal key union, so `StepKey` and `stepLabels` can be constrained to
- * exactly the registered step names.
+ * Maps a form-step key to its rendering component. `listFormSteps` yields
+ * steps keyed by the leaf field name; this lookup picks the matching
+ * component.
  */
 export const stepComponents = {
-  owner: StepOwner,
+  ownerName: StepOwnerName,
+  ownerEmail: StepOwnerEmail,
   animalType: StepAnimalType,
   size: StepSize,
   temperament: StepTemperament,
@@ -70,12 +69,6 @@ export const stepComponents = {
 export type StepKey = keyof typeof stepComponents
 type LabelKey = StepKey | 'review'
 
-/**
- * Human-readable stepper labels keyed by field name (plus the synthetic
- * 'review' phase). Add an entry here to override the default camelCase
- * humanization in the stepper. Keys are constrained to registered step names —
- * typos or stale entries fail to compile.
- */
 export const stepLabels: Partial<Record<LabelKey, string>> = {
   animalType: 'Animal',
   size: 'Dog size',
@@ -104,6 +97,7 @@ export const stepLabels: Partial<Record<LabelKey, string>> = {
   cageSize: 'Cage shape',
   yearsOwnedPets: 'Years with pets ❤️',
   previousAnimal: 'Previous pet',
-  owner: 'Owner',
+  ownerName: 'Your name',
+  ownerEmail: 'Your email',
   review: 'Review',
 }

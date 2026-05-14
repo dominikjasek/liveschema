@@ -365,12 +365,28 @@ export type FormStep = {
 
 /**
  * Extract the accumulated value shape from a form built with `defineForm()`.
- * Note: this gives the **unconditional** keys — fields asked inside a `.when`
- * branch don't appear here, because the outer `.when` returns the builder
- * unchanged. Use `Partial<InferForm<typeof form>>` if you're modeling
+ * The result is a discriminated union over every reachable branch path —
+ * fields gated by an equality `.when({k: lit}, ...)` are required in the
+ * matching variant. Use `Partial<InferForm<typeof form>>` if you're modeling
  * in-progress (partially-filled) state.
  */
 export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
+
+/**
+ * Per-field value lookup across every variant of a form's inferred type.
+ * Returns the union of `V[K]` for every variant V where K is a key — useful
+ * when a step component needs the type of a single field without caring
+ * which branch it lives in.
+ *
+ * @example
+ *   type SizeValue = InferField<typeof form, 'size'>     // 'large' | 'small'
+ *   type Name = InferField<typeof form, 'ownerName'>     // string
+ */
+export type InferField<F, K extends string> = InferForm<F> extends infer V
+  ? V extends Record<K, infer T>
+    ? T
+    : never
+  : never
 
 /** Ordered list of currently-reachable steps given the current values. */
 export function listFormSteps(

@@ -1,11 +1,7 @@
 import { z } from 'zod'
-import { leafStep } from 'zod-form-flow'
+import { defineForm, type InferField, type InferForm } from 'zod-form-flow'
 
-export { isLeafStep } from 'zod-form-flow'
-
-// ---------------------------------------------------------------------------
-// Option tuples — primitive data, exported for component option rendering.
-// ---------------------------------------------------------------------------
+// ── Option tuples — exported for component radio/select rendering ───────────
 
 export const animalTypes = ['dog', 'cat', 'parrot'] as const
 export const dogSizes = ['large', 'small'] as const
@@ -32,127 +28,113 @@ export const feedingHourOptions = [7, 12, 17, 21] as const
 export const cageSizes = ['wide', 'tall'] as const
 export const previousAnimalOptions = ['dog', 'cat', 'parrot', 'none'] as const
 
-// ---------------------------------------------------------------------------
-// Per-field leaf schemas — single source of truth for both validation rules
-// and component-side type inference. Step components use FieldValue<K> so
-// `useField<...>` no longer duplicates the leaf's TS type.
-// ---------------------------------------------------------------------------
+// ── Form definition ────────────────────────────────────────────────────────
+// Flat shape: every leaf becomes a top-level key. Branching via .when().
 
-export const fieldSchemas = {
-  owner: z.object({
-    ownerName: z.string().min(1, 'Required'),
-    ownerEmail: z.email('Invalid email'),
-  }),
-  animalType: z.enum(animalTypes),
-  size: z.enum(dogSizes),
-  temperament: z.enum(temperaments),
-  trainingGoal: z.enum(trainingGoals),
-  sport: z.enum(sports),
-  housing: z.enum(housingOptions),
-  noiseLevel: z.enum(noiseLevels),
-  yardAccess: z.enum(yardAccessOptions),
-  noDogAtHome: z.literal(true, { message: 'You must confirm to continue' }),
-  lifestyle: z.enum(lifestyles),
-  scratchPost: z.enum(scratchPostOptions),
-  numberOfPosts: z.coerce.number().int().min(1).max(5),
-  postType: z.enum(postTypes),
-  alternative: z.enum(alternatives),
-  territory: z.enum(territories),
-  trafficTraining: z.enum(trafficOptions),
-  predatorProtection: z.enum(predatorOptions),
-  species: z.enum(speciesOptions),
-  socialNeed: z.enum(socialNeeds),
-  dailyInteraction: z.enum(dailyInteractions),
-  enrichment: z.enum(enrichmentOptions),
-  companions: z.enum(companionOptions),
-  humanTime: z.enum(humanTimes),
-  feedingHours: z.array(z.number()).min(1),
-  cageSize: z.enum(cageSizes),
-  yearsOwnedPets: z.coerce.number().int().min(0).max(80),
-  previousAnimal: z.enum(previousAnimalOptions),
+export const form = defineForm()
+ // Owner — always asked (split into two steps per the new flat model)
+  .ask('ownerName', z.string().min(1, 'Required'))
+  .ask('ownerEmail', z.email('Invalid email'))
   
-} as const
+  .ask('animalType', z.enum(animalTypes))
 
-export type FieldName = keyof typeof fieldSchemas
-export type FieldValue<K extends FieldName> = z.infer<(typeof fieldSchemas)[K]>
+  .when({ animalType: 'dog' }, (b) =>
+    b
+      .ask('size', z.enum(dogSizes))
+      .when({ size: 'large' }, (b) =>
+        b
+          .ask('temperament', z.enum(temperaments))
+          .when({ temperament: 'calm' }, (b) =>
+            b.ask('trainingGoal', z.enum(trainingGoals)),
+          )
+          .when({ temperament: 'energetic' }, (b) => b.ask('sport', z.enum(sports))),
+      ),
+  )
 
-// ---------------------------------------------------------------------------
-// Tree-shaped schema. Discriminator fields stay as z.literal(...) inside each
-// option (required by z.discriminatedUnion); non-discriminator leaves and the
-// flat experience/owner sub-schemas reuse fieldSchemas.
-// ---------------------------------------------------------------------------
+  .when({ animalType: 'cat' }, (b) =>
+    b
+      .ask('noDogAtHome', z.literal(true, { message: 'You must confirm to continue' }))
+      .ask('lifestyle', z.enum(lifestyles))
+      .when({ lifestyle: 'indoor' }, (b) =>
+        b
+          .ask('scratchPost', z.enum(scratchPostOptions))
+          .when({ scratchPost: 'yes' }, (b) =>
+            b
+              .ask('numberOfPosts', z.coerce.number().int().min(1).max(5))
+              .ask('postType', z.enum(postTypes)),
+          )
+          .when({ scratchPost: 'no' }, (b) =>
+            b.ask('alternative', z.enum(alternatives)),
+          ),
+      )
+      .when({ lifestyle: 'outdoor' }, (b) =>
+        b
+          .ask('territory', z.enum(territories))
+          .when({ territory: 'urban' }, (b) =>
+            b.ask('trafficTraining', z.enum(trafficOptions)),
+          )
+          .when({ territory: 'rural' }, (b) =>
+            b.ask('predatorProtection', z.enum(predatorOptions)),
+          ),
+      ),
+  )
 
-const dogLargeBranch = z.discriminatedUnion('temperament', [
-  z.object({ temperament: z.literal('calm'), trainingGoal: fieldSchemas.trainingGoal }),
-  z.object({ temperament: z.literal('energetic'), sport: fieldSchemas.sport }),
-])
+  .when({ animalType: 'parrot' }, (b) =>
+    b
+      .ask('species', z.enum(speciesOptions))
+      .when({ species: 'macaw' }, (b) =>
+        b
+          .ask('socialNeed', z.enum(socialNeeds))
+          .when({ socialNeed: 'high' }, (b) =>
+            b.ask('dailyInteraction', z.enum(dailyInteractions)),
+          )
+          .when({ socialNeed: 'medium' }, (b) =>
+            b.ask('enrichment', z.enum(enrichmentOptions)),
+          ),
+      )
+      .when({ species: 'cockatiel' }, (b) =>
+        b
+          .ask('companions', z.enum(companionOptions))
+          .when({ companions: 'single' }, (b) =>
+            b.ask('humanTime', z.enum(humanTimes)),
+          )
+          .when({ companions: 'paired' }, (b) =>
+            b
+              .ask('feedingHours', z.array(z.number()).min(1))
+              .ask('cageSize', z.enum(cageSizes)),
+          ),
+      ),
+  )
 
-const dogBranch = z.discriminatedUnion('size', [
-  z.object({ size: z.literal('large'), branch: dogLargeBranch }),
-  z.object({ size: z.literal('small') }),
-])
+  // Experience — always asked
+  .ask('yearsOwnedPets', z.coerce.number().int().min(0).max(80))
+  .ask('previousAnimal', z.enum(previousAnimalOptions))
 
-const catIndoorYesBranch = z.object({
-  numberOfPosts: fieldSchemas.numberOfPosts,
-  postType: fieldSchemas.postType,
-})
+// ── Derived types ──────────────────────────────────────────────────────────
 
-const catIndoorBranch = z.discriminatedUnion('scratchPost', [
-  z.object({ scratchPost: z.literal('yes'), branch: catIndoorYesBranch }),
-  z.object({ scratchPost: z.literal('no'), alternative: fieldSchemas.alternative }),
-])
+export type Adoption = InferForm<typeof form>
 
-const catOutdoorBranch = z.discriminatedUnion('territory', [
-  z.object({ territory: z.literal('urban'), trafficTraining: fieldSchemas.trafficTraining }),
-  z.object({ territory: z.literal('rural'), predatorProtection: fieldSchemas.predatorProtection }),
-])
+export type FieldValue<K extends string> = InferField<typeof form, K>
 
-const catLifestyleBranch = z.discriminatedUnion('lifestyle', [
-  z.object({ lifestyle: z.literal('indoor'), branch: catIndoorBranch }),
-  z.object({ lifestyle: z.literal('outdoor'), branch: catOutdoorBranch }),
-])
+// Sanity check: TS should narrow conditional fields to required as the
+// discriminator chain is walked.
+function _probe(v: Adoption) {
+  if (v.animalType === 'cat') {
+    const confirmed: true = v.noDogAtHome
+    if (v.lifestyle === 'indoor' && v.scratchPost === 'yes') {
+      const posts: number = v.numberOfPosts
+      const material: 'sisal' | 'cardboard' = v.postType
+      return [confirmed, posts, material]
+    }
+  }
+  if (
+    v.animalType === 'parrot' &&
+    v.species === 'cockatiel' &&
+    v.companions === 'paired'
+  ) {
+    const hours: number[] = v.feedingHours
+    const cage: 'wide' | 'tall' = v.cageSize
+    return [hours, cage]
+  }
+}
 
-const parrotMacawBranch = z.discriminatedUnion('socialNeed', [
-  z.object({ socialNeed: z.literal('high'), dailyInteraction: fieldSchemas.dailyInteraction }),
-  z.object({ socialNeed: z.literal('medium'), enrichment: fieldSchemas.enrichment }),
-])
-
-const parrotCockatielPairedBranch = z.object({
-  feedingHours: fieldSchemas.feedingHours,
-  cageSize: fieldSchemas.cageSize,
-})
-
-const parrotCockatielBranch = z.discriminatedUnion('companions', [
-  z.object({ companions: z.literal('single'), humanTime: fieldSchemas.humanTime }),
-  z.object({ companions: z.literal('paired'), branch: parrotCockatielPairedBranch }),
-])
-
-const parrotBranch = z.discriminatedUnion('species', [
-  z.object({ species: z.literal('macaw'), branch: parrotMacawBranch }),
-  z.object({ species: z.literal('cockatiel'), branch: parrotCockatielBranch }),
-])
-
-const animalSchema = z.discriminatedUnion('animalType', [
-  z.object({ animalType: z.literal('dog'), branch: dogBranch }),
-  z.object({
-    animalType: z.literal('cat'),
-    noDogAtHome: fieldSchemas.noDogAtHome,
-    branch: catLifestyleBranch,
-  }),
-  z.object({ animalType: z.literal('parrot'), branch: parrotBranch }),
-])
-
-export const experienceSchema = z.object({
-  yearsOwnedPets: fieldSchemas.yearsOwnedPets,
-  previousAnimal: fieldSchemas.previousAnimal,
-})
-
-export const ownerSchema = z.object({
-  owner: leafStep(fieldSchemas.owner),
-})
-
-export const adoptionSchema = z.intersection(
-  z.intersection(animalSchema, experienceSchema),
-  ownerSchema,
-)
-export type Adoption = z.infer<typeof adoptionSchema>
