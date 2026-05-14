@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter vue-demo dev",
     "dev:vue": "pnpm --filter vue-demo dev",
+    "dev:react": "pnpm --filter react-demo dev",
     "dev:vanilla": "pnpm --filter vanilla-demo dev",
     "build": "pnpm -r build"
   },
