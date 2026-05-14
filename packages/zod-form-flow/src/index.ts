@@ -251,21 +251,72 @@ const FORM_NODES = Symbol('zod-form-flow.formNodes')
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 
+// Distribute `Omit` over BR — `Omit<A | B, K>` would otherwise collapse to
+// the common keys and lose discriminated-union members that only appear in
+// some variants.
+type BranchAdditions<BR extends object, Outer extends object> =
+  BR extends BR ? Omit<BR, keyof Outer> : never
+
+// Apply Prettify to every member of a union (rather than to the union as a
+// whole — that would collapse the union to its common keys).
+type DistPrettify<T> = T extends object ? Prettify<T> : T
+
+// Convert `{x: 'a'|'b', y: T}` into `{x: 'a', y: T} | {x: 'b', y: T}` so the
+// resulting V is a true discriminated union on K.
+type DistributeOnKey<V extends object, K extends keyof V> = V extends V
+  ? V[K] extends infer U
+    ? U extends V[K]
+      ? Prettify<Omit<V, K> & { [P in K]: U }>
+      : never
+    : never
+  : never
+
+// Distribute V on the keys of P (turning a single type with union-valued
+// fields into a true union of variants), so Extract/match operations work.
+type DistributeForMatch<V extends object, P extends object> =
+  keyof P & keyof V extends infer K
+    ? K extends keyof V
+      ? DistributeOnKey<V, K>
+      : V
+    : V
+
+// Only the variants of V that match P. Used to construct the branch
+// callback's V, so the branch doesn't see zombie non-matching variants.
+type FilterMatching<V extends object, P extends object> =
+  DistributeForMatch<V, P> extends infer DV
+    ? DV extends object
+      ? DV extends P
+        ? DV
+        : never
+      : never
+    : never
+
+// `.when({k: lit}, ...)` result: distribute V on keyof P, then for each
+// variant: if it matches P → add branch fields (required), else leave alone.
+type WhenEqResult<V extends object, P extends object, BR extends object> =
+  DistributeForMatch<V, P> extends infer DV
+    ? DV extends object
+      ? DV extends P
+        ? DistPrettify<DV & BranchAdditions<BR, DV>>
+        : DV
+      : never
+    : never
+
 export type FormBuilder<V extends object = object> = {
   ask<K extends string, S extends z.ZodType>(
     key: K,
     schema: S,
-  ): FormBuilder<Prettify<V & { [P in K]: z.infer<S> }>>
+  ): FormBuilder<DistPrettify<V & { [P in K]: z.infer<S> }>>
 
-  when<const P extends Partial<V>>(
+  when<const P extends Partial<V>, BR extends object>(
     pattern: P,
-    branch: (b: FormBuilder<Prettify<V & P>>) => FormBuilder<object>,
-  ): FormBuilder<V>
+    branch: (b: FormBuilder<DistPrettify<FilterMatching<V, P>>>) => FormBuilder<BR>,
+  ): FormBuilder<WhenEqResult<V, P, BR>>
 
-  when(
+  when<BR extends object>(
     predicate: (values: Partial<V>) => boolean,
-    branch: (b: FormBuilder<V>) => FormBuilder<object>,
-  ): FormBuilder<V>
+    branch: (b: FormBuilder<V>) => FormBuilder<BR>,
+  ): FormBuilder<DistPrettify<V & Partial<BranchAdditions<BR, V>>>>
 
   readonly [FORM_NODES]: FormNode[]
 }
@@ -311,6 +362,15 @@ export type FormStep = {
   schema: z.ZodType
   value: unknown
 }
+
+/**
+ * Extract the accumulated value shape from a form built with `defineForm()`.
+ * Note: this gives the **unconditional** keys — fields asked inside a `.when`
+ * branch don't appear here, because the outer `.when` returns the builder
+ * unchanged. Use `Partial<InferForm<typeof form>>` if you're modeling
+ * in-progress (partially-filled) state.
+ */
+export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
 
 /** Ordered list of currently-reachable steps given the current values. */
 export function listFormSteps(

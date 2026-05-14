@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineForm } from 'zod-form-flow'
+import { defineForm, type InferForm } from 'zod-form-flow'
 
 export const form = defineForm()
   .ask('travelerName', z.string().min(1))
@@ -38,3 +38,31 @@ export const form = defineForm()
     (v) => Number(v.travelers) >= 5 && v.budget === 'low',
     (b) => b.ask('hostelOk', z.enum(['yes', 'no'])),
   )
+
+// Discriminated union over every reachable branch. Hover to see all variants.
+// Example variants (illustrative):
+//   | { destination: 'city', cityVibe: 'foodie'|'museums'|'nightlife', ... }
+//   | { destination: 'beach', beachActivity: 'relax'|'surf', ... }
+//   | { destination: 'beach', beachActivity: 'dive', diveCertified: 'yes'|'no', ... }
+//   | { destination: 'mountains', season: 'summer', hikeIntensity: ..., ... }
+//   | { destination: 'mountains', season: 'winter',
+//       skiLevel: 'intermediate'|'expert', ... }
+//   | { destination: 'mountains', season: 'winter',
+//       skiLevel: 'beginner', needsSkiLessons: 'yes'|'no', ... }
+export type FormValues = InferForm<typeof form>
+
+// Sanity check: TS should narrow `needsSkiLessons` to required when
+// skiLevel === 'beginner'.
+function _probe(v: FormValues) {
+  if (
+    v.destination === 'mountains' &&
+  ) {
+    if (v.)
+  }
+
+  if (v.destination === "beach") {
+      if (v.beachActivity === "dive") {
+          console.log(v.diveCertified)
+      }
+  }
+}
