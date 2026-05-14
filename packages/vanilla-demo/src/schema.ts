@@ -12,7 +12,7 @@ export const form = defineForm()
   .when({ destination: 'beach' }, (b) =>
     b
       .ask('beachActivity', z.enum(['relax', 'surf', 'dive']))
-      .when({ beachActivity: 'dive' }, (b) => b.ask('diveCertified', z.enum(['yes', 'no']))),
+      .when({ beachActivity: 'dive' }, (b) => b.ask('diveCertified', z.boolean())),
   )
 
   .when({ destination: 'mountains' }, (b) =>
@@ -55,14 +55,10 @@ export type FormValues = InferForm<typeof form>
 // skiLevel === 'beginner'.
 function _probe(v: FormValues) {
   if (
-    v.destination === 'mountains' &&
+    v.destination === 'beach'
   ) {
-    if (v.)
-  }
-
-  if (v.destination === "beach") {
-      if (v.beachActivity === "dive") {
-          console.log(v.diveCertified)
-      }
+    if (v.beachActivity === "dive") {
+      console.log(v.diveCertified)
+    }
   }
 }

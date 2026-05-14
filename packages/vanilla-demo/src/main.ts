@@ -39,6 +39,16 @@ function renderField(step: FormStep): HTMLElement {
       render()
     })
     wrap.appendChild(select)
+  } else if (step.schema instanceof z.ZodBoolean) {
+    const checkbox = document.createElement('input')
+    checkbox.type = 'checkbox'
+    checkbox.dataset.path = step.key
+    checkbox.checked = step.value === true
+    checkbox.addEventListener('change', () => {
+      values[step.key] = checkbox.checked
+      render()
+    })
+    wrap.appendChild(checkbox)
   } else {
     const input = document.createElement('input')
     input.type = 'text'
@@ -72,7 +82,7 @@ function captureFocus(): FocusState | null {
   if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement)) return null
   const path = el.dataset.path
   if (!path) return null
-  if (el instanceof HTMLInputElement) {
+  if (el instanceof HTMLInputElement && el.type !== 'checkbox' && el.type !== 'radio') {
     return { path, start: el.selectionStart, end: el.selectionEnd }
   }
   return { path, start: null, end: null }
