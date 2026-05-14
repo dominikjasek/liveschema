@@ -32,10 +32,17 @@ export const previousAnimalOptions = ['dog', 'cat', 'parrot', 'none'] as const
 // Flat shape: every leaf becomes a top-level key. Branching via .when().
 
 export const form = defineForm()
- // Owner — always asked (split into two steps per the new flat model)
-  .ask('ownerName', z.string().min(1, 'Required'))
-  .ask('ownerEmail', z.email('Invalid email'))
-  
+ // Owner — always asked, rendered as a single step
+  .ask(
+    'owner',
+    z.object({
+      name: z
+        .string({ error: 'Bro I need to know your name!' })
+        .min(1, 'Bro I need to know your name!'),
+      email: z.email('Invalid email'),
+    }),
+  )
+
   .ask('animalType', z.enum(animalTypes))
 
   .when({ animalType: 'dog' }, (b) =>

@@ -12,6 +12,11 @@ const reviewItems = () =>
 function display(value: unknown): string {
   if (value === undefined || value === null) return '—'
   if (Array.isArray(value)) return value.join(', ')
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([k, v]) => `${k}: ${display(v)}`)
+      .join(' · ')
+  }
   return String(value)
 }
 

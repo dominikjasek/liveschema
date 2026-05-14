@@ -26,8 +26,7 @@ import StepFeedingHours from './StepFeedingHours.vue'
 import StepCageSize from './StepCageSize.vue'
 import StepYearsOwnedPets from './StepYearsOwnedPets.vue'
 import StepPreviousAnimal from './StepPreviousAnimal.vue'
-import StepOwnerName from './StepOwnerName.vue'
-import StepOwnerEmail from './StepOwnerEmail.vue'
+import StepOwner from './StepOwner.vue'
 
 /**
  * Maps a form-step key to its rendering component. `listFormSteps` yields
@@ -35,8 +34,7 @@ import StepOwnerEmail from './StepOwnerEmail.vue'
  * component.
  */
 export const stepComponents = {
-  ownerName: StepOwnerName,
-  ownerEmail: StepOwnerEmail,
+  owner: StepOwner,
   animalType: StepAnimalType,
   size: StepSize,
   temperament: StepTemperament,
@@ -97,7 +95,6 @@ export const stepLabels: Partial<Record<LabelKey, string>> = {
   cageSize: 'Cage shape',
   yearsOwnedPets: 'Years with pets ❤️',
   previousAnimal: 'Previous pet',
-  ownerName: 'Your name',
-  ownerEmail: 'Your email',
+  owner: 'About you',
   review: 'Review',
 }
