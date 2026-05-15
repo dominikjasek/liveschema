@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { listFormSteps, type FormStep } from 'zod-form-flow'
 import { form as formDef, type Adoption } from './schemas'
@@ -15,7 +15,7 @@ export function AdoptionForm() {
   const form = useForm({
     defaultValues: {} as Partial<Adoption>,
     onSubmit: ({ value }) => {
-      // eslint-disable-next-line no-alert
+       
       alert(`Adoption submitted!\n\n${JSON.stringify(value, null, 2)}`)
 
       if (value.animalType === "dog") {
@@ -32,13 +32,9 @@ export function AdoptionForm() {
   const steps: FormStep[] = useMemo(() => listFormSteps(formDef, values), [values])
   console.log('steps', steps)
 
-  // Clamp stepIndex if a branch change shrinks the step list.
+  // Clamp stepIndex if a branch change shrinks the step list. Stored
+  // stepIndex may drift out of range; reads always go through clampedIndex.
   const clampedIndex = Math.min(stepIndex, Math.max(0, steps.length - 1))
-  useEffect(() => {
-    if (phase === 'fill' && clampedIndex !== stepIndex) {
-      setStepIndex(clampedIndex)
-    }
-  }, [clampedIndex, stepIndex, phase])
 
   const currentStep = phase === 'fill' ? steps[clampedIndex] : undefined
   const stepLabels = useMemo(() => [...steps.map((s) => s.key), 'review'], [steps])

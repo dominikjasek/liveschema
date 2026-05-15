@@ -11,7 +11,7 @@ const { value, errorMessage } = useField<FieldValue<'trainingGoal'>>(() => props
   <h2>Training goal?</h2>
   <div class="options">
     <label v-for="o in trainingGoals" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

@@ -43,9 +43,11 @@ function walk(
   }
 
   if (schema instanceof z.ZodDiscriminatedUnion) {
-    const d = (schema as unknown as {
-      def: { discriminator: string; options: ReadonlyArray<z.ZodObject<z.ZodRawShape>> }
-    }).def
+    const d = (
+      schema as unknown as {
+        def: { discriminator: string; options: ReadonlyArray<z.ZodObject<z.ZodRawShape>> }
+      }
+    ).def
     const disc = d.discriminator
     const options = d.options
     const allowed = options.map((o) => literalValueOf(o.shape[disc])) as string[]
@@ -190,9 +192,7 @@ export function objectWith<Core extends z.ZodRawShape>(core: Core) {
   return makeObjectWithBuilder<Core, object>(core)
 }
 
-function makeObjectWithBuilder<Core extends z.ZodRawShape, Parent extends object>(
-  core: Core,
-) {
+function makeObjectWithBuilder<Core extends z.ZodRawShape, Parent extends object>(core: Core) {
   type Local = Partial<Parent & z.infer<z.ZodObject<Core>>>
   type WhenFn = <T extends z.ZodType>(
     predicate: (local: Local, root: unknown) => boolean,
@@ -217,9 +217,7 @@ function makeObjectWithBuilder<Core extends z.ZodRawShape, Parent extends object
     withParent<P extends z.ZodType>(_parent: P) {
       return makeObjectWithBuilder<Core, z.infer<P> & object>(core)
     },
-    extend<Extra extends z.ZodRawShape>(
-      build: (when: WhenFn) => Extra,
-    ): z.ZodObject<Core & Extra> {
+    extend<Extra extends z.ZodRawShape>(build: (when: WhenFn) => Extra): z.ZodObject<Core & Extra> {
       const extra = build(when)
       return z.object({ ...core, ...extra }) as unknown as z.ZodObject<Core & Extra>
     },
@@ -254,8 +252,9 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {}
 // Distribute `Omit` over BR — `Omit<A | B, K>` would otherwise collapse to
 // the common keys and lose discriminated-union members that only appear in
 // some variants.
-type BranchAdditions<BR extends object, Outer extends object> =
-  BR extends BR ? Omit<BR, keyof Outer> : never
+type BranchAdditions<BR extends object, Outer extends object> = BR extends BR
+  ? Omit<BR, keyof Outer>
+  : never
 
 // Apply Prettify to every member of a union (rather than to the union as a
 // whole — that would collapse the union to its common keys).
@@ -273,12 +272,11 @@ type DistributeOnKey<V extends object, K extends keyof V> = V extends V
 
 // Distribute V on the keys of P (turning a single type with union-valued
 // fields into a true union of variants), so Extract/match operations work.
-type DistributeForMatch<V extends object, P extends object> =
-  keyof P & keyof V extends infer K
-    ? K extends keyof V
-      ? DistributeOnKey<V, K>
-      : V
+type DistributeForMatch<V extends object, P extends object> = keyof P & keyof V extends infer K
+  ? K extends keyof V
+    ? DistributeOnKey<V, K>
     : V
+  : V
 
 // Only the variants of V that match P. Used to construct the branch
 // callback's V, so the branch doesn't see zombie non-matching variants.
@@ -333,10 +331,7 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
     ask(key: string, schema: z.ZodType) {
       return makeFormBuilder([...nodes, { kind: 'ask', key, schema }])
     },
-    when(
-      patternOrPred: unknown,
-      branchFn: (b: FormBuilder<object>) => FormBuilder<object>,
-    ) {
+    when(patternOrPred: unknown, branchFn: (b: FormBuilder<object>) => FormBuilder<object>) {
       const inner = branchFn(makeFormBuilder([]))
       const children = inner[FORM_NODES]
       const node: FormNode =
@@ -386,11 +381,8 @@ export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
  *   type SizeValue = InferField<typeof form, 'size'>     // 'large' | 'small'
  *   type Name = InferField<typeof form, 'ownerName'>     // string
  */
-export type InferField<F, K extends string> = InferForm<F> extends infer V
-  ? V extends Record<K, infer T>
-    ? T
-    : never
-  : never
+export type InferField<F, K extends string> =
+  InferForm<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
 
 /** Ordered list of currently-reachable steps given the current values. */
 export function listFormSteps<V extends object>(
@@ -414,11 +406,7 @@ export function reachableKeys<V extends object>(
   return new Set(listFormSteps(form, values).map((s) => s.key))
 }
 
-function walkFormNodes(
-  nodes: FormNode[],
-  values: Record<string, unknown>,
-  out: FormStep[],
-): void {
+function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormStep[]): void {
   for (const node of nodes) {
     if (node.kind === 'ask') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })

@@ -101,7 +101,7 @@ function jumpTo(i: number) {
 }
 
 function submit() {
-  // eslint-disable-next-line no-alert
+   
   alert(`Adoption submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
 }
 </script>
@@ -128,10 +128,10 @@ function submit() {
       </ol>
 
       <div class="content">
-        <form v-if="phase === 'fill'" @submit.prevent="goNext" class="step">
+        <form v-if="phase === 'fill'" class="step" @submit.prevent="goNext">
           <component
-            v-if="currentStep && currentComponent"
             :is="currentComponent"
+            v-if="currentStep && currentComponent"
             :key="currentStep.key"
             :path="currentStep.key"
           />

@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'noiseLevel'>>(() => props.p
   <h2>Noise sensitivity?</h2>
   <div class="options">
     <label v-for="o in noiseLevels" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

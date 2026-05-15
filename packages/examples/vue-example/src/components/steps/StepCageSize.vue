@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'cageSize'>>(() => props.pat
   <h2>Cage shape?</h2>
   <div class="options">
     <label v-for="o in cageSizes" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

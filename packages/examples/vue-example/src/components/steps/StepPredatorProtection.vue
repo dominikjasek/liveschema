@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'predatorProtection'>>(() =>
   <h2>Predator protection?</h2>
   <div class="options">
     <label v-for="o in predatorOptions" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

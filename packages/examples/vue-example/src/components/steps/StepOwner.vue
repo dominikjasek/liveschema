@@ -16,12 +16,12 @@ const { value: email, errorMessage: emailError } = useField<string>(
     <h2>About you</h2>
     <label class="field">
       <span>Name</span>
-      <input class="text-input" type="text" v-model="name" />
+      <input v-model="name" class="text-input" type="text" />
       <p v-if="nameError" class="error">{{ nameError }}</p>
     </label>
     <label class="field">
       <span>Email</span>
-      <input class="text-input" type="email" v-model="email" />
+      <input v-model="email" class="text-input" type="email" />
       <p v-if="emailError" class="error">{{ emailError }}</p>
     </label>
   </div>

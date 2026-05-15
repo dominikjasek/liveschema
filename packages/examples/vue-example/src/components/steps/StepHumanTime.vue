@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'humanTime'>>(() => props.pa
   <h2>Best human time?</h2>
   <div class="options">
     <label v-for="o in humanTimes" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

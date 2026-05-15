@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Controller, useForm, type Control, type Path } from 'react-hook-form'
+import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
 import { listFormSteps, type FormKeys } from 'zod-form-flow'
 import { form as formDef, type FormValues, animals, dogSizes } from './schema'
 import { zodFormFlowResolver } from '@hookform/resolver-zod-form-flow'
@@ -18,7 +18,6 @@ export function App() {
   const {
     register,
     control,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<DraftValues, unknown, FormValues>({
@@ -28,11 +27,11 @@ export function App() {
     shouldUnregister: true,
   })
 
-  const values = watch() as Record<string, unknown>
+  const values = useWatch({ control }) as Record<string, unknown>
   const fields = useMemo(() => listFormSteps(formDef, values), [values])
 
   const onSubmit = handleSubmit((data) => {
-    // eslint-disable-next-line no-alert
+     
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
   })
 

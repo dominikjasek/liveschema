@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'trafficTraining'>>(() => pr
   <h2>Traffic training?</h2>
   <div class="options">
     <label v-for="o in trafficOptions" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

@@ -8,7 +8,22 @@
     "dev:vue": "pnpm --filter vue-example dev",
     "dev:react": "pnpm --filter react-example dev",
     "dev:vanilla": "pnpm --filter vanilla-example dev",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-vue": "^10.9.1",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.59.3"
+  }
 }

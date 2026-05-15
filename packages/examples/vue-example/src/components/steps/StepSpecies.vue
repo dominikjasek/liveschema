@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'species'>>(() => props.path
   <h2>Which parrot species?</h2>
   <div class="options">
     <label v-for="o in speciesOptions" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

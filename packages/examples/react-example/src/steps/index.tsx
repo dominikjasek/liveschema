@@ -41,9 +41,9 @@ const radio = <T extends string | number>(
   question: string,
   options: readonly T[],
 ): Renderer => {
-  return (form) => (
-    <RadioStep form={form} path={path} question={question} options={options} />
-  )
+  return function RadioRenderer(form) {
+    return <RadioStep form={form} path={path} question={question} options={options} />
+  }
 }
 
 export const stepRenderers: Record<FormKey, Renderer> = {

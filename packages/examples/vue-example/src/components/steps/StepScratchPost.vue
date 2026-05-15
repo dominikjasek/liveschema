@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'scratchPost'>>(() => props.
   <h2>Will you provide a scratch post?</h2>
   <div class="options">
     <label v-for="o in scratchPostOptions" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>

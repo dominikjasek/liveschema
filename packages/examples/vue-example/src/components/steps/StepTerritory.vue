@@ -9,7 +9,7 @@ const { value, errorMessage } = useField<FieldValue<'territory'>>(() => props.pa
   <h2>Territory type?</h2>
   <div class="options">
     <label v-for="o in territories" :key="o" class="radio">
-      <input type="radio" :value="o" v-model="value" />
+      <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>
   </div>
