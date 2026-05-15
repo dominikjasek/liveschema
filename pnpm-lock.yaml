@@ -44,6 +44,9 @@ importers:
 
   packages/examples/react-hook-form-example:
     dependencies:
+      '@hookform/resolver-zod-form-flow':
+        specifier: workspace:*
+        version: link:../../hookform-resolver-zod-form-flow
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -125,6 +128,18 @@ importers:
       vue-tsc:
         specifier: ^3.2.8
         version: 3.2.9(typescript@6.0.3)
+
+  packages/hookform-resolver-zod-form-flow:
+    dependencies:
+      react-hook-form:
+        specifier: '>=7.0.0'
+        version: 7.75.0(react@19.2.6)
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
+      zod-form-flow:
+        specifier: workspace:*
+        version: link:../zod-form-flow
 
   packages/zod-form-flow:
     dependencies:
