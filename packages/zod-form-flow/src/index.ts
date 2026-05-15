@@ -357,11 +357,15 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
   return builder
 }
 
-export type FormStep = {
-  key: string
+export type FormStep<K extends string = string> = {
+  key: K
   schema: z.ZodType
   value: unknown
 }
+
+/** Distributive union of all field keys across every variant of a form's value type. */
+type DistributeKeys<V> = V extends unknown ? keyof V & string : never
+export type FormKeys<F> = DistributeKeys<InferForm<F>>
 
 /**
  * Extract the accumulated value shape from a form built with `defineForm()`.
@@ -389,19 +393,23 @@ export type InferField<F, K extends string> = InferForm<F> extends infer V
   : never
 
 /** Ordered list of currently-reachable steps given the current values. */
-export function listFormSteps(
-  form: FormBuilder<object>,
-  values: Record<string, unknown>,
-): FormStep[] {
+export function listFormSteps<V extends object>(
+  form: FormBuilder<V>,
+  values: Partial<V> | Record<string, unknown>,
+): Array<FormStep<DistributeKeys<V>>> {
   const out: FormStep[] = []
-  walkFormNodes(form[FORM_NODES], values, out)
-  return out
+  walkFormNodes(form[FORM_NODES], values as Record<string, unknown>, out)
+  return out as Array<FormStep<DistributeKeys<V>>>
 }
 
-/** Set of keys reachable in the current state — useful for pruning orphans. */
-export function reachableKeys(
-  form: FormBuilder<object>,
-  values: Record<string, unknown>,
+/**
+ * Set of keys reachable in the current state — useful for pruning orphans.
+ * Returns `Set<string>` (not a narrowed union) so callers can test arbitrary
+ * runtime keys via `.has()` without contravariance issues.
+ */
+export function reachableKeys<V extends object>(
+  form: FormBuilder<V>,
+  values: Partial<V> | Record<string, unknown>,
 ): Set<string> {
   return new Set(listFormSteps(form, values).map((s) => s.key))
 }
