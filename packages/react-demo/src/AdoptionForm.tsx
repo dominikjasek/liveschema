@@ -30,6 +30,7 @@ export function AdoptionForm() {
   const values = useStore(form.store, (s) => s.values) as Record<string, unknown>
 
   const steps: FormStep[] = useMemo(() => listFormSteps(formDef, values), [values])
+  console.log('steps', steps)
 
   // Clamp stepIndex if a branch change shrinks the step list.
   const clampedIndex = Math.min(stepIndex, Math.max(0, steps.length - 1))

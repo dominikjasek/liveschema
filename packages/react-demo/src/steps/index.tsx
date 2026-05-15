@@ -12,7 +12,6 @@ import {
   lifestyles,
   postTypes,
   predatorOptions,
-  previousAnimalOptions,
   scratchPostOptions,
   socialNeeds,
   speciesOptions,
@@ -29,6 +28,7 @@ import {
 // field key (e.g. dogSize, scratchPost, feedingHours).
 type FormKey = Adoption extends infer V ? (V extends object ? keyof V : never) : never
 import { RadioStep } from './RadioStep'
+import { StepExperience } from './StepExperience'
 import { StepFeedingHours } from './StepFeedingHours'
 import { StepNoDogAtHome } from './StepNoDogAtHome'
 import { StepNumberInput } from './StepNumberInput'
@@ -86,14 +86,5 @@ export const stepRenderers: Record<FormKey, Renderer> = {
   humanTime: radio('humanTime', 'When do you have time for the bird?', humanTimes),
   feedingHours: (form) => <StepFeedingHours form={form} />,
   cageSize: radio('cageSize', 'Cage shape preference?', cageSizes),
-  yearsOwnedPets: (form) => (
-    <StepNumberInput
-      form={form}
-      path="yearsOwnedPets"
-      question="How many years have you owned pets?"
-      min={0}
-      max={80}
-    />
-  ),
-  previousAnimal: radio('previousAnimal', 'What was your previous pet?', previousAnimalOptions),
+  experience: (form) => <StepExperience form={form} />,
 }

@@ -107,8 +107,13 @@ export const form = defineForm()
       ),
   )
 
-  .ask('yearsOwnedPets', z.coerce.number().int().min(0).max(80))
-  .ask('previousAnimal', z.enum(previousAnimalOptions))
+  .ask(
+    'experience',
+    z.object({
+      yearsOwnedPets: z.coerce.number().int().min(0).max(80),
+      previousAnimal: z.enum(previousAnimalOptions),
+    }),
+  )
 
 export type Adoption = InferForm<typeof form>
 

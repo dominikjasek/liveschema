@@ -22,8 +22,7 @@ export const stepLabels: Record<string, string> = {
   humanTime: 'Human time',
   feedingHours: 'Feeding hours',
   cageSize: 'Cage shape',
-  yearsOwnedPets: 'Years with pets ❤️',
-  previousAnimal: 'Previous pet',
+  experience: 'Your experience',
   review: 'Review',
 }
 
