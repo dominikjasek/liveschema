@@ -4,7 +4,6 @@ import { listFormSteps, type FormKeys } from 'form-flow'
 import { form as formDef, type FormValues, animals, dogSizes } from './schema'
 import { formFlowResolver } from '@form-flow/react-hook-form'
 
-type DraftValues = Partial<FormValues>
 type FieldKey = FormKeys<typeof formDef>
 
 const labels: Record<FieldKey, string> = {
@@ -20,7 +19,7 @@ export function App() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<DraftValues, unknown, FormValues>({
+  } = useForm<FormValues>({
     defaultValues: {},
     mode: 'all',
     resolver: formFlowResolver(formDef),
@@ -31,14 +30,13 @@ export function App() {
   const fields = useMemo(() => listFormSteps(formDef, values), [values])
 
   const onSubmit = handleSubmit((data) => {
-     
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
   })
 
   const fieldErrors = errors as Partial<Record<FieldKey, { message?: string }>>
 
   function renderField(key: FieldKey) {
-    const path = key as Path<DraftValues>
+    const path = key as Path<FormValues>
     const errorMsg = fieldErrors[key]?.message
     const label = labels[key]
 
@@ -115,8 +113,8 @@ export function App() {
 }
 
 type ControllerRadioProps = {
-  control: Control<DraftValues>
-  name: Path<DraftValues>
+  control: Control<FormValues>
+  name: Path<FormValues>
   label: string
   options: readonly string[]
   errorMsg?: string
@@ -150,8 +148,8 @@ function ControllerRadio({ control, name, label, options, errorMsg }: Controller
 }
 
 type ControllerCheckboxProps = {
-  control: Control<DraftValues>
-  name: Path<DraftValues>
+  control: Control<FormValues>
+  name: Path<FormValues>
   label: string
   errorMsg?: string
 }

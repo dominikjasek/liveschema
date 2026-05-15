@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { listFormSteps, type FormStep } from 'form-flow'
+import { listFormSteps, reachableKeys, type FormStep } from 'form-flow'
 import StepReview from './components/StepReview.vue'
 import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './components/steps'
 import { form as adoptionForm, type Adoption } from '@/schemas'
@@ -18,6 +18,15 @@ const form = useForm<Adoption>({
 const steps = computed<FormStep[]>(() =>
   listFormSteps(adoptionForm, form.values as Record<string, unknown>),
 )
+
+// Strip values from branches the user has abandoned (e.g. `dogSize` after
+// switching `animal` from 'dog' to 'cat'). vee-validate keeps the raw bag
+// around; we only ever want to display/submit reachable keys.
+const cleanValues = computed(() => {
+  const data = form.values as Record<string, unknown>
+  const keep = reachableKeys(adoptionForm, data)
+  return Object.fromEntries(Object.entries(data).filter(([k]) => keep.has(k)))
+})
 
 const currentStep = computed<FormStep | undefined>(() => {
   if (phase.value !== 'fill') return undefined
@@ -103,8 +112,7 @@ function jumpTo(i: number) {
 }
 
 function submit() {
-   
-  alert(`Adoption submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
+  alert(`Adoption submitted!\n\n${JSON.stringify(cleanValues.value, null, 2)}`)
 }
 </script>
 
@@ -146,14 +154,14 @@ function submit() {
         </form>
 
         <template v-else>
-          <StepReview :data="form.values" />
+          <StepReview :data="cleanValues" />
           <div class="actions">
             <button type="button" @click="goBack">Back</button>
             <button type="button" @click="submit">Submit</button>
           </div>
         </template>
 
-        <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: steps.map((s) => s.key) }, null, 2) }}</pre>
+        <pre class="debug">{{ JSON.stringify({ values: cleanValues, stepIndex, steps: steps.map((s) => s.key) }, null, 2) }}</pre>
       </div>
     </section>
   </main>

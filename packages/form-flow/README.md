@@ -4,6 +4,17 @@ Build a typed, branching multi-step form from any [Standard Schema](https://stan
 
 The package returns *data* (a list of steps). It doesn't manage step index, phase, navigation, validation, errors, or UI — those belong to the consumer.
 
+## Motivation
+
+Branching-logic forms, but headless and typed — Zod (or any Standard Schema) is the source of truth, and the branch type narrows the inferred values.
+
+Existing branching/wizard tools fall into two camps that each leave something on the table:
+
+- **Config-driven survey libraries** (JSON schemas, visibility expressions parsed at runtime) ship their own renderer and return untyped result bags — TypeScript can't see the branches.
+- **Generic form libraries** (React Hook Form, TanStack Form, vee-validate, Formik, …) are great at field state and validation, but multi-step *branching* is left to the consumer, and there's no inference from "which branch is active" to "which fields are now required."
+
+`form-flow` fills the gap: the **schema is the source of truth**, branching is a typed builder DSL, and the inferred value type is a discriminated union — so inside a narrowed branch, fields that were optional in the union become required.
+
 ## Install
 
 ```bash
@@ -119,6 +130,7 @@ End-to-end examples:
 
 - [packages/examples/react-example](../examples/react-example) — React + TanStack Form
 - [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (via `@form-flow/react-hook-form`)
+- [packages/examples/formik-example](../examples/formik-example) — React + Formik + ArkType
 - [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate
 - [packages/examples/vanilla-example](../examples/vanilla-example) — no form library
 
@@ -132,6 +144,7 @@ End-to-end examples:
 | `.when(predicate, branch)` | Predicate-gated sub-flow |
 | `listFormSteps(form, values)` | Ordered list of currently-reachable steps |
 | `reachableKeys(form, values)` | `Set<string>` of currently-reachable keys |
+| `validateForm(form, values)` | `{ key: firstMessage }` errors for reachable steps — plug straight into Formik/vee-validate/etc. `validate` |
 | `InferForm<F>` | Discriminated-union value type |
 | `InferField<F, K>` | Type of a single field across variants |
 | `FormStep` | `{ key, schema, value }` returned by the walker |

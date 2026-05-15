@@ -88,11 +88,11 @@ function dynamicStandardSchemaResolver<V extends object>(
  * object of those fields' schemas. The active fields — and therefore the
  * validated shape — change as the user answers branching questions.
  */
-export function formFlowResolver<V extends object>(
+export function formFlowResolver<V extends object, TIn extends FieldValues = Partial<V> & FieldValues>(
   form: FormBuilder<V>,
-): Resolver<Partial<V>, unknown, V> {
+): Resolver<TIn, unknown, V> {
   return dynamicStandardSchemaResolver<V>((data) => {
     const fields = listFormSteps(form, data as Record<string, unknown>)
     return objectFromFields(fields) as unknown as StandardSchemaForResolver
-  })
+  }) as unknown as Resolver<TIn, unknown, V>
 }

@@ -27,8 +27,9 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {}
 // Distribute `Omit` over BR — `Omit<A | B, K>` would otherwise collapse to
 // the common keys and lose discriminated-union members that only appear in
 // some variants.
-type BranchAdditions<BR extends object, Outer extends object> =
-  BR extends BR ? Omit<BR, keyof Outer> : never
+type BranchAdditions<BR extends object, Outer extends object> = BR extends BR
+  ? Omit<BR, keyof Outer>
+  : never
 
 // Apply Prettify to every member of a union (rather than to the union as a
 // whole — that would collapse the union to its common keys).
@@ -46,12 +47,11 @@ type DistributeOnKey<V extends object, K extends keyof V> = V extends V
 
 // Distribute V on the keys of P (turning a single type with union-valued
 // fields into a true union of variants), so Extract/match operations work.
-type DistributeForMatch<V extends object, P extends object> =
-  keyof P & keyof V extends infer K
-    ? K extends keyof V
-      ? DistributeOnKey<V, K>
-      : V
+type DistributeForMatch<V extends object, P extends object> = keyof P & keyof V extends infer K
+  ? K extends keyof V
+    ? DistributeOnKey<V, K>
     : V
+  : V
 
 // Only the variants of V that match P. Used to construct the branch
 // callback's V, so the branch doesn't see zombie non-matching variants.
@@ -106,10 +106,7 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
     ask(key: string, schema: StandardSchemaV1) {
       return makeFormBuilder([...nodes, { kind: 'ask', key, schema }])
     },
-    when(
-      patternOrPred: unknown,
-      branchFn: (b: FormBuilder<object>) => FormBuilder<object>,
-    ) {
+    when(patternOrPred: unknown, branchFn: (b: FormBuilder<object>) => FormBuilder<object>) {
       const inner = branchFn(makeFormBuilder([]))
       const children = inner[FORM_NODES]
       const node: FormNode =
@@ -159,11 +156,8 @@ export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
  *   type SizeValue = InferField<typeof form, 'size'>     // 'large' | 'small'
  *   type Name = InferField<typeof form, 'ownerName'>     // string
  */
-export type InferField<F, K extends string> = InferForm<F> extends infer V
-  ? V extends Record<K, infer T>
-    ? T
-    : never
-  : never
+export type InferField<F, K extends string> =
+  InferForm<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
 
 /** Ordered list of currently-reachable steps given the current values. */
 export function listFormSteps<V extends object>(
@@ -187,11 +181,46 @@ export function reachableKeys<V extends object>(
   return new Set(listFormSteps(form, values).map((s) => s.key))
 }
 
-function walkFormNodes(
-  nodes: FormNode[],
-  values: Record<string, unknown>,
-  out: FormStep[],
-): void {
+/** Flat `{ stepKey: firstMessage }` shape produced by `validateForm`. */
+export type FormErrors<F> = Partial<Record<FormKeys<F>, string>>
+
+/**
+ * Validate the currently-reachable steps against `values`. Returns a flat
+ * `{ stepKey: firstMessage }` record (empty when valid), suitable for use
+ * directly as a Formik / Final Form / vee-validate `validate` function.
+ *
+ * Synchronous unless any active validator returns a Promise, in which case
+ * the whole call resolves asynchronously. Only the first issue per step is
+ * surfaced; consumers that need nested paths or every issue should fall back
+ * to `listFormSteps` and call each step's Standard Schema validator directly.
+ */
+export function validateForm<V extends object>(
+  form: FormBuilder<V>,
+  values: Partial<V> | Record<string, unknown>,
+): FormErrors<FormBuilder<V>> | Promise<FormErrors<FormBuilder<V>>> {
+  const data = values as Record<string, unknown>
+  const steps = listFormSteps(form, data)
+  const errors: Record<string, string> = {}
+  const pending: Array<Promise<void>> = []
+
+  for (const step of steps) {
+    const result = step.schema['~standard'].validate(data[step.key])
+    if (result instanceof Promise) {
+      pending.push(
+        result.then((r) => {
+          if (r.issues && r.issues.length > 0) errors[step.key] = r.issues[0].message
+        }),
+      )
+    } else if (result.issues && result.issues.length > 0) {
+      errors[step.key] = result.issues[0].message
+    }
+  }
+
+  if (pending.length === 0) return errors as FormErrors<FormBuilder<V>>
+  return Promise.all(pending).then(() => errors as FormErrors<FormBuilder<V>>)
+}
+
+function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormStep[]): void {
   for (const node of nodes) {
     if (node.kind === 'ask') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })

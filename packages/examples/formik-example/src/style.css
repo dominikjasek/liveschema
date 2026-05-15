@@ -1,0 +1,157 @@
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #3b82f6;
+  --accent-bg: rgba(59, 130, 246, 0.1);
+  --accent-border: rgba(59, 130, 246, 0.5);
+
+  font:
+    18px/145% system-ui,
+    sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #61dafb;
+    --accent-bg: rgba(97, 218, 251, 0.15);
+    --accent-border: rgba(97, 218, 251, 0.5);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 48px;
+  margin: 32px 0;
+  text-align: center;
+}
+
+h2 {
+  font-size: 22px;
+  margin: 0 0 8px;
+}
+
+#app {
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100svh;
+  box-sizing: border-box;
+}
+
+.form-single {
+  max-width: 640px;
+  margin: 2rem auto;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field > span {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.text-input {
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  width: 18rem;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.radio:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.actions button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
+.debug {
+  background: var(--code-bg);
+  color: var(--text-h);
+  padding: 0.5rem;
+  margin: 1rem 0;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
