@@ -47,6 +47,9 @@ importers:
       '@hookform/resolver-zod-form-flow':
         specifier: workspace:*
         version: link:../../hookform-resolver-zod-form-flow
+      '@hookform/resolvers':
+        specifier: ^5.0.0
+        version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -131,6 +134,9 @@ importers:
 
   packages/hookform-resolver-zod-form-flow:
     dependencies:
+      '@hookform/resolvers':
+        specifier: '>=5.0.0'
+        version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
       react-hook-form:
         specifier: '>=7.0.0'
         version: 7.75.0(react@19.2.6)
@@ -240,6 +246,11 @@ packages:
 
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
+
+  '@hookform/resolvers@5.2.2':
+    resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
+    peerDependencies:
+      react-hook-form: ^7.55.0
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -363,6 +374,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
+
+  '@standard-schema/utils@0.3.0':
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
   '@tanstack/devtools-event-client@0.4.3':
     resolution: {integrity: sha512-OZI6QyULw0FI0wjgmeYzCIfbgPsOEzwJtCpa69XrfLMtNXLGnz3d/dIabk7frg0TmHo+Ah49w5I4KC7Tufwsvw==}
@@ -974,6 +988,11 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@hookform/resolvers@5.2.2(react-hook-form@7.75.0(react@19.2.6))':
+    dependencies:
+      '@standard-schema/utils': 0.3.0
+      react-hook-form: 7.75.0(react@19.2.6)
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -1056,6 +1075,8 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.13': {}
 
   '@rolldown/pluginutils@1.0.0-rc.3': {}
+
+  '@standard-schema/utils@0.3.0': {}
 
   '@tanstack/devtools-event-client@0.4.3': {}
 

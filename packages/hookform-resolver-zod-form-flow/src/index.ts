@@ -1,47 +1,39 @@
-import type { FieldErrors, Resolver } from 'react-hook-form'
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
+import type { FieldValues, Resolver, ResolverOptions } from 'react-hook-form'
 import { z } from 'zod'
 import { listFormSteps, type FormBuilder } from 'zod-form-flow'
+
+type StandardSchemaForResolver = Parameters<typeof standardSchemaResolver>[0]
+
+/**
+ * Wrap `@hookform/resolvers/standard-schema` so the schema is recomputed
+ * on every validation cycle from the current form values. Useful whenever
+ * the validated shape depends on what the user has already filled in.
+ */
+function dynamicStandardSchemaResolver<V extends object>(
+  schemaFor: (data: Partial<V>) => StandardSchemaForResolver,
+): Resolver<Partial<V>, unknown, V> {
+  return (data, ctx, opts) =>
+    standardSchemaResolver(schemaFor(data))(
+      data as FieldValues,
+      ctx,
+      opts as ResolverOptions<FieldValues>,
+    ) as ReturnType<Resolver<Partial<V>, unknown, V>>
+}
 
 /**
  * Build a react-hook-form `Resolver` from a `zod-form-flow` form definition.
  *
- * On every validation cycle the resolver re-computes the active field set
- * (`listFormSteps(form, currentValues)`), assembles an ad-hoc `z.object`
- * from those fields' schemas, and validates `data` against it. Issues are
- * mapped into RHF's nested `FieldErrors` shape preserving Zod's `path`.
- *
- * Mirrors the shape of `@hookform/resolvers/zod`'s `zodResolver(schema)` so
- * usage is idiomatic for RHF users.
+ * On every validation cycle it re-computes the active field set
+ * (`listFormSteps(form, currentValues)`) and assembles a `z.object` of those
+ * fields' schemas. The active fields — and therefore the validated shape —
+ * change as the user answers branching questions.
  */
 export function zodFormFlowResolver<V extends object>(
   form: FormBuilder<V>,
 ): Resolver<Partial<V>, unknown, V> {
-  return (data) => {
+  return dynamicStandardSchemaResolver<V>((data) => {
     const fields = listFormSteps(form, data as Record<string, unknown>)
-    const schema = z.object(Object.fromEntries(fields.map((f) => [f.key, f.schema])))
-    const result = schema.safeParse(data)
-    if (result.success) return { values: result.data as V, errors: {} }
-    const errors = {} as FieldErrors<Partial<V>>
-    for (const issue of result.error.issues) {
-      setLeafError(errors, issue.path, { type: 'zod', message: issue.message })
-    }
-    return { values: {}, errors }
-  }
-}
-
-function setLeafError(
-  target: Record<string, unknown>,
-  path: ReadonlyArray<PropertyKey>,
-  err: { type: string; message: string },
-): void {
-  if (path.length === 0) return
-  let curr = target
-  for (let i = 0; i < path.length - 1; i++) {
-    const k = String(path[i])
-    const next = curr[k]
-    if (next == null || typeof next !== 'object') curr[k] = {}
-    curr = curr[k] as Record<string, unknown>
-  }
-  const leaf = String(path[path.length - 1])
-  if (!(leaf in curr)) curr[leaf] = err
+    return z.object(Object.fromEntries(fields.map((f) => [f.key, f.schema])))
+  })
 }
