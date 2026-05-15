@@ -41,6 +41,9 @@ importers:
       '@tanstack/react-form':
         specifier: ^1.0.0
         version: 1.32.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      form-flow:
+        specifier: workspace:*
+        version: link:../../form-flow
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -50,9 +53,6 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
-      zod-form-flow:
-        specifier: workspace:*
-        version: link:../../zod-form-flow
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -72,12 +72,15 @@ importers:
 
   packages/examples/react-hook-form-example:
     dependencies:
-      '@hookform/resolver-zod-form-flow':
+      '@form-flow/react-hook-form':
         specifier: workspace:*
-        version: link:../../hookform-resolver-zod-form-flow
+        version: link:../../react-hook-form
       '@hookform/resolvers':
         specifier: ^5.0.0
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
+      form-flow:
+        specifier: workspace:*
+        version: link:../../form-flow
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -90,9 +93,6 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
-      zod-form-flow:
-        specifier: workspace:*
-        version: link:../../zod-form-flow
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -112,12 +112,12 @@ importers:
 
   packages/examples/vanilla-example:
     dependencies:
+      form-flow:
+        specifier: workspace:*
+        version: link:../../form-flow
       zod:
         specifier: ^4.4.3
         version: 4.4.3
-      zod-form-flow:
-        specifier: workspace:*
-        version: link:../../zod-form-flow
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -131,6 +131,9 @@ importers:
       '@vee-validate/zod':
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.34(typescript@6.0.3))(zod@4.4.3)
+      form-flow:
+        specifier: workspace:*
+        version: link:../../form-flow
       vee-validate:
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.34(typescript@6.0.3))
@@ -140,9 +143,6 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
-      zod-form-flow:
-        specifier: workspace:*
-        version: link:../../zod-form-flow
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^6.0.6
@@ -160,26 +160,26 @@ importers:
         specifier: ^3.2.8
         version: 3.2.9(typescript@6.0.3)
 
-  packages/hookform-resolver-zod-form-flow:
+  packages/form-flow:
+    dependencies:
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.1.0
+
+  packages/react-hook-form:
     dependencies:
       '@hookform/resolvers':
         specifier: '>=5.0.0'
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.1.0
+      form-flow:
+        specifier: workspace:*
+        version: link:../form-flow
       react-hook-form:
         specifier: '>=7.0.0'
         version: 7.75.0(react@19.2.6)
-      zod:
-        specifier: ^4.0.0
-        version: 4.4.3
-      zod-form-flow:
-        specifier: workspace:*
-        version: link:../zod-form-flow
-
-  packages/zod-form-flow:
-    dependencies:
-      zod:
-        specifier: ^4.0.0
-        version: 4.4.3
 
 packages:
 
@@ -460,6 +460,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
+
+  '@standard-schema/spec@1.1.0':
+    resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
@@ -2124,6 +2127,8 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.13': {}
 
   '@rolldown/pluginutils@1.0.0-rc.3': {}
+
+  '@standard-schema/spec@1.1.0': {}
 
   '@standard-schema/utils@0.3.0': {}
 

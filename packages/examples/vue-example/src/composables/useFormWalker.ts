@@ -1,4 +1,4 @@
-import { listFormSteps, type FormStep } from 'zod-form-flow'
+import { listFormSteps, type FormStep } from 'form-flow'
 import { form } from '@/schemas'
 
 export type { FormStep }

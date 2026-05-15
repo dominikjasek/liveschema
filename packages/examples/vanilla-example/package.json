@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "zod": "^4.4.3",
-    "zod-form-flow": "workspace:*"
+    "form-flow": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "typescript": "^6.0.3",

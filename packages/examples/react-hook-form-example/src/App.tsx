@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
-import { listFormSteps, type FormKeys } from 'zod-form-flow'
+import { listFormSteps, type FormKeys } from 'form-flow'
 import { form as formDef, type FormValues, animals, dogSizes } from './schema'
-import { zodFormFlowResolver } from '@hookform/resolver-zod-form-flow'
+import { formFlowResolver } from '@form-flow/react-hook-form'
 
 type DraftValues = Partial<FormValues>
 type FieldKey = FormKeys<typeof formDef>
@@ -23,7 +23,7 @@ export function App() {
   } = useForm<DraftValues, unknown, FormValues>({
     defaultValues: {},
     mode: 'all',
-    resolver: zodFormFlowResolver(formDef),
+    resolver: formFlowResolver(formDef),
     shouldUnregister: true,
   })
 

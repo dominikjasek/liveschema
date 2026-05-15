@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { listFormSteps, reachableKeys, type FormStep } from 'zod-form-flow'
+import { listFormSteps, reachableKeys, type FormStep } from 'form-flow'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -7,7 +7,7 @@ const valuesEl = document.getElementById('values') as HTMLPreElement
 
 const values: Record<string, unknown> = {}
 
-function optionsFor(s: z.ZodType): string[] | null {
+function optionsFor(s: FormStep['schema']): string[] | null {
   if (s instanceof z.ZodEnum) return [...(s.options as readonly string[])]
   return null
 }

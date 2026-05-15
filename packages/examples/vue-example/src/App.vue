@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { listFormSteps, type FormStep } from 'zod-form-flow'
+import { listFormSteps, type FormStep } from 'form-flow'
 import StepReview from './components/StepReview.vue'
 import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './components/steps'
 import { form as adoptionForm, type Adoption } from '@/schemas'
@@ -61,18 +61,20 @@ async function goNext() {
   const step = currentStep.value
   if (!step) return
   const value = (form.values as Record<string, unknown>)[step.key]
-  const result = step.schema.safeParse(value)
-  if (!result.success) {
-    for (const issue of result.error.issues) {
-      const issuePath = issue.path.length
-        ? `${step.key}.${issue.path.join('.')}`
-        : step.key
+  const result = step.schema['~standard'].validate(value)
+  if (result instanceof Promise) return // demo: leaf validators are sync
+  if (result.issues) {
+    for (const issue of result.issues) {
+      const segs = (issue.path ?? []).map((p) =>
+        typeof p === 'object' ? String(p.key) : String(p),
+      )
+      const issuePath = segs.length ? `${step.key}.${segs.join('.')}` : step.key
       form.setFieldError(issuePath as never, issue.message)
     }
     return
   }
   // Persist the parsed (potentially coerced) value back into form state.
-  form.setFieldValue(step.key as never, result.data as never)
+  form.setFieldValue(step.key as never, result.value as never)
   if (stepIndex.value < steps.value.length - 1) {
     stepIndex.value++
   } else {

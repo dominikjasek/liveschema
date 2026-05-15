@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { listFormSteps, type FormStep } from 'zod-form-flow'
+import { listFormSteps, type FormStep } from 'form-flow'
 import { form as formDef, type Adoption } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
@@ -43,12 +43,16 @@ export function AdoptionForm() {
   async function goNext() {
     if (!currentStep) return
     const value = (values as Record<string, unknown>)[currentStep.key]
-    const result = currentStep.schema.safeParse(value)
-    if (!result.success) {
+    const result = currentStep.schema['~standard'].validate(value)
+    if (result instanceof Promise) return // demo: leaf validators are sync
+    if (result.issues) {
       // Push issues onto the matching TanStack field's error list.
-      for (const issue of result.error.issues) {
-        const fieldName = issue.path.length
-          ? `${currentStep.key}.${issue.path.join('.')}`
+      for (const issue of result.issues) {
+        const segs = (issue.path ?? []).map((p) =>
+          typeof p === 'object' ? String(p.key) : String(p),
+        )
+        const fieldName = segs.length
+          ? `${currentStep.key}.${segs.join('.')}`
           : currentStep.key
         form.setFieldMeta(fieldName as never, ((m: Record<string, unknown>) => ({
           ...m,
@@ -59,7 +63,7 @@ export function AdoptionForm() {
       return
     }
     // Persist parsed value (handles coercion, e.g. number).
-    form.setFieldValue(currentStep.key as never, result.data as never)
+    form.setFieldValue(currentStep.key as never, result.value as never)
     // Clear any prior errors for this step.
     form.setFieldMeta(currentStep.key as never, ((m: Record<string, unknown>) => ({
       ...m,

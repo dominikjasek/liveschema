@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineForm, type InferForm } from 'zod-form-flow'
+import { defineForm, type InferForm } from 'form-flow'
 
 export const form = defineForm()
   .ask('travelerName', z.string().min(1))

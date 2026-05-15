@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineForm, type InferForm } from 'zod-form-flow'
+import { defineForm, type InferForm } from 'form-flow'
 
 export const animals = ['dog', 'cat'] as const
 export const dogSizes = ['small', 'large'] as const

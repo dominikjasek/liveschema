@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineForm, type InferField, type InferForm } from 'zod-form-flow'
+import { defineForm, type InferField, type InferForm } from 'form-flow'
 
 // ── Option tuples — exported for component radio/select rendering ───────────
 

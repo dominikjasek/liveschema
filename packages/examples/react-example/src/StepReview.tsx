@@ -1,4 +1,4 @@
-import { listFormSteps } from 'zod-form-flow'
+import { listFormSteps } from 'form-flow'
 import { form } from './schemas'
 import { humanize } from './stepLabels'
 

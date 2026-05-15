@@ -9,13 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hookform/resolver-zod-form-flow": "workspace:*",
+    "@form-flow/react-hook-form": "workspace:*",
     "@hookform/resolvers": "^5.0.0",
+    "form-flow": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",
-    "zod": "^4.4.3",
-    "zod-form-flow": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
