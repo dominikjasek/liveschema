@@ -113,9 +113,10 @@ if (!result.success) {
 
 End-to-end examples:
 
-- [packages/react-demo](../react-demo) — React + TanStack Form
-- [packages/vue-demo](../vue-demo) — Vue 3 + vee-validate
-- [packages/vanilla-demo](../vanilla-demo) — no form library
+- [packages/examples/react-example](../examples/react-example) — React + TanStack Form
+- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form
+- [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate
+- [packages/examples/vanilla-example](../examples/vanilla-example) — no form library
 
 ## API
 

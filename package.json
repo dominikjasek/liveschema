@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter vue-demo dev",
-    "dev:vue": "pnpm --filter vue-demo dev",
-    "dev:react": "pnpm --filter react-demo dev",
-    "dev:vanilla": "pnpm --filter vanilla-demo dev",
+    "dev": "pnpm --filter vue-example dev",
+    "dev:vue": "pnpm --filter vue-example dev",
+    "dev:react": "pnpm --filter react-example dev",
+    "dev:vanilla": "pnpm --filter vanilla-example dev",
     "build": "pnpm -r build"
   },
   "packageManager": "pnpm@9.0.0"

@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  packages/react-demo:
+  packages/examples/react-example:
     dependencies:
       '@tanstack/react-form':
         specifier: ^1.0.0
@@ -24,7 +24,7 @@ importers:
         version: 4.4.3
       zod-form-flow:
         specifier: workspace:*
-        version: link:../zod-form-flow
+        version: link:../../zod-form-flow
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -42,7 +42,7 @@ importers:
         specifier: ^8.0.10
         version: 8.0.12
 
-  packages/react-hook-form-demo:
+  packages/examples/react-hook-form-example:
     dependencies:
       react:
         specifier: ^19.0.0
@@ -58,7 +58,7 @@ importers:
         version: 4.4.3
       zod-form-flow:
         specifier: workspace:*
-        version: link:../zod-form-flow
+        version: link:../../zod-form-flow
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -76,14 +76,14 @@ importers:
         specifier: ^8.0.10
         version: 8.0.12
 
-  packages/vanilla-demo:
+  packages/examples/vanilla-example:
     dependencies:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
       zod-form-flow:
         specifier: workspace:*
-        version: link:../zod-form-flow
+        version: link:../../zod-form-flow
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -92,7 +92,7 @@ importers:
         specifier: ^8.0.10
         version: 8.0.12
 
-  packages/vue-demo:
+  packages/examples/vue-example:
     dependencies:
       '@vee-validate/zod':
         specifier: ^4.15.1
@@ -108,7 +108,7 @@ importers:
         version: 4.4.3
       zod-form-flow:
         specifier: workspace:*
-        version: link:../zod-form-flow
+        version: link:../../zod-form-flow
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^6.0.6
