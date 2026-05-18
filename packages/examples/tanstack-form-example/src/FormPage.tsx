@@ -3,7 +3,6 @@ import { listFormSteps, toStandardSchema } from 'form-flow'
 import {
   form as formDef,
   type FormValues,
-  type FormFields,
   type FieldKey,
   animals,
   dogSizes,
@@ -16,16 +15,20 @@ const labels: Record<FieldKey, string> = {
   indoor: 'Indoor cat',
 }
 
-const dynamicSchema = toStandardSchema<FormValues, FormFields>(formDef)
+const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
 
 export function FormPage() {
   const form = useForm({
-    defaultValues: {} as FormFields,
+    defaultValues: {} as FormValues,
     validationLogic: revalidateLogic(),
     validators: {
-      onDynamic: dynamicSchema,
+      onDynamic: standardSchema,
     },
     onSubmit: ({ value }) => {
+      if (value.animal === 'cat') {
+        // `value` is narrowed to the cat variant — `indoor` is typed, `dogSize` is not.
+        console.log(value.indoor)
+      }
       alert(`Submitted!\n\n${JSON.stringify(value, null, 2)}`)
     },
   })

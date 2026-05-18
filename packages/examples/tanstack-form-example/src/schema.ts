@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineForm, type InferForm, type InferField, type FormKeys } from 'form-flow'
+import { defineForm, type InferForm, type FormKeys } from 'form-flow'
 
 export const animals = ['dog', 'cat'] as const
 export const dogSizes = ['small', 'large'] as const
@@ -12,11 +12,3 @@ export const form = defineForm()
 
 export type FormValues = InferForm<typeof form>
 export type FieldKey = FormKeys<typeof form>
-
-/**
- * TanStack Form needs one flat value shape, not a discriminated union.
- * Widen the branching `FormValues` into `{ email?, animal?, dogSize?, indoor? }`.
- */
-export type FormFields = {
-  [K in FieldKey]?: InferField<typeof form, K>
-}
