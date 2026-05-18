@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { listFormSteps, type FormStep } from 'form-flow'
+import { activeFields, type FormField } from 'form-flow'
 import { form as formDef, type Adoption } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
@@ -29,7 +29,7 @@ export function AdoptionForm() {
   // Subscribe to values — every value change re-derives the step list.
   const values = useStore(form.store, (s) => s.values) as Record<string, unknown>
 
-  const steps: FormStep[] = useMemo(() => listFormSteps(formDef, values), [values])
+  const steps: FormField[] = useMemo(() => activeFields(formDef, values), [values])
   console.log('steps', steps)
 
   // Clamp stepIndex if a branch change shrinks the step list. Stored
@@ -96,7 +96,7 @@ export function AdoptionForm() {
     }
   }
 
-  // FormStep.key is `string`; the walker can only emit keys defined in the
+  // FormField.key is `string`; the walker can only emit keys defined in the
   // form, so the cast to `keyof typeof stepRenderers` is sound.
   const renderer = currentStep
     ? stepRenderers[currentStep.key as keyof typeof stepRenderers]

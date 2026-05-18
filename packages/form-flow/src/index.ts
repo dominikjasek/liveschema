@@ -127,7 +127,7 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
   return builder
 }
 
-export type FormStep<K extends string = string> = {
+export type FormField<K extends string = string> = {
   key: K
   schema: StandardSchemaV1
   value: unknown
@@ -159,14 +159,14 @@ export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
 export type InferField<F, K extends string> =
   InferForm<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
 
-/** Ordered list of currently-reachable steps given the current values. */
-export function listFormSteps<V extends object>(
+/** Ordered list of currently-reachable fields given the current values. */
+export function activeFields<V extends object>(
   form: FormBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
-): Array<FormStep<DistributeKeys<V>>> {
-  const out: FormStep[] = []
+): Array<FormField<DistributeKeys<V>>> {
+  const out: FormField[] = []
   walkFormNodes(form[FORM_NODES], values as Record<string, unknown>, out)
-  return out as Array<FormStep<DistributeKeys<V>>>
+  return out as Array<FormField<DistributeKeys<V>>>
 }
 
 /**
@@ -178,41 +178,41 @@ export function reachableKeys<V extends object>(
   form: FormBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
 ): Set<string> {
-  return new Set(listFormSteps(form, values).map((s) => s.key))
+  return new Set(activeFields(form, values).map((s) => s.key))
 }
 
-/** Flat `{ stepKey: firstMessage }` shape produced by `validateForm`. */
+/** Flat `{ fieldKey: firstMessage }` shape produced by `validateForm`. */
 export type FormErrors<F> = Partial<Record<FormKeys<F>, string>>
 
 /**
- * Validate the currently-reachable steps against `values`. Returns a flat
- * `{ stepKey: firstMessage }` record (empty when valid), suitable for use
+ * Validate the currently-reachable fields against `values`. Returns a flat
+ * `{ fieldKey: firstMessage }` record (empty when valid), suitable for use
  * directly as a Formik / Final Form / vee-validate `validate` function.
  *
  * Synchronous unless any active validator returns a Promise, in which case
- * the whole call resolves asynchronously. Only the first issue per step is
+ * the whole call resolves asynchronously. Only the first issue per field is
  * surfaced; consumers that need nested paths or every issue should fall back
- * to `listFormSteps` and call each step's Standard Schema validator directly.
+ * to `activeFields` and call each field's Standard Schema validator directly.
  */
 export function validateForm<V extends object>(
   form: FormBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
 ): FormErrors<FormBuilder<V>> | Promise<FormErrors<FormBuilder<V>>> {
   const data = values as Record<string, unknown>
-  const steps = listFormSteps(form, data)
+  const fields = activeFields(form, data)
   const errors: Record<string, string> = {}
   const pending: Array<Promise<void>> = []
 
-  for (const step of steps) {
-    const result = step.schema['~standard'].validate(data[step.key])
+  for (const field of fields) {
+    const result = field.schema['~standard'].validate(data[field.key])
     if (result instanceof Promise) {
       pending.push(
         result.then((r) => {
-          if (r.issues && r.issues.length > 0) errors[step.key] = r.issues[0].message
+          if (r.issues && r.issues.length > 0) errors[field.key] = r.issues[0].message
         }),
       )
     } else if (result.issues && result.issues.length > 0) {
-      errors[step.key] = result.issues[0].message
+      errors[field.key] = result.issues[0].message
     }
   }
 
@@ -242,17 +242,17 @@ export function toStandardSchema<V extends object, TIn = Partial<V>>(
       vendor: 'form-flow',
       validate(input) {
         const data = (input ?? {}) as Record<string, unknown>
-        const steps = listFormSteps(form, data)
+        const fields = activeFields(form, data)
         const issues: StandardSchemaV1.Issue[] = []
         const out: Record<string, unknown> = {}
         const pending: Array<Promise<void>> = []
 
-        for (const step of steps) {
-          const result = step.schema['~standard'].validate(data[step.key])
+        for (const field of fields) {
+          const result = field.schema['~standard'].validate(data[field.key])
           if (result instanceof Promise) {
-            pending.push(result.then((r) => collectStep(r, step.key, issues, out)))
+            pending.push(result.then((r) => collectField(r, field.key, issues, out)))
           } else {
-            collectStep(result, step.key, issues, out)
+            collectField(result, field.key, issues, out)
           }
         }
 
@@ -266,7 +266,7 @@ export function toStandardSchema<V extends object, TIn = Partial<V>>(
   }
 }
 
-function collectStep(
+function collectField(
   result: StandardSchemaV1.Result<unknown>,
   key: string,
   issues: StandardSchemaV1.Issue[],
@@ -281,7 +281,7 @@ function collectStep(
   }
 }
 
-function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormStep[]): void {
+function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormField[]): void {
   for (const node of nodes) {
     if (node.kind === 'ask') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })

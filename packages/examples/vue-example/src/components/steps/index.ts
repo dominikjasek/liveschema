@@ -5,8 +5,8 @@ import StepDogSize from './StepDogSize.vue'
 import StepIndoor from './StepIndoor.vue'
 
 /**
- * Maps a form-step key to its rendering component. `listFormSteps` yields
- * steps keyed by the leaf field name; this lookup picks the matching
+ * Maps a form-field key to its rendering component. `activeFields` yields
+ * fields keyed by the leaf field name; this lookup picks the matching
  * component.
  */
 export const stepComponents = {

@@ -1,5 +1,5 @@
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
-import { listFormSteps, toStandardSchema } from 'form-flow'
+import { activeFields, toStandardSchema } from 'form-flow'
 import {
   form as formDef,
   type FormValues,
@@ -34,7 +34,7 @@ export function FormPage() {
   })
 
   const values = useStore(form.store, (state) => state.values)
-  const fields = listFormSteps(formDef, values)
+  const fields = activeFields(formDef, values)
 
   return (
     <>

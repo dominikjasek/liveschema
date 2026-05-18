@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { listFormSteps, reachableKeys, type FormStep } from 'form-flow'
+import { activeFields, reachableKeys, type FormField } from 'form-flow'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -7,12 +7,12 @@ const valuesEl = document.getElementById('values') as HTMLPreElement
 
 const values: Record<string, unknown> = {}
 
-function optionsFor(s: FormStep['schema']): string[] | null {
+function optionsFor(s: FormField['schema']): string[] | null {
   if (s instanceof z.ZodEnum) return [...(s.options as readonly string[])]
   return null
 }
 
-function renderField(step: FormStep): HTMLElement {
+function renderField(step: FormField): HTMLElement {
   const wrap = document.createElement('label')
   wrap.className = 'field'
   const title = document.createElement('span')
@@ -107,7 +107,7 @@ function restoreFocus(state: FocusState | null): void {
 function render(): void {
   const focusState = captureFocus()
   pruneOrphans()
-  const steps = listFormSteps(form, values)
+  const steps = activeFields(form, values)
   formEl.replaceChildren(...steps.map(renderField))
   renderValues()
   restoreFocus(focusState)

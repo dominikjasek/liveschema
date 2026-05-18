@@ -1,8 +1,8 @@
-import { listFormSteps, type FormStep } from 'form-flow'
+import { activeFields, type FormField } from 'form-flow'
 import { form } from '@/schemas'
 
-export type { FormStep }
+export type { FormField }
 
-export function listSteps(values: Record<string, unknown>): FormStep[] {
-  return listFormSteps(form, values)
+export function listSteps(values: Record<string, unknown>): FormField[] {
+  return activeFields(form, values)
 }

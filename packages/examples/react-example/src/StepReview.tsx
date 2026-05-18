@@ -1,4 +1,4 @@
-import { listFormSteps } from 'form-flow'
+import { activeFields } from 'form-flow'
 import { form } from './schemas'
 import { humanize } from './stepLabels'
 
@@ -14,7 +14,7 @@ function display(value: unknown): string {
 }
 
 export function StepReview({ data }: { data: Record<string, unknown> }) {
-  const items = listFormSteps(form, data).map((step) => ({
+  const items = activeFields(form, data).map((step) => ({
     key: step.key,
     value: step.value,
   }))

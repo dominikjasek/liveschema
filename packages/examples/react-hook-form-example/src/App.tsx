@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
-import { listFormSteps, type FormKeys } from 'form-flow'
+import { activeFields, type FormKeys } from 'form-flow'
 import { form as formDef, type FormValues, animals, dogSizes } from './schema'
 import { formFlowResolver } from '@form-flow/react-hook-form'
 
@@ -27,7 +27,7 @@ export function App() {
   })
 
   const values = useWatch({ control }) as Record<string, unknown>
-  const fields = useMemo(() => listFormSteps(formDef, values), [values])
+  const fields = useMemo(() => activeFields(formDef, values), [values])
 
   const onSubmit = handleSubmit((data) => {
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)

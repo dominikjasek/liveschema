@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { listFormSteps, reachableKeys, type FormStep } from 'form-flow'
+import { activeFields, reachableKeys, type FormField } from 'form-flow'
 import StepReview from './components/StepReview.vue'
 import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './components/steps'
 import { form as adoptionForm, type Adoption } from '@/schemas'
@@ -15,8 +15,8 @@ const form = useForm<Adoption>({
   keepValuesOnUnmount: true,
 })
 
-const steps = computed<FormStep[]>(() =>
-  listFormSteps(adoptionForm, form.values as Record<string, unknown>),
+const steps = computed<FormField[]>(() =>
+  activeFields(adoptionForm, form.values as Record<string, unknown>),
 )
 
 // Strip values from branches the user has abandoned (e.g. `dogSize` after
@@ -28,7 +28,7 @@ const cleanValues = computed(() => {
   return Object.fromEntries(Object.entries(data).filter(([k]) => keep.has(k)))
 })
 
-const currentStep = computed<FormStep | undefined>(() => {
+const currentStep = computed<FormField | undefined>(() => {
   if (phase.value !== 'fill') return undefined
   return steps.value[stepIndex.value]
 })
