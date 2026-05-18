@@ -9,6 +9,7 @@
     "dev:react": "pnpm --filter react-example dev",
     "dev:vanilla": "pnpm --filter vanilla-example dev",
     "dev:formik": "pnpm --filter formik-example dev",
+    "dev:tanstack": "pnpm --filter tanstack-form-example dev",
     "build": "pnpm -r build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -220,6 +220,67 @@ export function validateForm<V extends object>(
   return Promise.all(pending).then(() => errors as FormErrors<FormBuilder<V>>)
 }
 
+/**
+ * Build a single Standard Schema validator for a form-flow form. Each
+ * `validate(value)` call re-evaluates which fields are reachable given the
+ * current `value`, then validates each active field against its own schema.
+ *
+ * Issues are tagged with the field's key as the first path segment, so
+ * consumers that route errors by path (TanStack Form's `onDynamic`,
+ * `@hookform/resolvers/standard-schema`, etc.) deliver each message to the
+ * right field. Vendor is reported as `"form-flow"`.
+ *
+ * `TIn` defaults to `Partial<V>` but can be widened (e.g. to a flat partial
+ * of all reachable keys) when a consumer needs a non-union input shape.
+ */
+export function toStandardSchema<V extends object, TIn = Partial<V>>(
+  form: FormBuilder<V>,
+): StandardSchemaV1<TIn, V> {
+  return {
+    '~standard': {
+      version: 1,
+      vendor: 'form-flow',
+      validate(input) {
+        const data = (input ?? {}) as Record<string, unknown>
+        const steps = listFormSteps(form, data)
+        const issues: StandardSchemaV1.Issue[] = []
+        const out: Record<string, unknown> = {}
+        const pending: Array<Promise<void>> = []
+
+        for (const step of steps) {
+          const result = step.schema['~standard'].validate(data[step.key])
+          if (result instanceof Promise) {
+            pending.push(result.then((r) => collectStep(r, step.key, issues, out)))
+          } else {
+            collectStep(result, step.key, issues, out)
+          }
+        }
+
+        const finalize = (): StandardSchemaV1.Result<V> =>
+          issues.length ? { issues } : { value: out as V }
+
+        if (pending.length > 0) return Promise.all(pending).then(finalize)
+        return finalize()
+      },
+    },
+  }
+}
+
+function collectStep(
+  result: StandardSchemaV1.Result<unknown>,
+  key: string,
+  issues: StandardSchemaV1.Issue[],
+  out: Record<string, unknown>,
+): void {
+  if (result.issues) {
+    for (const issue of result.issues) {
+      issues.push({ message: issue.message, path: [key, ...(issue.path ?? [])] })
+    }
+  } else {
+    out[key] = result.value
+  }
+}
+
 function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormStep[]): void {
   for (const node of nodes) {
     if (node.kind === 'ask') {
