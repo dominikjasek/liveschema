@@ -29,23 +29,40 @@ const FORM_NODES = Symbol('form-flow.formNodes')
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 
-// Distribute `Omit` over BR — `Omit<A | B, K>` would otherwise collapse to
-// the common keys and lose discriminated-union members that only appear in
-// some variants.
-type BranchAdditions<BR extends object, Outer extends object> = BR extends BR
-  ? Omit<BR, keyof Outer>
-  : never
+// Pair each outer variant with the single BR variant whose shape extends it,
+// rather than crossing each outer variant with every BR variant. The previous
+// "BR extends BR ? Omit<BR, keyof Outer>" form distributed over BR and then
+// intersected unconditionally — producing both an exponential variant blow-up
+// (which trips TS2589) and incorrect narrowing in nested branches (e.g.
+// `housingType='house'` paired with the apartment branch's dogSize literals).
+//
+// Extract<BR, Outer> returns only the BR variants assignable to Outer; we then
+// intersect to get the additions correctly narrowed for that variant.
+type BranchAdditions<BR extends object, Outer extends object> = Extract<BR, Outer>
+
+// Keys BR added on top of V (independent of any particular outer variant).
+// Used by WhenOrResult's non-matching branch where we add the new fields as
+// optional; per-variant Extract returns `never` there because the non-matching
+// DV doesn't share BR's path.
+type NewBranchFields<BR extends object, V extends object> =
+  [Exclude<keyof BR, keyof V>] extends [infer NK extends keyof BR]
+    ? Pick<BR, NK>
+    : never
 
 // Apply Prettify to every member of a union (rather than to the union as a
 // whole — that would collapse the union to its common keys).
 type DistPrettify<T> = T extends object ? Prettify<T> : T
 
 // Convert `{x: 'a'|'b', y: T}` into `{x: 'a', y: T} | {x: 'b', y: T}` so the
-// resulting V is a true discriminated union on K.
+// resulting V is a true discriminated union on K. We intentionally don't
+// `Prettify` the result — DistMulti chains multiple DistributeOnKey calls
+// and the final `DistPrettify` in WhenEqResult/WhenOrResult is enough.
+// Each extra Prettify materializes a fresh mapped type, compounding
+// instantiation depth (TS2589) on long .when() chains.
 type DistributeOnKey<V extends object, K extends keyof V> = V extends V
   ? V[K] extends infer U
     ? U extends V[K]
-      ? Prettify<Omit<V, K> & { [P in K]: U }>
+      ? Omit<V, K> & { [P in K]: U }
       : never
     : never
   : never
@@ -120,13 +137,14 @@ type WhenEqResult<V extends object, P extends object, BR extends object> =
 // statically match any pattern still get the new fields as OPTIONAL — because
 // at runtime an OR pattern with non-literal-narrowable keys (e.g. a `string`
 // field that's only sometimes a specific literal) can fire on variants TS
-// can't prove match.
+// can't prove match. Use NewBranchFields for the non-matching case since
+// per-variant Extract returns `never` there.
 type WhenOrResult<V extends object, P extends object, BR extends object> =
   DistributeForMatch<V, P> extends infer DV
     ? DV extends object
       ? DV extends P
         ? DistPrettify<DV & BranchAdditions<BR, DV>>
-        : DistPrettify<DV & Partial<BranchAdditions<BR, DV>>>
+        : DistPrettify<DV & Partial<NewBranchFields<BR, V>>>
       : never
     : never
 
