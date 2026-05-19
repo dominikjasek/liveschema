@@ -212,6 +212,21 @@ export type FormField<K extends string = string> = {
   value: unknown
 }
 
+/**
+ * Best-effort accessor for the enum option values of a Standard Schema
+ * validator. Reads the `.options` property convention shared by Zod
+ * (`z.enum(...)`), Valibot, and similar libraries; returns `undefined` for
+ * non-enum schemas (or validators that don't surface options this way).
+ * Useful for rendering radios / selects without re-declaring the literal
+ * list at the UI layer.
+ */
+export function enumOptions(schema: StandardSchemaV1): readonly string[] | undefined {
+  const opts = (schema as { options?: unknown }).options
+  if (!Array.isArray(opts)) return undefined
+  for (const o of opts) if (typeof o !== 'string') return undefined
+  return opts as readonly string[]
+}
+
 /** Distributive union of all field keys across every variant of a form's value type. */
 type DistributeKeys<V> = V extends unknown ? keyof V & string : never
 export type FormKeys<F> = DistributeKeys<InferForm<F>>
