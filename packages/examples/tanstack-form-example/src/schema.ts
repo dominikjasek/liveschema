@@ -14,10 +14,6 @@ export const form = defineForm()
   .ask('hasPriorPetExperience', z.boolean())
   .when({ hasPriorPetExperience: true }, (b) => b.ask('priorPetName', z.string().min(1).max(100)))
   .ask('animal', z.enum(animals))
-  // Apartment dwellers can't adopt large dogs — restrict the dogSize enum to
-  // small/medium for that branch. The two `.when` patterns are mutually
-  // exclusive (housingType is either 'house' or 'apartment'), so dogSize is
-  // declared exactly once at runtime.
   .when({ animal: 'dog' }, (b) =>
     b
       .when({ housingType: 'house' }, (b) => b.ask('dogSize', z.enum(dogSizes)))

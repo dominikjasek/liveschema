@@ -49,6 +49,13 @@ type NewBranchFields<BR extends object, V extends object> =
     ? Pick<BR, NK>
     : never
 
+// Reject pattern keys that aren't in V. `P extends Partial<V>` accepts excess
+// keys structurally — and generic inference (`const P extends Partial<V>`)
+// further suppresses the excess-property check that would normally fire on a
+// fresh object literal. Intersecting the parameter with `{[K in extras]: never}`
+// forces any extra key's value to be `never`, which the literal can't satisfy.
+type NoExtraKeys<V, P> = { [K in Exclude<keyof P, keyof V>]: never }
+
 // Apply Prettify to every member of a union (rather than to the union as a
 // whole — that would collapse the union to its common keys).
 type DistPrettify<T> = T extends object ? Prettify<T> : T
@@ -155,7 +162,7 @@ export type FormBuilder<V extends object = object> = {
   ): FormBuilder<DistPrettify<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>>
 
   when<const P extends Partial<V>, BR extends object>(
-    pattern: P,
+    pattern: P & NoExtraKeys<V, P>,
     branch: (b: FormBuilder<DistPrettify<FilterMatching<V, P>>>) => FormBuilder<BR>,
   ): FormBuilder<WhenEqResult<V, P, BR>>
 
@@ -176,7 +183,7 @@ export type FormBuilder<V extends object = object> = {
    * variants TS can't prove match.
    */
   whenAny<const Ps extends ReadonlyArray<Partial<V>>, BR extends object>(
-    patterns: Ps,
+    patterns: { readonly [I in keyof Ps]: Ps[I] & NoExtraKeys<V, Ps[I]> },
     branch: (b: FormBuilder<DistPrettify<FilterMatching<V, Ps[number]>>>) => FormBuilder<BR>,
   ): FormBuilder<WhenOrResult<V, Ps[number], BR>>
 

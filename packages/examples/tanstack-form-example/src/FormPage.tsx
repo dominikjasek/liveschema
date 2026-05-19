@@ -13,14 +13,24 @@ const labels: Record<FieldKey, string> = {
   dogSize: 'Preferred dog size',
   dogName: 'What will you name the dog?',
   catIndoor: 'Will the cat be indoor only?',
-  needsHomeVisit: "OK with a home visit before we approve?",
+  needsHomeVisit: "Do you want us to visit your home?",
 }
 
 const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
 
 export function FormPage() {
   const form = useForm({
-    defaultValues: {} as FormValues,
+    defaultValues: {
+      animal: "dog",
+      email: "",
+      fullName: "",
+      housingType: "house",
+      hasYard: true,
+      hasPriorPetExperience: false,
+      dogName: "",
+      dogSize: "small",
+      needsHomeVisit: true
+    } as FormValues,
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: standardSchema,
@@ -37,6 +47,9 @@ export function FormPage() {
       if (value.hasPriorPetExperience) {
         // Narrowed: `priorPetName` is required when the user has prior experience.
         console.log(value.priorPetName)
+      }
+      if (value.housingType === "apartment") {
+        console.log(value.needsHomeVisit)
       }
       alert(`Submitted!\n\n${JSON.stringify(value, null, 2)}`)
     },
