@@ -15,6 +15,11 @@ type FormNode =
       children: FormNode[]
     }
   | {
+      kind: 'whenAny'
+      patterns: ReadonlyArray<Record<string, unknown>>
+      children: FormNode[]
+    }
+  | {
       kind: 'whenPred'
       predicate: (values: Record<string, unknown>) => boolean
       children: FormNode[]
@@ -45,13 +50,49 @@ type DistributeOnKey<V extends object, K extends keyof V> = V extends V
     : never
   : never
 
-// Distribute V on the keys of P (turning a single type with union-valued
-// fields into a true union of variants), so Extract/match operations work.
-type DistributeForMatch<V extends object, P extends object> = keyof P & keyof V extends infer K
-  ? K extends keyof V
-    ? DistributeOnKey<V, K>
+// Distribute V on every key shared with P, *iteratively* — for multi-key
+// patterns like `{animal: 'dog', havePets: 'yes'}` we need the full
+// cross-product (one variant per combination of literal values), not just
+// the union of single-key distributions. Otherwise the "imprecise" variants
+// (with the un-distributed union-valued keys) leak through and dilute the
+// narrowing in downstream `V extends P` checks.
+//
+// We iterate keys via a tuple (UnionToTuple) so each distribution applies to
+// the result of the previous one (sequential composition) rather than via TS
+// union distribution which forks parallel branches and reunions stale variants.
+//
+// `[never]` short-circuit: when P is a union with disjoint keys (e.g.
+// `{animal:'dog'} | {email:'x'}`), `keyof P` collapses to `never` (TS's
+// `keyof (A|B) = keyof A & keyof B` rule). Skip distribution and return V —
+// downstream `V extends P` handles OR via subtype rules.
+type DistributeForMatch<V extends object, P extends object> =
+  [keyof P & keyof V] extends [never]
+    ? V
+    : UnionToTuple<keyof P & keyof V> extends infer KT extends ReadonlyArray<PropertyKey>
+      ? DistMulti<V, KT>
+      : V
+
+type DistMulti<V extends object, KT extends ReadonlyArray<PropertyKey>> =
+  KT extends readonly [infer K1, ...infer Rest]
+    ? K1 extends keyof V
+      ? Rest extends ReadonlyArray<PropertyKey>
+        ? DistributeOnKey<V, K1> extends infer V1 extends object
+          ? DistMulti<V1, Rest>
+          : V
+        : V
+      : V
     : V
-  : V
+
+type UnionToIntersection<U> = (U extends U ? (k: U) => void : never) extends (
+  k: infer I,
+) => void
+  ? I
+  : never
+type LastOf<U> =
+  UnionToIntersection<U extends U ? () => U : never> extends () => infer R ? R : never
+type UnionToTuple<U, Last = LastOf<U>> = [U] extends [never]
+  ? []
+  : [...UnionToTuple<Exclude<U, Last>>, Last]
 
 // Only the variants of V that match P. Used to construct the branch
 // callback's V, so the branch doesn't see zombie non-matching variants.
@@ -75,6 +116,20 @@ type WhenEqResult<V extends object, P extends object, BR extends object> =
       : never
     : never
 
+// `.when(or(...), ...)` result: like WhenEqResult, but variants that DON'T
+// statically match any pattern still get the new fields as OPTIONAL — because
+// at runtime an OR pattern with non-literal-narrowable keys (e.g. a `string`
+// field that's only sometimes a specific literal) can fire on variants TS
+// can't prove match.
+type WhenOrResult<V extends object, P extends object, BR extends object> =
+  DistributeForMatch<V, P> extends infer DV
+    ? DV extends object
+      ? DV extends P
+        ? DistPrettify<DV & BranchAdditions<BR, DV>>
+        : DistPrettify<DV & Partial<BranchAdditions<BR, DV>>>
+      : never
+    : never
+
 export type FormBuilder<V extends object = object> = {
   ask<K extends string, S extends StandardSchemaV1>(
     key: K,
@@ -90,6 +145,22 @@ export type FormBuilder<V extends object = object> = {
     predicate: (values: Partial<V>) => boolean,
     branch: (b: FormBuilder<V>) => FormBuilder<BR>,
   ): FormBuilder<DistPrettify<V & Partial<BranchAdditions<BR, V>>>>
+
+  /**
+   * OR branch: fires when the current values match *any* pattern in the array.
+   * Lives on its own method (not a `.when()` overload) so the array's element
+   * type contextually narrows to `Partial<V>` — giving you full autocomplete
+   * on V's keys inside each pattern literal.
+   *
+   * Variants matching any pattern get the new field as REQUIRED; variants
+   * that don't statically match still get it as OPTIONAL, because patterns
+   * with non-literal keys (e.g. `email: string`) can fire at runtime on
+   * variants TS can't prove match.
+   */
+  whenAny<const Ps extends ReadonlyArray<Partial<V>>, BR extends object>(
+    patterns: Ps,
+    branch: (b: FormBuilder<DistPrettify<FilterMatching<V, Ps[number]>>>) => FormBuilder<BR>,
+  ): FormBuilder<WhenOrResult<V, Ps[number], BR>>
 
   readonly [FORM_NODES]: FormNode[]
 }
@@ -121,6 +192,14 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
               pattern: patternOrPred as Record<string, unknown>,
               children,
             }
+      return makeFormBuilder([...nodes, node])
+    },
+    whenAny(
+      patterns: ReadonlyArray<Record<string, unknown>>,
+      branchFn: (b: FormBuilder<object>) => FormBuilder<object>,
+    ) {
+      const inner = branchFn(makeFormBuilder([]))
+      const node: FormNode = { kind: 'whenAny', patterns, children: inner[FORM_NODES] }
       return makeFormBuilder([...nodes, node])
     },
   } as unknown as FormBuilder<object>
@@ -287,6 +366,11 @@ function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: 
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })
     } else if (node.kind === 'whenEq') {
       const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
+      if (match) walkFormNodes(node.children, values, out)
+    } else if (node.kind === 'whenAny') {
+      const match = node.patterns.some((p) =>
+        Object.entries(p).every(([k, v]) => values[k] === v),
+      )
       if (match) walkFormNodes(node.children, values, out)
     } else {
       if (node.predicate(values)) walkFormNodes(node.children, values, out)

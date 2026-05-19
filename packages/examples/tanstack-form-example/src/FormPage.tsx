@@ -10,9 +10,12 @@ import {
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
-  animal: 'Animal 🐶😽',
+  havePets: 'Do you have other pets?',
+  animal: 'Preffered Animal? 🐶😽',
   dogSize: 'Dog size',
   indoor: 'Indoor cat',
+  vipDogQuestion: 'VIP dog question (special access)',
+  nameOfYourDog: "What's your dog's name?",
 }
 
 const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
@@ -29,6 +32,12 @@ export function FormPage() {
         // `value` is narrowed to the cat variant — `indoor` is typed, `dogSize` is not.
         console.log(value.indoor)
       }
+      if (value.animal === 'dog' && value.havePets) {
+        // Both keys are literal-typed (animal: 'dog' | 'cat', havePets: true | false)
+        // → variant is narrowed to the (animal: 'dog', havePets: true) branch,
+        // where nameOfYourDog is required.
+        console.log(value.nameOfYourDog)
+      }
       alert(`Submitted!\n\n${JSON.stringify(value, null, 2)}`)
     },
   })
@@ -39,7 +48,7 @@ export function FormPage() {
   return (
     <>
       <header>
-        <h1>Adopt an Animal</h1>
+        <h1>Adopt an Animal with Tanstack Form</h1>
       </header>
       <main>
         <section className="form-single">
@@ -70,6 +79,26 @@ export function FormPage() {
                         />
                         <FieldError errors={field.state.meta.errors} />
                       </label>
+                    )}
+                  </form.Field>
+                )
+              }
+              
+              if (key === 'havePets') {
+                return (
+                  <form.Field key={key} name="havePets">
+                    {(field) => (
+                      <div className="field">
+                        <label className="confirm">
+                          <input
+                            type="checkbox"
+                            checked={field.state.value === true}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                          />
+                          <span>{label}</span>
+                        </label>
+                        <FieldError errors={field.state.meta.errors} />
+                      </div>
                     )}
                   </form.Field>
                 )
@@ -140,6 +169,46 @@ export function FormPage() {
                         </label>
                         <FieldError errors={field.state.meta.errors} />
                       </div>
+                    )}
+                  </form.Field>
+                )
+              }
+              
+              if (key === 'vipDogQuestion') {
+                return (
+                  <form.Field key={key} name="vipDogQuestion">
+                    {(field) => (
+                      <div className="field">
+                        <label className="confirm">
+                          <input
+                            type="checkbox"
+                            checked={field.state.value === true}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                          />
+                          <span>{label}</span>
+                        </label>
+                        <FieldError errors={field.state.meta.errors} />
+                      </div>
+                    )}
+                  </form.Field>
+                )
+              }
+
+              if (key === 'nameOfYourDog') {
+                return (
+                  <form.Field key={key} name="nameOfYourDog">
+                    {(field) => (
+                      <label className="field">
+                        <span>{label}</span>
+                        <input
+                          className="text-input"
+                          type="text"
+                          value={field.state.value ?? ''}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                        />
+                        <FieldError errors={field.state.meta.errors} />
+                      </label>
                     )}
                   </form.Field>
                 )
