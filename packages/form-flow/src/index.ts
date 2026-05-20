@@ -89,12 +89,22 @@ type DistributeOnKey<V extends object, K extends keyof V> = V extends V
 // `{animal:'dog'} | {email:'x'}`), `keyof P` collapses to `never` (TS's
 // `keyof (A|B) = keyof A & keyof B` rule). Skip distribution and return V —
 // downstream `V extends P` handles OR via subtype rules.
+//
+// Fast-path the single-key case (`.when({k: lit}, ...)` — the overwhelming
+// majority of patterns): one `DistributeOnKey` call, skipping `UnionToTuple`
+// + `DistMulti`. `IsUnion<K>` is the cheap two-conditional union detector.
+type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
+
 type DistributeForMatch<V extends object, P extends object> =
-  [keyof P & keyof V] extends [never]
-    ? V
-    : UnionToTuple<keyof P & keyof V> extends infer KT extends ReadonlyArray<PropertyKey>
-      ? DistMulti<V, KT>
-      : V
+  keyof P & keyof V extends infer K extends keyof V
+    ? [K] extends [never]
+      ? V
+      : IsUnion<K> extends false
+        ? DistributeOnKey<V, K>
+        : UnionToTuple<K> extends infer KT extends ReadonlyArray<PropertyKey>
+          ? DistMulti<V, KT>
+          : V
+    : V
 
 type DistMulti<V extends object, KT extends ReadonlyArray<PropertyKey>> =
   KT extends readonly [infer K1, ...infer Rest]
@@ -131,6 +141,12 @@ type FilterMatching<V extends object, P extends object> =
 
 // `.when({k: lit}, ...)` result: distribute V on keyof P, then for each
 // variant: if it matches P → add branch fields (required), else leave alone.
+// We `DistPrettify` at branch boundaries (the `.when` result) but NOT at
+// every `.ask`: this flattens the union variants that subsequent `Omit`/
+// `keyof` operations walk, keeping later `DistributeForMatch` calls fast.
+// Dropping these two `DistPrettify` calls measurably *increases* check time
+// because downstream operations then have to traverse a deeper intersection
+// tree per variant — even though raw type/instantiation counts drop.
 type WhenEqResult<V extends object, P extends object, BR extends object> =
   DistributeForMatch<V, P> extends infer DV
     ? DV extends object
@@ -159,17 +175,17 @@ export type FormBuilder<V extends object = object> = {
   ask<K extends string, S extends StandardSchemaV1>(
     key: K,
     schema: S,
-  ): FormBuilder<DistPrettify<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>>
+  ): FormBuilder<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>
 
   when<const P extends Partial<V>, BR extends object>(
     pattern: P & NoExtraKeys<V, P>,
-    branch: (b: FormBuilder<DistPrettify<FilterMatching<V, P>>>) => FormBuilder<BR>,
+    branch: (b: FormBuilder<FilterMatching<V, P>>) => FormBuilder<BR>,
   ): FormBuilder<WhenEqResult<V, P, BR>>
 
   when<BR extends object>(
     predicate: (values: Partial<V>) => boolean,
     branch: (b: FormBuilder<V>) => FormBuilder<BR>,
-  ): FormBuilder<DistPrettify<V & Partial<BranchAdditions<BR, V>>>>
+  ): FormBuilder<V & Partial<BranchAdditions<BR, V>>>
 
   /**
    * OR branch: fires when the current values match *any* pattern in the array.
@@ -184,7 +200,7 @@ export type FormBuilder<V extends object = object> = {
    */
   whenAny<const Ps extends ReadonlyArray<Partial<V>>, BR extends object>(
     patterns: { readonly [I in keyof Ps]: Ps[I] & NoExtraKeys<V, Ps[I]> },
-    branch: (b: FormBuilder<DistPrettify<FilterMatching<V, Ps[number]>>>) => FormBuilder<BR>,
+    branch: (b: FormBuilder<FilterMatching<V, Ps[number]>>) => FormBuilder<BR>,
   ): FormBuilder<WhenOrResult<V, Ps[number], BR>>
 
   readonly [FORM_NODES]: FormNode[]
@@ -263,7 +279,7 @@ export type FormKeys<F> = DistributeKeys<InferForm<F>>
  * matching variant. Use `Partial<InferForm<typeof form>>` if you're modeling
  * in-progress (partially-filled) state.
  */
-export type InferForm<F> = F extends FormBuilder<infer V> ? V : never
+export type InferForm<F> = F extends FormBuilder<infer V> ? DistPrettify<V> : never
 
 /**
  * Per-field value lookup across every variant of a form's inferred type.
