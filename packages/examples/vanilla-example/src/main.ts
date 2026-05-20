@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { activeFields, type FormField } from 'form-flow'
+import { activeFields, validateForm, type FormField } from 'form-flow'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -97,12 +97,32 @@ function restoreFocus(state: FocusState | null): void {
   }
 }
 
+function renderSubmit(): HTMLElement {
+  const button = document.createElement('button')
+  button.type = 'submit'
+  button.className = 'submit'
+  button.textContent = 'Submit'
+  return button
+}
+
 function render(): void {
   const focusState = captureFocus()
   const steps = activeFields(form, values)
-  formEl.replaceChildren(...steps.map(renderField))
+  formEl.replaceChildren(...steps.map(renderField), renderSubmit())
   renderValues()
   restoreFocus(focusState)
 }
+
+formEl.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const result = validateForm(form, values)
+  if (result instanceof Promise) return
+  const messages = Object.entries(result)
+  if (messages.length > 0) {
+    alert('Errors! ' + messages.map(([k, m]) => `${k}: ${m}`).join('\n'))
+    return
+  }
+  alert(`Submitted!\n\n${JSON.stringify(values, null, 2)}`)
+})
 
 render()

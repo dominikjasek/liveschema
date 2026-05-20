@@ -1,17 +1,23 @@
 # form-flow
 
-Build a typed, branching multi-step form from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, Effect Schema, …). Returns the **currently-reachable, ordered list of fields** given the form's current values. The field list re-derives as the user fills in answers — typical use case is a multi-step form where later questions depend on earlier ones.
+Build a typed, branching schema from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, Effect Schema, …). The inferred value type is a **discriminated union** over every reachable branch — and at runtime, given the current values, you get the **ordered list of currently-reachable fields**.
 
-The package returns *data* (a list of fields). It doesn't manage step index, phase, navigation, validation, errors, or UI — those belong to the consumer.
+Same definition powers:
+
+- **Conditional forms** — single-page or multi-step, the live field list re-derives as values change.
+- **Backend validation** — feed a request body through `toStandardSchema(form)` and reject shapes that don't match any reachable branch.
+- **Anywhere you have branching data** — surveys, decision trees, configuration with conditional sections.
+
+The package returns *data* (a list of fields, or a Standard Schema validator). It doesn't manage UI, navigation, errors, or form state — those belong to the consumer.
 
 ## Motivation
 
-Branching-logic forms, but headless and typed — Zod (or any Standard Schema) is the source of truth, and the branch type narrows the inferred values.
+Branching-logic schemas, but headless and typed — your validator of choice is the source of truth, and the branch type narrows the inferred values.
 
-Existing branching/wizard tools fall into two camps that each leave something on the table:
+Existing tools fall into two camps that each leave something on the table:
 
 - **Config-driven survey libraries** (JSON schemas, visibility expressions parsed at runtime) ship their own renderer and return untyped result bags — TypeScript can't see the branches.
-- **Generic form libraries** (React Hook Form, TanStack Form, vee-validate, Formik, …) are great at field state and validation, but multi-step *branching* is left to the consumer, and there's no inference from "which branch is active" to "which fields are now required."
+- **Generic form libraries** (React Hook Form, TanStack Form, vee-validate, Formik, …) handle field state and validation, but *branching* is left to the consumer, and there's no inference from "which branch is active" to "which fields are now required."
 
 `form-flow` fills the gap: the **schema is the source of truth**, branching is a typed builder DSL, and the inferred value type is a discriminated union — so inside a narrowed branch, fields that were optional in the union become required.
 
@@ -39,7 +45,7 @@ const form = defineForm()
 
 type Values = InferForm<typeof form>
 
-// Given current form values, get the live ordered list of reachable fields:
+// Given current values, get the live ordered list of reachable fields:
 const fields = activeFields(form, { name: 'Ada', animal: 'dog' })
 // [
 //   { key: 'name',    schema: <standard schema>, value: 'Ada' },
@@ -52,7 +58,7 @@ const fields = activeFields(form, { name: 'Ada', animal: 'dog' })
 
 ### `.field(key, schema)`
 
-Declares a field. The schema is any Standard Schema validator for *that* field's value. Wrap multiple subfields in an object schema to render them on a single screen:
+Declares a field. The schema is any Standard Schema validator for *that* field's value. Wrap multiple subfields in an object schema to group them:
 
 ```ts
 .field('owner', z.object({
@@ -65,11 +71,15 @@ The resulting value is nested: `values.owner.name`.
 
 ### `.when({ key: literal }, branch)`
 
-Equality branch. Inner steps are reachable only while every `key=literal` matches the current values. Also narrows the inferred type — inside `.when({ animal: 'dog' }, ...)` the `dogSize` field becomes *required* on that union variant.
+Equality branch. Inner fields are reachable only while every `key=literal` matches the current values. Also narrows the inferred type — inside `.when({ animal: 'dog' }, ...)` the `dogSize` field becomes *required* on that union variant.
 
 ### `.when((values) => boolean, branch)`
 
 Predicate branch. Same gating behavior, but the condition is a function. TypeScript can't reason about arbitrary predicates, so branch fields are added as `Partial` rather than narrowed to required.
+
+### `.whenAny([pattern1, pattern2, ...], branch)`
+
+OR branch — inner fields are reachable when the current values match *any* pattern. Variants statically matching at least one pattern get the new fields as required; other variants get them as optional.
 
 ## Type inference
 
@@ -92,9 +102,27 @@ function handle(v: Values) {
 
 Use `Partial<Values>` to model in-progress (partially-filled) state.
 
+## Backend validation
+
+`toStandardSchema(form)` returns a single Standard Schema that validates the currently-reachable fields. Plug it into any framework that accepts Standard Schema:
+
+```ts
+import { toStandardSchema } from 'form-flow'
+
+const schema = toStandardSchema(form)
+const result = schema['~standard'].validate(await req.json())
+if (result instanceof Promise) {
+  // some validator was async
+} else if (result.issues) {
+  // 422 with result.issues
+} else {
+  // result.value is fully typed and only contains reachable fields
+}
+```
+
 ## Pruning orphaned values
 
-When a user revisits an earlier step and changes a branch discriminator, previously-set values on the abandoned branch may no longer be reachable. Build a `Set` from `activeFields()` and drop the rest:
+When the user changes a branch discriminator (e.g. switches `animal` from `'dog'` to `'cat'`), previously-set values on the abandoned branch (`dogSize`) may no longer be reachable. Build a `Set` from `activeFields()` and drop the rest:
 
 ```ts
 const keep = new Set(activeFields(form, values).map((f) => f.key))
@@ -103,34 +131,37 @@ const cleaned = Object.fromEntries(
 )
 ```
 
-## Typical integration
+## Rendering the active fields
 
 ```ts
 // 1. Live field list, re-derived from current values on every render.
 const fields = activeFields(form, values)
 
-// 2. Pick the current field (consumer owns the index).
-const current = fields[stepIndex]
+// 2. Render however you like — single page, one-field-per-screen wizard,
+//    grouped sections — keyed by `field.key`.
+for (const field of fields) {
+  // pick an input based on `field.schema` (radio for enums, checkbox for
+  // booleans, text input otherwise) and bind to `values[field.key]`.
+}
 
-// 3. On Next, validate just this field's value via Standard Schema.
-const result = current.schema['~standard'].validate(values[current.key])
+// 3. Validate a single field — useful for per-field "Next" buttons:
+const result = field.schema['~standard'].validate(values[field.key])
 if (result instanceof Promise) {
   // handle async validators
 } else if (result.issues) {
   // route result.issues to your form library's field errors
 } else {
-  setValue(current.key, result.value) // persist coerced value
-  setStepIndex(stepIndex + 1)
+  setValue(field.key, result.value) // persist coerced value
 }
 ```
 
 End-to-end examples:
 
-- [packages/examples/react-example](../examples/react-example) — React + TanStack Form
-- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (via `@form-flow/react-hook-form`)
-- [packages/examples/formik-example](../examples/formik-example) — React + Formik + ArkType
-- [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate
-- [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema
+- [packages/examples/react-example](../examples/react-example) — React + TanStack Form (multi-step wizard)
+- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@form-flow/react-hook-form`)
+- [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
+- [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
+- [packages/examples/tanstack-form-example](../examples/tanstack-form-example) — React + TanStack Form (single-page)
 - [packages/examples/vanilla-example](../examples/vanilla-example) — no form library
 
 ## API
@@ -139,18 +170,20 @@ End-to-end examples:
 | --- | --- |
 | `defineForm()` | Start a form builder |
 | `.field(key, schema)` | Declare a field (schema is any Standard Schema validator) |
-| `.when(pattern, branch)` | Equality-gated sub-flow |
-| `.when(predicate, branch)` | Predicate-gated sub-flow |
+| `.when(pattern, branch)` | Equality-gated sub-branch |
+| `.when(predicate, branch)` | Predicate-gated sub-branch |
+| `.whenAny(patterns, branch)` | OR-gated sub-branch |
 | `activeFields(form, values)` | Ordered list of currently-reachable fields |
 | `validateForm(form, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate` |
-| `toStandardSchema(form)` | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, etc. |
+| `toStandardSchema(form)` | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
+| `enumOptions(schema)` | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects |
 | `InferForm<F>` | Discriminated-union value type |
 | `InferField<F, K>` | Type of a single field across variants |
 | `FormField` | `{ key, schema, value }` returned by `activeFields` |
 
 ## What this package is *not*
 
-- **Not a form library** — bring your own (TanStack Form, vee-validate, React Hook Form, plain state). The package just gives you the step list; you keep the values.
-- **Not a UI library** — render however you want, keyed by `step.key`.
-- **Doesn't track step index, phase ("fill" vs "review"), or navigation** — that's all in the consumer.
+- **Not a form library** — bring your own (TanStack Form, vee-validate, React Hook Form, plain state). The package gives you the active-field list; you keep the values.
+- **Not a UI library** — render however you want, keyed by `field.key`.
+- **Doesn't track navigation or phase** (e.g. "fill" vs "review", current-step index) — that's all in the consumer.
 - **Doesn't route validation errors into form-library field state** — the consumer does that with the issues from `field.schema['~standard'].validate(values[field.key])`.

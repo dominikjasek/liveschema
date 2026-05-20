@@ -284,8 +284,8 @@ export type InferForm<F> = F extends FormBuilder<infer V> ? DistPrettify<V> : ne
 /**
  * Per-field value lookup across every variant of a form's inferred type.
  * Returns the union of `V[K]` for every variant V where K is a key — useful
- * when a step component needs the type of a single field without caring
- * which branch it lives in.
+ * when a renderer needs the type of a single field without caring which
+ * branch it lives in.
  *
  * @example
  *   type SizeValue = InferField<typeof form, 'size'>     // 'large' | 'small'

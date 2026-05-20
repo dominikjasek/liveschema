@@ -1,56 +1,22 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { activeFields, type FormField } from 'form-flow'
+import { activeFields, toStandardSchema, type FormField } from 'form-flow'
 import StepReview from './components/StepReview.vue'
-import { resolveStep, stepLabels as stepLabelMap } from './components/steps'
-import { form as orderForm, type Order } from '@/schemas'
+import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'
+import { form as orderForm, type Order, type FieldKey } from '@/schemas'
 
 type Phase = 'fill' | 'review'
 
-const phase = ref<Phase>('fill')
-const stepIndex = ref(0)
+// Wizard-level grouping: keys listed together render on a single step.
+// Any field not listed here becomes a step by itself, labeled via `stepLabelMap`.
+type StepGroup = { label: string; keys: readonly FieldKey[] }
+const stepGroups: readonly StepGroup[] = [
+  { label: 'Contact info', keys: ['email', 'fullName'] },
+  { label: 'Order type', keys: ['orderType', 'leaveAtDoor'] },
+]
 
-const form = useForm<Order>({
-  keepValuesOnUnmount: true,
-})
-
-const steps = computed<FormField[]>(() =>
-  activeFields(orderForm, form.values as Record<string, unknown>),
-)
-
-// Strip values from branches the user has abandoned (e.g. `pizzaSize`
-// after switching `mainCourse` from 'pizza' to 'salad'). vee-validate
-// keeps the raw bag around; we only ever want reachable keys — reuse
-// the `steps` walker so we don't traverse the form twice.
-const cleanValues = computed(() => {
-  const data = form.values as Record<string, unknown>
-  const keep = new Set(steps.value.map((s) => s.key))
-  return Object.fromEntries(Object.entries(data).filter(([k]) => keep.has(k)))
-})
-
-const currentStep = computed<FormField | undefined>(() => {
-  if (phase.value !== 'fill') return undefined
-  return steps.value[stepIndex.value]
-})
-
-// When an upstream choice changes, the walker yields a different ordered list
-// of steps, and the active stepIndex may now point past the last reachable
-// step. Clamp it.
-watch(
-  () => steps.value.length,
-  (len) => {
-    if (phase.value === 'fill' && stepIndex.value >= len) {
-      stepIndex.value = Math.max(0, len - 1)
-    }
-  },
-)
-
-const currentBinding = computed(() => {
-  const step = currentStep.value
-  if (!step) return undefined
-  return resolveStep(step)
-})
+type ResolvedStep = { label: string; fields: FormField[] }
 
 function humanize(field: string): string {
   return (
@@ -59,7 +25,65 @@ function humanize(field: string): string {
   )
 }
 
-const stepLabels = computed(() => [...steps.value.map((s) => s.key), 'review'])
+function groupSteps(active: FormField[]): ResolvedStep[] {
+  const groupOf = new Map<string, StepGroup>()
+  for (const grp of stepGroups) for (const k of grp.keys) groupOf.set(k, grp)
+  const out: ResolvedStep[] = []
+  const placed = new Set<StepGroup>()
+  for (const field of active) {
+    const grp = groupOf.get(field.key)
+    if (grp) {
+      if (placed.has(grp)) continue
+      placed.add(grp)
+      out.push({
+        label: grp.label,
+        fields: active.filter((f) => grp.keys.includes(f.key as FieldKey)),
+      })
+    } else {
+      out.push({ label: humanize(field.key), fields: [field] })
+    }
+  }
+  return out
+}
+
+const phase = ref<Phase>('fill')
+const stepIndex = ref(0)
+
+const form = useForm<Order>({
+  keepValuesOnUnmount: true,
+  validationSchema: toStandardSchema(orderForm),
+})
+
+const currentActiveFields = computed<FormField[]>(() =>
+  activeFields(orderForm, form.values as Record<string, unknown>),
+)
+
+const currentSteps = computed<ResolvedStep[]>(() => groupSteps(currentActiveFields.value))
+
+const currentStep = computed<ResolvedStep | undefined>(() => {
+  if (phase.value !== 'fill') return undefined
+  return currentSteps.value[stepIndex.value]
+})
+
+// When an upstream choice changes, the walker yields a different ordered list
+// of steps, and the active stepIndex may now point past the last reachable
+// step. Clamp it.
+watch(
+  () => currentSteps.value.length,
+  (len) => {
+    if (phase.value === 'fill' && stepIndex.value >= len) {
+      stepIndex.value = Math.max(0, len - 1)
+    }
+  },
+)
+
+const currentBindings = computed<StepBinding[]>(() => {
+  const step = currentStep.value
+  if (!step) return []
+  return step.fields.map(resolveStep).filter((b): b is StepBinding => !!b)
+})
+
+const stepLabels = computed(() => [...currentSteps.value.map((s) => s.label), 'Review'])
 
 const activeIndex = computed(() => {
   if (phase.value === 'review') return stepLabels.value.length - 1
@@ -70,22 +94,17 @@ async function goNext() {
   if (phase.value !== 'fill') return
   const step = currentStep.value
   if (!step) return
-  const value = (form.values as Record<string, unknown>)[step.key]
-  const result = step.schema['~standard'].validate(value)
-  if (result instanceof Promise) return // demo: leaf validators are sync
-  if (result.issues) {
-    for (const issue of result.issues) {
-      const segs = (issue.path ?? []).map((p) =>
-        typeof p === 'object' ? String(p.key) : String(p),
-      )
-      const issuePath = segs.length ? `${step.key}.${segs.join('.')}` : step.key
-      form.setFieldError(issuePath as never, issue.message)
-    }
-    return
-  }
-  // Persist the parsed (potentially coerced) value back into form state.
-  form.setFieldValue(step.key as never, result.value as never)
-  if (stepIndex.value < steps.value.length - 1) {
+  const results = await Promise.all(
+    step.fields.map((f) => form.validateField(f.key as never)),
+  )
+  if (results.some((r) => !r.valid)) return
+  // Persist the parsed (potentially coerced) value so downstream branches
+  // see e.g. a real number for `pizzaCount` rather than the raw string.
+  step.fields.forEach((f, i) => {
+    const value = results[i].value
+    if (value !== undefined) form.setFieldValue(f.key as never, value as never)
+  })
+  if (stepIndex.value < currentSteps.value.length - 1) {
     stepIndex.value++
   } else {
     phase.value = 'review'
@@ -95,16 +114,15 @@ async function goNext() {
 function goBack() {
   if (phase.value === 'review') {
     phase.value = 'fill'
-    stepIndex.value = steps.value.length - 1
+    stepIndex.value = currentSteps.value.length - 1
     return
   }
   if (stepIndex.value > 0) stepIndex.value--
 }
 
 function jumpTo(i: number) {
-  const labels = stepLabels.value
   if (i > activeIndex.value) return
-  if (i === labels.length - 1) {
+  if (i === stepLabels.value.length - 1) {
     phase.value = 'review'
   } else {
     phase.value = 'fill'
@@ -119,7 +137,7 @@ function submit() {
 
 <template>
   <header>
-    <h1>Place an Order</h1>
+    <h1>Vue vee-validate multi-step form</h1>
   </header>
   <main>
     <section class="form">
@@ -129,11 +147,11 @@ function submit() {
             type="button"
             :class="{ active: activeIndex === i, done: activeIndex > i }"
             :disabled="i > activeIndex"
-            :title="humanize(label)"
+            :title="label"
             @click="jumpTo(i)"
           >
             <span class="step-num">{{ i + 1 }}</span>
-            <span class="step-label">{{ humanize(label) }}</span>
+            <span class="step-label">{{ label }}</span>
           </button>
         </li>
       </ol>
@@ -141,28 +159,28 @@ function submit() {
       <div class="content">
         <form v-if="phase === 'fill'" class="step" @submit.prevent="goNext">
           <component
-            :is="currentBinding.component"
-            v-if="currentStep && currentBinding"
-            :key="currentStep.key"
-            v-bind="currentBinding.props"
+            :is="binding.component"
+            v-for="binding in currentBindings"
+            :key="(binding.props as { path: string }).path"
+            v-bind="binding.props"
           />
           <div class="actions">
             <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
             <button type="submit">
-              {{ stepIndex === steps.length - 1 ? 'Review' : 'Next' }}
+              {{ stepIndex === currentSteps.length - 1 ? 'Review' : 'Next' }}
             </button>
           </div>
         </form>
 
         <template v-else>
-          <StepReview :data="cleanValues" />
+          <StepReview :data="form.values" />
           <div class="actions">
             <button type="button" @click="goBack">Back</button>
             <button type="button" @click="submit">Submit</button>
           </div>
         </template>
 
-        <pre class="debug">{{ JSON.stringify({ values: cleanValues, stepIndex, steps: steps.map((s) => s.key) }, null, 2) }}</pre>
+        <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: currentActiveFields.map((s) => s.key) }, null, 2) }}</pre>
       </div>
     </section>
   </main>

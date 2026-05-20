@@ -35,7 +35,15 @@ export function App() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
-    defaultValues: {},
+    defaultValues: {
+      email: '',
+      fullName: '',
+      orderType: 'pickup',
+      hasOrderedBefore: false,
+      mainCourse: 'pizza',
+      pizzaSize: 'small',
+      toppings: '',
+    },
     mode: 'all',
     resolver: formFlowResolver(formDef),
     shouldUnregister: true,
@@ -93,7 +101,7 @@ export function App() {
   return (
     <>
       <header>
-        <h1>Place an Order</h1>
+        <h1>React hook form</h1>
       </header>
       <main>
         <section className="form-single">
