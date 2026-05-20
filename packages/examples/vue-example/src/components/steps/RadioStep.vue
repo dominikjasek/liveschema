@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
-import { dogSizes, type FieldValue } from '@/schemas'
-const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<FieldValue<'dogSize'>>(() => props.path)
+const props = defineProps<{
+  path: string
+  question: string
+  options: readonly string[]
+}>()
+const { value, errorMessage } = useField<string | undefined>(() => props.path)
 </script>
 
 <template>
-  <h2>Large or small dog?</h2>
+  <h2>{{ question }}</h2>
   <div class="options">
-    <label v-for="o in dogSizes" :key="o" class="radio">
+    <label v-for="o in props.options" :key="o" class="radio">
       <input v-model="value" type="radio" :value="o" />
       <span>{{ o }}</span>
     </label>

@@ -1,64 +1,40 @@
 import { z } from 'zod'
-import { defineForm, type InferForm } from 'form-flow'
+import { defineForm, type InferForm, type FormKeys } from 'form-flow'
+
+export const mainCourses = ['pizza', 'salad'] as const
+export const pizzaSizes = ['small', 'medium', 'large'] as const
+export const orderTypes = ['pickup', 'delivery'] as const
 
 export const form = defineForm()
-  .ask('travelerName', z.string().min(1))
-  .ask('destination', z.enum(['city', 'beach', 'mountains']))
-
-  .when((v) => v.destination === 'city', (b) =>
-    b.ask('cityVibe', z.enum(['foodie', 'museums', 'nightlife'])),
-  )
-
-  .when({ destination: 'beach' }, (b) =>
+  .ask('email', z.email())
+  .ask('fullName', z.string().min(2).max(100))
+  .ask('orderType', z.enum(orderTypes))
+  .when({ orderType: 'delivery' }, (b) => b.ask('leaveAtDoor', z.boolean()))
+  .ask('hasOrderedBefore', z.boolean())
+  .when({ hasOrderedBefore: true }, (b) => b.ask('favoriteItem', z.string().min(1).max(100)))
+  .ask('mainCourse', z.enum(mainCourses))
+  .when({ mainCourse: 'pizza' }, (b) =>
     b
-      .ask('beachActivity', z.enum(['relax', 'surf', 'dive']))
-      .when({ beachActivity: 'dive' }, (b) => b.ask('diveCertified', z.boolean())),
+      .when({ orderType: 'pickup' }, (b) => b.ask('pizzaSize', z.enum(pizzaSizes)))
+      .when({ orderType: 'delivery' }, (b) =>
+        b.ask('pizzaSize', z.enum(pizzaSizes).exclude(['large'])),
+      ),
   )
-
-  .when({ destination: 'mountains' }, (b) =>
+  .when({ mainCourse: 'pizza' }, (b) => b.ask('toppings', z.string().min(2).max(200)))
+  .when({ mainCourse: 'pizza' }, (b) =>
+    b.ask('pizzaCount', z.coerce.number().int().min(1).max(20)).when(
+      (v) => Number(v.pizzaCount) >= 3,
+      (b) => b.ask('requestedReadyTime', z.string().min(1).max(100)),
+    ),
+  )
+  .when({ mainCourse: 'salad' }, (b) => b.ask('dressingOnSide', z.boolean()))
+  .whenAny([{ orderType: 'delivery' }, { mainCourse: 'pizza' }], (b) =>
     b
-      .ask('season', z.enum(['summer', 'winter']))
-      .when({ season: 'winter' }, (b) =>
-        b
-          .ask('skiLevel', z.enum(['beginner', 'intermediate', 'expert']))
-          .when({ skiLevel: 'beginner' }, (b) =>
-            b.ask('needsSkiLessons', z.enum(['yes', 'no'])),
-          ),
-      )
-      .when({ season: 'summer' }, (b) =>
-        b.ask('hikeIntensity', z.enum(['easy', 'moderate', 'hard'])),
+      .ask('needsNapkins', z.boolean().optional())
+      .when({ needsNapkins: true }, (b) =>
+        b.ask('napkinCount', z.coerce.number().int().min(1).max(20)),
       ),
   )
 
-  .ask('travelers', z.coerce.number().int().min(1).max(20))
-  .when((v) => Number(v.travelers) >= 5, (b) => b.ask('groupContactPhone', z.string().min(6)))
-
-  .ask('budget', z.enum(['low', 'medium', 'high']))
-  .when(
-    (v) => Number(v.travelers) >= 5 && v.budget === 'low',
-    (b) => b.ask('hostelOk', z.enum(['yes', 'no'])),
-  )
-
-// Discriminated union over every reachable branch. Hover to see all variants.
-// Example variants (illustrative):
-//   | { destination: 'city', cityVibe: 'foodie'|'museums'|'nightlife', ... }
-//   | { destination: 'beach', beachActivity: 'relax'|'surf', ... }
-//   | { destination: 'beach', beachActivity: 'dive', diveCertified: 'yes'|'no', ... }
-//   | { destination: 'mountains', season: 'summer', hikeIntensity: ..., ... }
-//   | { destination: 'mountains', season: 'winter',
-//       skiLevel: 'intermediate'|'expert', ... }
-//   | { destination: 'mountains', season: 'winter',
-//       skiLevel: 'beginner', needsSkiLessons: 'yes'|'no', ... }
 export type FormValues = InferForm<typeof form>
-
-// Sanity check: TS should narrow `needsSkiLessons` to required when
-// skiLevel === 'beginner'.
-function _probe(v: FormValues) {
-  if (
-    v.destination === 'beach'
-  ) {
-    if (v.beachActivity === "dive") {
-      console.log(v.diveCertified)
-    }
-  }
-}
+export type FieldKey = FormKeys<typeof form>

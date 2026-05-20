@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { activeFields, type FormField } from 'form-flow'
-import { form as formDef, type Adoption } from './schemas'
+import { form as formDef, type Order } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
 import { humanize } from './stepLabels'
@@ -13,14 +13,13 @@ export function AdoptionForm() {
   const [stepIndex, setStepIndex] = useState(0)
 
   const form = useForm({
-    defaultValues: {} as Partial<Adoption>,
+    defaultValues: {} as Partial<Order>,
     onSubmit: ({ value }) => {
-       
-      alert(`Adoption submitted!\n\n${JSON.stringify(value, null, 2)}`)
+      alert(`Order submitted!\n\n${JSON.stringify(value, null, 2)}`)
 
-      if (value.animalType === "dog") {
-        if (value.dogSize === "large") {
-          console.log("big doggie")
+      if (value.mainCourse === 'pizza') {
+        if (value.pizzaSize === 'large') {
+          console.log('big pizza')
         }
       }
     },
@@ -96,8 +95,6 @@ export function AdoptionForm() {
     }
   }
 
-  // FormField.key is `string`; the walker can only emit keys defined in the
-  // form, so the cast to `keyof typeof stepRenderers` is sound.
   const renderer = currentStep
     ? stepRenderers[currentStep.key as keyof typeof stepRenderers]
     : undefined
@@ -132,7 +129,7 @@ export function AdoptionForm() {
               void goNext()
             }}
           >
-            {currentStep && renderer ? renderer(form) : null}
+            {currentStep && renderer ? renderer(form, currentStep) : null}
             <div className="actions">
               {clampedIndex > 0 && (
                 <button type="button" onClick={goBack}>

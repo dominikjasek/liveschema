@@ -1,90 +1,68 @@
 import type { ReactNode } from 'react'
+import { enumOptions, type FormField } from 'form-flow'
 import type { AdoptionForm } from '../formTypes'
-import {
-  alternatives,
-  animalTypes,
-  cageSizes,
-  companionOptions,
-  dailyInteractions,
-  dogSizes,
-  enrichmentOptions,
-  humanTimes,
-  lifestyles,
-  postTypes,
-  predatorOptions,
-  scratchPostOptions,
-  socialNeeds,
-  speciesOptions,
-  sports,
-  temperaments,
-  territories,
-  trafficOptions,
-  trainingGoals,
-  type Adoption,
-} from '../schemas'
-
-// Adoption is a discriminated union — `keyof Adoption` only sees keys common
-// to every variant. Distribute over the union to collect *every* reachable
-// field key (e.g. dogSize, scratchPost, feedingHours).
-type FormKey = Adoption extends infer V ? (V extends object ? keyof V : never) : never
+import type { FieldKey } from '../schemas'
 import { RadioStep } from './RadioStep'
-import { StepExperience } from './StepExperience'
-import { StepFeedingHours } from './StepFeedingHours'
-import { StepNoDogAtHome } from './StepNoDogAtHome'
+import { TextStep } from './TextStep'
+import { CheckboxStep } from './CheckboxStep'
 import { StepNumberInput } from './StepNumberInput'
-import { StepOwner } from './StepOwner'
 
-type Renderer = (form: AdoptionForm) => ReactNode
+type Renderer = (form: AdoptionForm, step: FormField) => ReactNode
 
-const radio = <T extends string | number>(
-  path: FormKey,
+const text = (
+  path: FieldKey,
   question: string,
-  options: readonly T[],
-): Renderer => {
-  return function RadioRenderer(form) {
+  type: 'text' | 'email' = 'text',
+): Renderer =>
+  function TextRenderer(form) {
+    return <TextStep form={form} path={path} question={question} type={type} />
+  }
+
+const checkbox = (path: FieldKey, question: string, confirmLabel?: string): Renderer =>
+  function CheckboxRenderer(form) {
+    return <CheckboxStep form={form} path={path} question={question} confirmLabel={confirmLabel} />
+  }
+
+const number = (
+  path: FieldKey,
+  question: string,
+  min?: number,
+  max?: number,
+): Renderer =>
+  function NumberRenderer(form) {
+    return <StepNumberInput form={form} path={path} question={question} min={min} max={max} />
+  }
+
+const radio = (path: FieldKey, question: string): Renderer =>
+  function RadioRenderer(form, step) {
+    const options = enumOptions(step.schema) ?? []
     return <RadioStep form={form} path={path} question={question} options={options} />
   }
-}
 
-export const stepRenderers: Record<FormKey, Renderer> = {
-  owner: (form) => <StepOwner form={form} />,
-  animalType: radio('animalType', 'What kind of animal would you like to adopt?', animalTypes),
-  dogSize: radio('dogSize', 'How big is the dog?', dogSizes),
-  temperament: radio('temperament', "What's the dog's temperament?", temperaments),
-  trainingGoal: radio('trainingGoal', 'What training goal fits best?', trainingGoals),
-  sport: radio('sport', 'Which sport would you pursue?', sports),
-  noDogAtHome: (form) => <StepNoDogAtHome form={form} />,
-  lifestyle: radio('lifestyle', 'Indoor or outdoor cat?', lifestyles),
-  scratchPost: radio('scratchPost', 'Will you provide a scratching post?', scratchPostOptions),
-  numberOfPosts: (form) => (
-    <StepNumberInput
-      form={form}
-      path="numberOfPosts"
-      question="How many scratching posts will you install?"
-      min={1}
-      max={5}
-    />
+export const stepRenderers: Record<FieldKey, Renderer> = {
+  email: text('email', 'Your email', 'email'),
+  fullName: text('fullName', 'Your full name'),
+  orderType: radio('orderType', 'How would you like to receive your order?'),
+  leaveAtDoor: checkbox(
+    'leaveAtDoor',
+    'Leave at the door if no answer?',
+    'Yes, leave at the door',
   ),
-  postType: radio('postType', 'What material for the post?', postTypes),
-  alternative: radio('alternative', 'Pick an alternative outlet', alternatives),
-  territory: radio('territory', "What's the surrounding territory?", territories),
-  trafficTraining: radio('trafficTraining', 'Is the cat traffic-trained?', trafficOptions),
-  predatorProtection: radio(
-    'predatorProtection',
-    'How will you handle predators?',
-    predatorOptions,
+  hasOrderedBefore: checkbox(
+    'hasOrderedBefore',
+    'Have you ordered from us before?',
+    'Yes, returning customer',
   ),
-  species: radio('species', 'Which parrot species?', speciesOptions),
-  socialNeed: radio('socialNeed', "What's the bird's social need?", socialNeeds),
-  dailyInteraction: radio(
-    'dailyInteraction',
-    'How much daily interaction can you provide?',
-    dailyInteractions,
+  favoriteItem: text('favoriteItem', 'Your favorite item from last time'),
+  mainCourse: radio('mainCourse', 'What would you like for your main course?'),
+  pizzaSize: radio('pizzaSize', 'Pizza size'),
+  toppings: text('toppings', 'Toppings (comma-separated)'),
+  pizzaCount: number('pizzaCount', 'How many pizzas?', 1, 20),
+  requestedReadyTime: text(
+    'requestedReadyTime',
+    'When should it be ready? (3+ pizzas need 30+ min prep)',
   ),
-  enrichment: radio('enrichment', 'Pick an enrichment type', enrichmentOptions),
-  companions: radio('companions', 'Single bird or paired?', companionOptions),
-  humanTime: radio('humanTime', 'When do you have time for the bird?', humanTimes),
-  feedingHours: (form) => <StepFeedingHours form={form} />,
-  cageSize: radio('cageSize', 'Cage shape preference?', cageSizes),
-  experience: (form) => <StepExperience form={form} />,
+  dressingOnSide: checkbox('dressingOnSide', 'Dressing on the side?', 'Yes, on the side'),
+  needsNapkins: checkbox('needsNapkins', 'Include extra napkins?', 'Yes, please'),
+  napkinCount: number('napkinCount', 'How many extra napkins?', 1, 20),
 }

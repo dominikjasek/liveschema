@@ -3,28 +3,28 @@ import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { activeFields, reachableKeys, type FormField } from 'form-flow'
 import StepReview from './components/StepReview.vue'
-import { stepComponents, stepLabels as stepLabelMap, type StepKey } from './components/steps'
-import { form as adoptionForm, type Adoption } from '@/schemas'
+import { resolveStep, stepLabels as stepLabelMap } from './components/steps'
+import { form as orderForm, type Order } from '@/schemas'
 
 type Phase = 'fill' | 'review'
 
 const phase = ref<Phase>('fill')
 const stepIndex = ref(0)
 
-const form = useForm<Adoption>({
+const form = useForm<Order>({
   keepValuesOnUnmount: true,
 })
 
 const steps = computed<FormField[]>(() =>
-  activeFields(adoptionForm, form.values as Record<string, unknown>),
+  activeFields(orderForm, form.values as Record<string, unknown>),
 )
 
-// Strip values from branches the user has abandoned (e.g. `dogSize` after
-// switching `animal` from 'dog' to 'cat'). vee-validate keeps the raw bag
-// around; we only ever want to display/submit reachable keys.
+// Strip values from branches the user has abandoned (e.g. `pizzaSize`
+// after switching `mainCourse` from 'pizza' to 'salad'). vee-validate
+// keeps the raw bag around; we only ever want reachable keys.
 const cleanValues = computed(() => {
   const data = form.values as Record<string, unknown>
-  const keep = reachableKeys(adoptionForm, data)
+  const keep = reachableKeys(orderForm, data)
   return Object.fromEntries(Object.entries(data).filter(([k]) => keep.has(k)))
 })
 
@@ -45,15 +45,15 @@ watch(
   },
 )
 
-const currentComponent = computed(() => {
+const currentBinding = computed(() => {
   const step = currentStep.value
   if (!step) return undefined
-  return stepComponents[step.key as StepKey]
+  return resolveStep(step)
 })
 
 function humanize(field: string): string {
   return (
-    stepLabelMap[field as StepKey] ??
+    stepLabelMap[field] ??
     field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
   )
 }
@@ -112,13 +112,13 @@ function jumpTo(i: number) {
 }
 
 function submit() {
-  alert(`Adoption submitted!\n\n${JSON.stringify(cleanValues.value, null, 2)}`)
+  alert(`Order submitted!\n\n${JSON.stringify(cleanValues.value, null, 2)}`)
 }
 </script>
 
 <template>
   <header>
-    <h1>Adopt an Animal</h1>
+    <h1>Place an Order</h1>
   </header>
   <main>
     <section class="form">
@@ -140,10 +140,10 @@ function submit() {
       <div class="content">
         <form v-if="phase === 'fill'" class="step" @submit.prevent="goNext">
           <component
-            :is="currentComponent"
-            v-if="currentStep && currentComponent"
+            :is="currentBinding.component"
+            v-if="currentStep && currentBinding"
             :key="currentStep.key"
-            :path="currentStep.key"
+            v-bind="currentBinding.props"
           />
           <div class="actions">
             <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>

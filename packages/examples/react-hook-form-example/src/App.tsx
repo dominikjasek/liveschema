@@ -1,17 +1,32 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
-import { activeFields, type FormKeys } from 'form-flow'
-import { form as formDef, type FormValues, animals, dogSizes } from './schema'
+import { activeFields, enumOptions } from 'form-flow'
+import { form as formDef, type FormValues, type FieldKey } from './schema'
 import { formFlowResolver } from '@form-flow/react-hook-form'
-
-type FieldKey = FormKeys<typeof formDef>
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
-  animal: 'Animal',
-  dogSize: 'Dog size',
-  indoor: 'Indoor cat',
+  fullName: 'Full name',
+  orderType: 'How would you like to receive your order?',
+  leaveAtDoor: 'Leave at the door if no answer?',
+  hasOrderedBefore: 'Have you ordered from us before?',
+  favoriteItem: 'Your favorite item from last time',
+  mainCourse: 'Main course',
+  pizzaSize: 'Pizza size',
+  toppings: 'Toppings (comma-separated)',
+  pizzaCount: 'How many pizzas?',
+  requestedReadyTime: 'When should it be ready? (3+ pizzas need 30+ min prep)',
+  dressingOnSide: 'Dressing on the side?',
+  needsNapkins: 'Include extra napkins?',
+  napkinCount: 'How many extra napkins?',
 }
+
+const checkboxKeys = new Set<FieldKey>([
+  'leaveAtDoor',
+  'hasOrderedBefore',
+  'dressingOnSide',
+  'needsNapkins',
+])
 
 export function App() {
   const {
@@ -35,48 +50,26 @@ export function App() {
 
   const fieldErrors = errors as Partial<Record<FieldKey, { message?: string }>>
 
-  function renderField(key: FieldKey) {
+  function renderField(key: FieldKey, schema: ReturnType<typeof activeFields>[number]['schema']) {
     const path = key as Path<FormValues>
     const errorMsg = fieldErrors[key]?.message
     const label = labels[key]
 
-    if (key === 'email') {
-      return (
-        <label key={key} className="field">
-          <span>{label}</span>
-          <input className="text-input" type="text" {...register(path)} />
-          {errorMsg && <p className="error">{errorMsg}</p>}
-        </label>
-      )
-    }
-
-    if (key === 'animal') {
+    const options = enumOptions(schema)
+    if (options) {
       return (
         <ControllerRadio
           key={key}
           control={control}
           name={path}
           label={label}
-          options={animals}
+          options={options}
           errorMsg={errorMsg}
         />
       )
     }
 
-    if (key === 'dogSize') {
-      return (
-        <ControllerRadio
-          key={key}
-          control={control}
-          name={path}
-          label={label}
-          options={dogSizes}
-          errorMsg={errorMsg}
-        />
-      )
-    }
-
-    if (key === 'indoor') {
+    if (checkboxKeys.has(key)) {
       return (
         <ControllerCheckbox
           key={key}
@@ -88,19 +81,24 @@ export function App() {
       )
     }
 
-    const _exhaustive: never = key
-    return _exhaustive
+    return (
+      <label key={key} className="field">
+        <span>{label}</span>
+        <input className="text-input" type="text" {...register(path)} />
+        {errorMsg && <p className="error">{errorMsg}</p>}
+      </label>
+    )
   }
 
   return (
     <>
       <header>
-        <h1>Adopt an Animal</h1>
+        <h1>Place an Order</h1>
       </header>
       <main>
         <section className="form-single">
           <form className="form-fields" onSubmit={onSubmit}>
-            {fields.map((f) => renderField(f.key))}
+            {fields.map((f) => renderField(f.key as FieldKey, f.schema))}
             <div className="actions">
               <button type="submit">Submit</button>
             </div>

@@ -4,7 +4,7 @@ export function App() {
   return (
     <>
       <header>
-        <h1>Adopt an Animal</h1>
+        <h1>Place an Order</h1>
       </header>
       <main>
         <AdoptionForm />

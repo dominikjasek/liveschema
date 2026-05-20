@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { useField } from 'vee-validate'
-import type { FieldValue } from '@/schemas'
-const props = defineProps<{ path: string }>()
-const { value, errorMessage } = useField<FieldValue<'email'> | undefined>(() => props.path)
+const props = defineProps<{
+  path: string
+  question: string
+  type?: 'text' | 'email'
+}>()
+const { value, errorMessage } = useField<string | undefined>(() => props.path)
 </script>
 
 <template>
-  <h2>Your email</h2>
+  <h2>{{ question }}</h2>
   <label class="field">
-    <input v-model="value" class="text-input" type="email" />
+    <input v-model="value" class="text-input" :type="props.type ?? 'text'" />
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </label>
 </template>
