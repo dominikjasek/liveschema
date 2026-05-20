@@ -94,12 +94,10 @@ Use `Partial<Values>` to model in-progress (partially-filled) state.
 
 ## Pruning orphaned values
 
-When a user revisits an earlier step and changes a branch discriminator, previously-set values on the abandoned branch may no longer be reachable. `reachableKeys()` returns the keys that *are* reachable now, so you can drop the rest:
+When a user revisits an earlier step and changes a branch discriminator, previously-set values on the abandoned branch may no longer be reachable. Build a `Set` from `activeFields()` and drop the rest:
 
 ```ts
-import { reachableKeys } from 'form-flow'
-
-const keep = reachableKeys(form, values)
+const keep = new Set(activeFields(form, values).map((f) => f.key))
 const cleaned = Object.fromEntries(
   Object.entries(values).filter(([k]) => keep.has(k)),
 )
@@ -132,6 +130,7 @@ End-to-end examples:
 - [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (via `@form-flow/react-hook-form`)
 - [packages/examples/formik-example](../examples/formik-example) — React + Formik + ArkType
 - [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate
+- [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema
 - [packages/examples/vanilla-example](../examples/vanilla-example) — no form library
 
 ## API
@@ -143,7 +142,6 @@ End-to-end examples:
 | `.when(pattern, branch)` | Equality-gated sub-flow |
 | `.when(predicate, branch)` | Predicate-gated sub-flow |
 | `activeFields(form, values)` | Ordered list of currently-reachable fields |
-| `reachableKeys(form, values)` | `Set<string>` of currently-reachable keys |
 | `validateForm(form, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate` |
 | `toStandardSchema(form)` | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, etc. |
 | `InferForm<F>` | Discriminated-union value type |

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { activeFields, reachableKeys, type FormField } from 'form-flow'
+import { activeFields, type FormField } from 'form-flow'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -68,13 +68,6 @@ function renderValues(): void {
   valuesEl.textContent = JSON.stringify(values, null, 2)
 }
 
-function pruneOrphans(): void {
-  const reachable = reachableKeys(form, values)
-  for (const k of Object.keys(values)) {
-    if (!reachable.has(k)) delete values[k]
-  }
-}
-
 type FocusState = { path: string; start: number | null; end: number | null }
 
 function captureFocus(): FocusState | null {
@@ -106,7 +99,6 @@ function restoreFocus(state: FocusState | null): void {
 
 function render(): void {
   const focusState = captureFocus()
-  pruneOrphans()
   const steps = activeFields(form, values)
   formEl.replaceChildren(...steps.map(renderField))
   renderValues()

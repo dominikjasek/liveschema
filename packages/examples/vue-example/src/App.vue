@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { activeFields, reachableKeys, type FormField } from 'form-flow'
+import { activeFields, type FormField } from 'form-flow'
 import StepReview from './components/StepReview.vue'
 import { resolveStep, stepLabels as stepLabelMap } from './components/steps'
 import { form as orderForm, type Order } from '@/schemas'
@@ -21,10 +21,11 @@ const steps = computed<FormField[]>(() =>
 
 // Strip values from branches the user has abandoned (e.g. `pizzaSize`
 // after switching `mainCourse` from 'pizza' to 'salad'). vee-validate
-// keeps the raw bag around; we only ever want reachable keys.
+// keeps the raw bag around; we only ever want reachable keys — reuse
+// the `steps` walker so we don't traverse the form twice.
 const cleanValues = computed(() => {
   const data = form.values as Record<string, unknown>
-  const keep = reachableKeys(orderForm, data)
+  const keep = new Set(steps.value.map((s) => s.key))
   return Object.fromEntries(Object.entries(data).filter(([k]) => keep.has(k)))
 })
 
@@ -112,7 +113,7 @@ function jumpTo(i: number) {
 }
 
 function submit() {
-  alert(`Order submitted!\n\n${JSON.stringify(cleanValues.value, null, 2)}`)
+  alert(`Order submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
 }
 </script>
 

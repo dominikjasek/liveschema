@@ -304,18 +304,6 @@ export function activeFields<V extends object>(
   return out as Array<FormField<DistributeKeys<V>>>
 }
 
-/**
- * Set of keys reachable in the current state — useful for pruning orphans.
- * Returns `Set<string>` (not a narrowed union) so callers can test arbitrary
- * runtime keys via `.has()` without contravariance issues.
- */
-export function reachableKeys<V extends object>(
-  form: FormBuilder<V>,
-  values: Partial<V> | Record<string, unknown>,
-): Set<string> {
-  return new Set(activeFields(form, values).map((s) => s.key))
-}
-
 /** Flat `{ fieldKey: firstMessage }` shape produced by `validateForm`. */
 export type FormErrors<F> = Partial<Record<FormKeys<F>, string>>
 
