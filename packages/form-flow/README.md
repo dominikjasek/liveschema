@@ -32,10 +32,10 @@ import { z } from 'zod'
 import { defineForm, activeFields, type InferForm } from 'form-flow'
 
 const form = defineForm()
-  .ask('name', z.string().min(1))
-  .ask('animal', z.enum(['dog', 'cat']))
-  .when({ animal: 'dog' }, (b) => b.ask('dogSize', z.enum(['small', 'large'])))
-  .when({ animal: 'cat' }, (b) => b.ask('indoor', z.boolean()))
+  .field('name', z.string().min(1))
+  .field('animal', z.enum(['dog', 'cat']))
+  .when({ animal: 'dog' }, (b) => b.field('dogSize', z.enum(['small', 'large'])))
+  .when({ animal: 'cat' }, (b) => b.field('indoor', z.boolean()))
 
 type Values = InferForm<typeof form>
 
@@ -50,12 +50,12 @@ const fields = activeFields(form, { name: 'Ada', animal: 'dog' })
 
 ## DSL
 
-### `.ask(key, schema)`
+### `.field(key, schema)`
 
-Declares a step. The schema is any Standard Schema validator for *that* step's value. Wrap multiple fields in an object schema to render them on a single screen:
+Declares a field. The schema is any Standard Schema validator for *that* field's value. Wrap multiple subfields in an object schema to render them on a single screen:
 
 ```ts
-.ask('owner', z.object({
+.field('owner', z.object({
   name: z.string().min(1),
   email: z.email(),
 }))
@@ -139,7 +139,7 @@ End-to-end examples:
 | Export | Purpose |
 | --- | --- |
 | `defineForm()` | Start a form builder |
-| `.ask(key, schema)` | Declare a step (schema is any Standard Schema validator) |
+| `.field(key, schema)` | Declare a field (schema is any Standard Schema validator) |
 | `.when(pattern, branch)` | Equality-gated sub-flow |
 | `.when(predicate, branch)` | Predicate-gated sub-flow |
 | `activeFields(form, values)` | Ordered list of currently-reachable fields |

@@ -3,12 +3,12 @@ import type { StandardSchemaV1 } from '@standard-schema/spec'
 // ---------------------------------------------------------------------------
 // defineForm — high-level builder DSL. Schema leaves are any Standard Schema
 // validator (Zod, Valibot, ArkType, Effect Schema, ...). Structure (sequencing,
-// equality branches, predicate gates) is expressed via .ask() and .when().
+// equality branches, predicate gates) is expressed via .field() and .when().
 // The resulting value shape is flat — no synthetic wrapper keys.
 // ---------------------------------------------------------------------------
 
 type FormNode =
-  | { kind: 'ask'; key: string; schema: StandardSchemaV1 }
+  | { kind: 'field'; key: string; schema: StandardSchemaV1 }
   | {
       kind: 'whenEq'
       pattern: Record<string, unknown>
@@ -142,7 +142,7 @@ type FilterMatching<V extends object, P extends object> =
 // `.when({k: lit}, ...)` result: distribute V on keyof P, then for each
 // variant: if it matches P → add branch fields (required), else leave alone.
 // We `DistPrettify` at branch boundaries (the `.when` result) but NOT at
-// every `.ask`: this flattens the union variants that subsequent `Omit`/
+// every `.field`: this flattens the union variants that subsequent `Omit`/
 // `keyof` operations walk, keeping later `DistributeForMatch` calls fast.
 // Dropping these two `DistPrettify` calls measurably *increases* check time
 // because downstream operations then have to traverse a deeper intersection
@@ -172,7 +172,7 @@ type WhenOrResult<V extends object, P extends object, BR extends object> =
     : never
 
 export type FormBuilder<V extends object = object> = {
-  ask<K extends string, S extends StandardSchemaV1>(
+  field<K extends string, S extends StandardSchemaV1>(
     key: K,
     schema: S,
   ): FormBuilder<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>
@@ -215,8 +215,8 @@ export function defineForm(): FormBuilder<{}> {
 function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
   const builder = {
     [FORM_NODES]: nodes,
-    ask(key: string, schema: StandardSchemaV1) {
-      return makeFormBuilder([...nodes, { kind: 'ask', key, schema }])
+    field(key: string, schema: StandardSchemaV1) {
+      return makeFormBuilder([...nodes, { kind: 'field', key, schema }])
     },
     when(patternOrPred: unknown, branchFn: (b: FormBuilder<object>) => FormBuilder<object>) {
       const inner = branchFn(makeFormBuilder([]))
@@ -418,7 +418,7 @@ function collectField(
 
 function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormField[]): void {
   for (const node of nodes) {
-    if (node.kind === 'ask') {
+    if (node.kind === 'field') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })
     } else if (node.kind === 'whenEq') {
       const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
