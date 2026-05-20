@@ -5,15 +5,18 @@ import { form as formDef, type FormValues, type FieldKey } from './schema'
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
   fullName: 'Full name',
-  housingType: 'Where do you live?',
-  hasYard: 'Do you have a yard?',
-  hasPriorPetExperience: 'Have you owned a pet before?',
-  priorPetName: "Your previous pet's name",
-  animal: 'Which animal would you like to adopt? 🐶😽',
-  dogSize: 'Preferred dog size',
-  dogName: 'What will you name the dog?',
-  catIndoor: 'Will the cat be indoor only?',
-  needsHomeVisit: "Do you want us to visit your home?",
+  orderType: 'How would you like to receive your order?',
+  leaveAtDoor: 'Leave at the door if no answer?',
+  hasOrderedBefore: 'Have you ordered from us before?',
+  favoriteItem: 'Your favorite item from last time',
+  mainCourse: 'Main course',
+  pizzaSize: 'Pizza size',
+  toppings: 'Toppings (comma-separated)',
+  pizzaCount: 'How many pizzas?',
+  requestedReadyTime: 'When should it be ready? (3+ pizzas need 30+ min prep)',
+  dressingOnSide: 'Dressing on the side?',
+  needsNapkins: 'Include extra napkins?',
+  napkinCount: 'How many extra napkins?',
 }
 
 const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
@@ -21,35 +24,28 @@ const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
 export function FormPage() {
   const form = useForm({
     defaultValues: {
-      animal: "dog",
-      email: "",
-      fullName: "",
-      housingType: "house",
-      hasYard: true,
-      hasPriorPetExperience: false,
-      dogName: "",
-      dogSize: "small",
-      needsHomeVisit: true
+      email: '',
+      fullName: '',
+      orderType: 'pickup',
+      hasOrderedBefore: false,
+      mainCourse: 'pizza',
+      pizzaSize: 'small',
+      toppings: '',
     } as FormValues,
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: standardSchema,
     },
     onSubmit: ({ value }) => {
-      if (value.animal === 'cat') {
-        // `value` is narrowed to the cat variant — `catIndoor` is typed.
-        console.log(value.catIndoor)
+      if (value.mainCourse === "pizza") {
+        if (value.pizzaCount > 8) {
+          console.log(value.requestedReadyTime) // this can not be infered because of dynamic check of count
+        }
       }
-      if (value.animal === 'dog') {
-        // Narrowed to the dog variant — `dogSize` and `dogName` are required.
-        console.log(value.dogSize, value.dogName)
-      }
-      if (value.hasPriorPetExperience) {
-        // Narrowed: `priorPetName` is required when the user has prior experience.
-        console.log(value.priorPetName)
-      }
-      if (value.housingType === "apartment") {
-        console.log(value.needsHomeVisit)
+      if (value.orderType === "delivery") {
+        if(value.needsNapkins) {
+          console.log(value.napkinCount) // this can not be infered because of dynamic check of needsNapkins
+        }
       }
       alert(`Submitted!\n\n${JSON.stringify(value, null, 2)}`)
     },
@@ -124,7 +120,7 @@ export function FormPage() {
   return (
     <>
       <header>
-        <h1>Adopt an Animal with Tanstack Form</h1>
+        <h1>Tanstack Form</h1>
       </header>
       <main>
         <section className="form-single">
@@ -142,10 +138,10 @@ export function FormPage() {
               const options = enumOptions(f.schema)
               if (options) return renderRadio(key, label, options)
               if (
-                key === 'hasYard' ||
-                key === 'hasPriorPetExperience' ||
-                key === 'catIndoor' ||
-                key === 'needsHomeVisit'
+                key === 'leaveAtDoor' ||
+                key === 'hasOrderedBefore' ||
+                key === 'dressingOnSide' ||
+                key === 'needsNapkins'
               ) {
                 return renderCheckbox(key, label)
               }
