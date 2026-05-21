@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { enumOptions, type FormField } from 'form-flow'
+import { enumOptions, type SchemaField } from 'liveschema'
 import TextStep from './TextStep.vue'
 import RadioStep from './RadioStep.vue'
 import CheckboxStep from './CheckboxStep.vue'
@@ -16,7 +16,7 @@ export type StepBinding = {
   props: Record<string, unknown>
 }
 
-type Renderer = (step: FormField) => StepBinding
+type Renderer = (step: SchemaField) => StepBinding
 
 const text =
   (question: string, type: 'text' | 'email' = 'text'): Renderer =>
@@ -63,7 +63,7 @@ const renderers: Record<FieldKey, Renderer> = {
   napkinCount: number('How many extra napkins?', 1, 20),
 }
 
-export function resolveStep(step: FormField): StepBinding | undefined {
+export function resolveStep(step: SchemaField): StepBinding | undefined {
   const renderer = renderers[step.key as FieldKey]
   return renderer ? renderer(step) : undefined
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { activeFields, toStandardSchema, type FormField } from 'form-flow'
+import { activeFields, toStandardSchema, type SchemaField } from 'liveschema'
 import StepReview from './components/StepReview.vue'
 import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'
 import { form as orderForm, type Order, type FieldKey } from '@/schemas'
@@ -16,7 +16,7 @@ const stepGroups: readonly StepGroup[] = [
   { label: 'Order type', keys: ['orderType', 'leaveAtDoor'] },
 ]
 
-type ResolvedStep = { label: string; fields: FormField[] }
+type ResolvedStep = { label: string; fields: SchemaField[] }
 
 function humanize(field: string): string {
   return (
@@ -25,7 +25,7 @@ function humanize(field: string): string {
   )
 }
 
-function groupSteps(active: FormField[]): ResolvedStep[] {
+function groupSteps(active: SchemaField[]): ResolvedStep[] {
   const groupOf = new Map<string, StepGroup>()
   for (const grp of stepGroups) for (const k of grp.keys) groupOf.set(k, grp)
   const out: ResolvedStep[] = []
@@ -54,7 +54,7 @@ const form = useForm<Order>({
   validationSchema: toStandardSchema(orderForm),
 })
 
-const currentActiveFields = computed<FormField[]>(() =>
+const currentActiveFields = computed<SchemaField[]>(() =>
   activeFields(orderForm, form.values as Record<string, unknown>),
 )
 

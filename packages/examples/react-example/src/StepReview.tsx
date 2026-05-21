@@ -1,4 +1,4 @@
-import { activeFields } from 'form-flow'
+import { activeFields } from 'liveschema'
 import { form } from './schemas'
 import { humanize } from './stepLabels'
 

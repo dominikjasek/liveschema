@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "form-flow": "workspace:*",
+    "liveschema": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {

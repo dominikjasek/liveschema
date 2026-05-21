@@ -7,25 +7,25 @@ import type { StandardSchemaV1 } from '@standard-schema/spec'
 // The resulting value shape is flat — no synthetic wrapper keys.
 // ---------------------------------------------------------------------------
 
-type FormNode =
+type SchemaNode =
   | { kind: 'field'; key: string; schema: StandardSchemaV1 }
   | {
       kind: 'whenEq'
       pattern: Record<string, unknown>
-      children: FormNode[]
+      children: SchemaNode[]
     }
   | {
       kind: 'whenAny'
       patterns: ReadonlyArray<Record<string, unknown>>
-      children: FormNode[]
+      children: SchemaNode[]
     }
   | {
       kind: 'whenPred'
       predicate: (values: Record<string, unknown>) => boolean
-      children: FormNode[]
+      children: SchemaNode[]
     }
 
-const FORM_NODES = Symbol('form-flow.formNodes')
+const SCHEMA_NODES = Symbol('liveschema.schemaNodes')
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 
@@ -172,21 +172,21 @@ type WhenOrResult<V extends object, P extends object, BR extends object> =
       : never
     : never
 
-export type FormBuilder<V extends object = object> = {
+export type SchemaBuilder<V extends object = object> = {
   field<K extends string, S extends StandardSchemaV1>(
     key: K,
     schema: S,
-  ): FormBuilder<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>
+  ): SchemaBuilder<V & { [P in K]: StandardSchemaV1.InferOutput<S> }>
 
   when<const P extends Partial<V>, BR extends object>(
     pattern: P & NoExtraKeys<V, P>,
-    branch: (b: FormBuilder<FilterMatching<V, P>>) => FormBuilder<BR>,
-  ): FormBuilder<WhenEqResult<V, P, BR>>
+    branch: (b: SchemaBuilder<FilterMatching<V, P>>) => SchemaBuilder<BR>,
+  ): SchemaBuilder<WhenEqResult<V, P, BR>>
 
   when<BR extends object>(
     predicate: (values: Partial<V>) => boolean,
-    branch: (b: FormBuilder<V>) => FormBuilder<BR>,
-  ): FormBuilder<V & Partial<BranchAdditions<BR, V>>>
+    branch: (b: SchemaBuilder<V>) => SchemaBuilder<BR>,
+  ): SchemaBuilder<V & Partial<BranchAdditions<BR, V>>>
 
   /**
    * OR branch: fires when the current values match *any* pattern in the array.
@@ -201,28 +201,28 @@ export type FormBuilder<V extends object = object> = {
    */
   whenAny<const Ps extends ReadonlyArray<Partial<V>>, BR extends object>(
     patterns: { readonly [I in keyof Ps]: Ps[I] & NoExtraKeys<V, Ps[I]> },
-    branch: (b: FormBuilder<FilterMatching<V, Ps[number]>>) => FormBuilder<BR>,
-  ): FormBuilder<WhenOrResult<V, Ps[number], BR>>
+    branch: (b: SchemaBuilder<FilterMatching<V, Ps[number]>>) => SchemaBuilder<BR>,
+  ): SchemaBuilder<WhenOrResult<V, Ps[number], BR>>
 
-  readonly [FORM_NODES]: FormNode[]
+  readonly [SCHEMA_NODES]: SchemaNode[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export function defineSchema(): FormBuilder<{}> {
+export function defineSchema(): SchemaBuilder<{}> {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  return makeFormBuilder([]) as unknown as FormBuilder<{}>
+  return makeSchemaBuilder([]) as unknown as SchemaBuilder<{}>
 }
 
-function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
+function makeSchemaBuilder(nodes: SchemaNode[]): SchemaBuilder<object> {
   const builder = {
-    [FORM_NODES]: nodes,
+    [SCHEMA_NODES]: nodes,
     field(key: string, schema: StandardSchemaV1) {
-      return makeFormBuilder([...nodes, { kind: 'field', key, schema }])
+      return makeSchemaBuilder([...nodes, { kind: 'field', key, schema }])
     },
-    when(patternOrPred: unknown, branchFn: (b: FormBuilder<object>) => FormBuilder<object>) {
-      const inner = branchFn(makeFormBuilder([]))
-      const children = inner[FORM_NODES]
-      const node: FormNode =
+    when(patternOrPred: unknown, branchFn: (b: SchemaBuilder<object>) => SchemaBuilder<object>) {
+      const inner = branchFn(makeSchemaBuilder([]))
+      const children = inner[SCHEMA_NODES]
+      const node: SchemaNode =
         typeof patternOrPred === 'function'
           ? {
               kind: 'whenPred',
@@ -234,21 +234,21 @@ function makeFormBuilder(nodes: FormNode[]): FormBuilder<object> {
               pattern: patternOrPred as Record<string, unknown>,
               children,
             }
-      return makeFormBuilder([...nodes, node])
+      return makeSchemaBuilder([...nodes, node])
     },
     whenAny(
       patterns: ReadonlyArray<Record<string, unknown>>,
-      branchFn: (b: FormBuilder<object>) => FormBuilder<object>,
+      branchFn: (b: SchemaBuilder<object>) => SchemaBuilder<object>,
     ) {
-      const inner = branchFn(makeFormBuilder([]))
-      const node: FormNode = { kind: 'whenAny', patterns, children: inner[FORM_NODES] }
-      return makeFormBuilder([...nodes, node])
+      const inner = branchFn(makeSchemaBuilder([]))
+      const node: SchemaNode = { kind: 'whenAny', patterns, children: inner[SCHEMA_NODES] }
+      return makeSchemaBuilder([...nodes, node])
     },
-  } as unknown as FormBuilder<object>
+  } as unknown as SchemaBuilder<object>
   return builder
 }
 
-export type FormField<K extends string = string> = {
+export type SchemaField<K extends string = string> = {
   key: K
   schema: StandardSchemaV1
   value: unknown
@@ -269,44 +269,44 @@ export function enumOptions(schema: StandardSchemaV1): readonly string[] | undef
   return opts as readonly string[]
 }
 
-/** Distributive union of all field keys across every variant of a form's value type. */
+/** Distributive union of all field keys across every variant of a schema's value type. */
 type DistributeKeys<V> = V extends unknown ? keyof V & string : never
-export type FormKeys<F> = DistributeKeys<InferForm<F>>
+export type SchemaKeys<F> = DistributeKeys<InferSchema<F>>
 
 /**
- * Extract the accumulated value shape from a form built with `defineSchema()`.
+ * Extract the accumulated value shape from a schema built with `defineSchema()`.
  * The result is a discriminated union over every reachable branch path —
  * fields gated by an equality `.when({k: lit}, ...)` are required in the
- * matching variant. Use `Partial<InferForm<typeof form>>` if you're modeling
+ * matching variant. Use `Partial<InferSchema<typeof schema>>` if you're modeling
  * in-progress (partially-filled) state.
  */
-export type InferForm<F> = F extends FormBuilder<infer V> ? DistPrettify<V> : never
+export type InferSchema<F> = F extends SchemaBuilder<infer V> ? DistPrettify<V> : never
 
 /**
- * Per-field value lookup across every variant of a form's inferred type.
+ * Per-field value lookup across every variant of a schema's inferred type.
  * Returns the union of `V[K]` for every variant V where K is a key — useful
  * when a renderer needs the type of a single field without caring which
  * branch it lives in.
  *
  * @example
- *   type SizeValue = InferField<typeof form, 'size'>     // 'large' | 'small'
- *   type Name = InferField<typeof form, 'ownerName'>     // string
+ *   type SizeValue = InferField<typeof schema, 'size'>     // 'large' | 'small'
+ *   type Name = InferField<typeof schema, 'ownerName'>     // string
  */
 export type InferField<F, K extends string> =
-  InferForm<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
+  InferSchema<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
 
 /** Ordered list of currently-reachable fields given the current values. */
 export function activeFields<V extends object>(
-  form: FormBuilder<V>,
+  schema: SchemaBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
-): Array<FormField<DistributeKeys<V>>> {
-  const out: FormField[] = []
-  walkFormNodes(form[FORM_NODES], values as Record<string, unknown>, out)
-  return out as Array<FormField<DistributeKeys<V>>>
+): Array<SchemaField<DistributeKeys<V>>> {
+  const out: SchemaField[] = []
+  walkSchemaNodes(schema[SCHEMA_NODES], values as Record<string, unknown>, out)
+  return out as Array<SchemaField<DistributeKeys<V>>>
 }
 
-/** Flat `{ fieldKey: firstMessage }` shape produced by `validateForm`. */
-export type FormErrors<F> = Partial<Record<FormKeys<F>, string>>
+/** Flat `{ fieldKey: firstMessage }` shape produced by `validateSchema`. */
+export type SchemaErrors<F> = Partial<Record<SchemaKeys<F>, string>>
 
 /**
  * Validate the currently-reachable fields against `values`. Returns a flat
@@ -318,12 +318,12 @@ export type FormErrors<F> = Partial<Record<FormKeys<F>, string>>
  * surfaced; consumers that need nested paths or every issue should fall back
  * to `activeFields` and call each field's Standard Schema validator directly.
  */
-export function validateForm<V extends object>(
-  form: FormBuilder<V>,
+export function validateSchema<V extends object>(
+  schema: SchemaBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
-): FormErrors<FormBuilder<V>> | Promise<FormErrors<FormBuilder<V>>> {
+): SchemaErrors<SchemaBuilder<V>> | Promise<SchemaErrors<SchemaBuilder<V>>> {
   const data = values as Record<string, unknown>
-  const fields = activeFields(form, data)
+  const fields = activeFields(schema, data)
   const errors: Record<string, string> = {}
   const pending: Array<Promise<void>> = []
 
@@ -340,33 +340,33 @@ export function validateForm<V extends object>(
     }
   }
 
-  if (pending.length === 0) return errors as FormErrors<FormBuilder<V>>
-  return Promise.all(pending).then(() => errors as FormErrors<FormBuilder<V>>)
+  if (pending.length === 0) return errors as SchemaErrors<SchemaBuilder<V>>
+  return Promise.all(pending).then(() => errors as SchemaErrors<SchemaBuilder<V>>)
 }
 
 /**
- * Build a single Standard Schema validator for a form-flow form. Each
+ * Build a single Standard Schema validator for a liveschema schema. Each
  * `validate(value)` call re-evaluates which fields are reachable given the
  * current `value`, then validates each active field against its own schema.
  *
  * Issues are tagged with the field's key as the first path segment, so
  * consumers that route errors by path (TanStack Form's `onDynamic`,
  * `@hookform/resolvers/standard-schema`, etc.) deliver each message to the
- * right field. Vendor is reported as `"form-flow"`.
+ * right field. Vendor is reported as `"liveschema"`.
  *
  * `TIn` defaults to `Partial<V>` but can be widened (e.g. to a flat partial
  * of all reachable keys) when a consumer needs a non-union input shape.
  */
 export function toStandardSchema<V extends object, TIn = Partial<V>>(
-  form: FormBuilder<V>,
+  schema: SchemaBuilder<V>,
 ): StandardSchemaV1<TIn, V> {
   return {
     '~standard': {
       version: 1,
-      vendor: 'form-flow',
+      vendor: 'liveschema',
       validate(input) {
         const data = (input ?? {}) as Record<string, unknown>
-        const fields = activeFields(form, data)
+        const fields = activeFields(schema, data)
         const issues: StandardSchemaV1.Issue[] = []
         const out: Record<string, unknown> = {}
         const pending: Array<Promise<void>> = []
@@ -405,18 +405,18 @@ function collectField(
   }
 }
 
-function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: FormField[]): void {
+function walkSchemaNodes(nodes: SchemaNode[], values: Record<string, unknown>, out: SchemaField[]): void {
   for (const node of nodes) {
     if (node.kind === 'field') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })
     } else if (node.kind === 'whenEq') {
       const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
-      if (match) walkFormNodes(node.children, values, out)
+      if (match) walkSchemaNodes(node.children, values, out)
     } else if (node.kind === 'whenAny') {
       const match = node.patterns.some((p) => Object.entries(p).every(([k, v]) => values[k] === v))
-      if (match) walkFormNodes(node.children, values, out)
+      if (match) walkSchemaNodes(node.children, values, out)
     } else {
-      if (node.predicate(values)) walkFormNodes(node.children, values, out)
+      if (node.predicate(values)) walkSchemaNodes(node.children, values, out)
     }
   }
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { activeFields, validateForm, type FormField } from 'form-flow'
+import { activeFields, validateSchema, type SchemaField } from 'liveschema'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -7,12 +7,12 @@ const valuesEl = document.getElementById('values') as HTMLPreElement
 
 const values: Record<string, unknown> = {}
 
-function optionsFor(s: FormField['schema']): string[] | null {
+function optionsFor(s: SchemaField['schema']): string[] | null {
   if (s instanceof z.ZodEnum) return [...(s.options as readonly string[])]
   return null
 }
 
-function renderField(step: FormField): HTMLElement {
+function renderField(step: SchemaField): HTMLElement {
   const wrap = document.createElement('label')
   wrap.className = 'field'
   const title = document.createElement('span')
@@ -115,7 +115,7 @@ function render(): void {
 
 formEl.addEventListener('submit', (e) => {
   e.preventDefault()
-  const result = validateForm(form, values)
+  const result = validateSchema(form, values)
   if (result instanceof Promise) return
   const messages = Object.entries(result)
   if (messages.length > 0) {

@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@form-flow/react-hook-form": "workspace:*",
+    "@liveschema/react-hook-form": "workspace:*",
     "@hookform/resolvers": "^5.0.0",
-    "form-flow": "workspace:*",
+    "liveschema": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",

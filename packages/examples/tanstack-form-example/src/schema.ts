@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineSchema, type InferForm, type FormKeys } from 'form-flow'
+import { defineSchema, type InferSchema, type SchemaKeys } from 'liveschema'
 
 export const mainCourses = ['pizza', 'salad'] as const
 export const pizzaSizes = ['small', 'medium', 'large'] as const
@@ -47,5 +47,5 @@ export const form = defineSchema()
       ),
   )
 
-export type FormValues = InferForm<typeof form>
-export type FieldKey = FormKeys<typeof form>
+export type FormValues = InferSchema<typeof form>
+export type FieldKey = SchemaKeys<typeof form>

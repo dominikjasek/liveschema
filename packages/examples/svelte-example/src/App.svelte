@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createForm } from 'felte'
-  import { activeFields, enumOptions, toStandardSchema } from 'form-flow'
+  import { activeFields, enumOptions, toStandardSchema } from 'liveschema'
   import { form as formDef, type FieldKey, type FormValues } from './schema'
 
   const labels: Record<FieldKey, string> = {
@@ -27,7 +27,7 @@
     'needsNapkins',
   ])
 
-  // form-flow's Standard Schema validator over the *currently reachable*
+  // liveschema's Standard Schema validator over the *currently reachable*
   // fields. We feed Felte's `validate` so per-field errors come straight
   // from each Effect schema, routed by the issue's `path[0]`.
   const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)

@@ -12,7 +12,7 @@
     "@standard-schema/spec": "^1.0.0",
     "@tanstack/react-form": "^1.0.0",
     "@tanstack/react-router": "^1.95.0",
-    "form-flow": "workspace:*",
+    "liveschema": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^4.4.3"

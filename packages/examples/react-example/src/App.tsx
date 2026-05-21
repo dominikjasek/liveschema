@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { activeFields, type FormField } from 'form-flow'
+import { activeFields, type SchemaField } from 'liveschema'
 import { form as formDef, type Order } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
@@ -36,7 +36,7 @@ export function App() {
   // Subscribe to values — every value change re-derives the step list.
   const values = useStore(form.store, (s) => s.values) as Record<string, unknown>
 
-  const steps: FormField[] = useMemo(() => activeFields(formDef, values), [values])
+  const steps: SchemaField[] = useMemo(() => activeFields(formDef, values), [values])
 
   // Clamp stepIndex if a branch change shrinks the step list. Stored
   // stepIndex may drift out of range; reads always go through clampedIndex.

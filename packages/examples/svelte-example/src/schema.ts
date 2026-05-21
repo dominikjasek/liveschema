@@ -1,8 +1,8 @@
 import { Schema } from 'effect'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
-import { defineSchema, type InferForm, type FormKeys } from 'form-flow'
+import { defineSchema, type InferSchema, type SchemaKeys } from 'liveschema'
 
-// Effect Schema → Standard Schema adapter. form-flow accepts any
+// Effect Schema → Standard Schema adapter. liveschema accepts any
 // StandardSchemaV1, so we wrap each Effect schema via the official helper.
 const std = <A, I>(schema: Schema.Schema<A, I>): StandardSchemaV1<I, A> =>
   Schema.standardSchemaV1(schema)
@@ -57,5 +57,5 @@ export const form = defineSchema()
       .when({ needsNapkins: true }, (b) => b.field('napkinCount', std(CountFromString(1, 20)))),
   )
 
-export type FormValues = InferForm<typeof form>
-export type FieldKey = FormKeys<typeof form>
+export type FormValues = InferSchema<typeof form>
+export type FieldKey = SchemaKeys<typeof form>

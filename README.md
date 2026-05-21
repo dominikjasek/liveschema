@@ -1,4 +1,4 @@
-# form-flow
+# liveschema
 
 Build a typed, branching schema from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, …). The inferred value type is a discriminated union over reachable branches; at runtime, get the ordered list of currently-reachable fields.
 
@@ -7,14 +7,14 @@ Works for conditional forms (single-page or multi-step), backend payload validat
 ## Install
 
 ```sh
-pnpm add form-flow zod
+pnpm add liveschema zod
 ```
 
 ## Quick example
 
 ```ts
 import { z } from 'zod'
-import { defineSchema, activeFields, validateForm, type InferForm } from 'form-flow'
+import { defineSchema, activeFields, validateSchema, type InferSchema } from 'liveschema'
 
 const order = defineSchema()
   .field('email', z.email())
@@ -28,7 +28,7 @@ const order = defineSchema()
     ),
   )
 
-type Order = InferForm<typeof order>
+type Order = InferSchema<typeof order>
 // → discriminated union over { orderType: 'pickup' | 'delivery' } × { mainCourse: 'pizza' | 'salad' },
 //   with `leaveAtDoor` only present in delivery variants, `pizzaCount` only in pizza, etc.
 
@@ -38,7 +38,7 @@ const fields = activeFields(order, { orderType: 'delivery', mainCourse: 'pizza',
 //    { key: 'mainCourse', ... }, { key: 'pizzaCount', ... }, { key: 'requestedReadyTime', ... }]
 
 // Flat `{ key: firstMessage }` errors for the active subset — drop into Formik / vee-validate / etc.
-const errors = validateForm(order, input)
+const errors = validateSchema(order, input)
 ```
 
 ## Branching constructs
@@ -54,7 +54,7 @@ Equality `.when({k: lit})` narrows the inferred union (the new fields become req
 
 ## Library integration
 
-`toStandardSchema(form)` returns a Standard Schema validator for the whole form — pass it to anything that accepts one (vee-validate, TanStack Form, `@hookform/resolvers/standard-schema`, …). Validation only ever covers the currently-reachable subset, and parsed output strips abandoned-branch values.
+`toStandardSchema(schema)` returns a Standard Schema validator for the whole schema — pass it to anything that accepts one (vee-validate, TanStack Form, `@hookform/resolvers/standard-schema`, …). Validation only ever covers the currently-reachable subset, and parsed output strips abandoned-branch values.
 
 ```ts
 // vee-validate
@@ -68,11 +68,11 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 - `defineSchema()` — start a builder.
 - `.field(key, schema)`, `.when(...)`, `.whenAny(...)` — compose.
-- `activeFields(form, values)` — ordered list of currently-reachable `{ key, schema, value }`.
-- `validateForm(form, values)` — flat `{ key: firstMessage }` errors (sync unless a leaf validator is async).
-- `toStandardSchema(form)` — wrap the whole form as a single Standard Schema validator.
+- `activeFields(schema, values)` — ordered list of currently-reachable `{ key, schema, value }`.
+- `validateSchema(schema, values)` — flat `{ key: firstMessage }` errors (sync unless a leaf validator is async).
+- `toStandardSchema(schema)` — wrap the whole schema as a single Standard Schema validator.
 - `enumOptions(schema)` — best-effort accessor for a leaf's enum options (Zod / Valibot convention).
-- Types: `InferForm<F>`, `InferField<F, K>`, `FormKeys<F>`, `FormField<K>`, `FormErrors<F>`.
+- Types: `InferSchema<F>`, `InferField<F, K>`, `SchemaKeys<F>`, `SchemaField<K>`, `SchemaErrors<F>`.
 
 ## Examples
 

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
-import { activeFields, enumOptions } from 'form-flow'
+import { activeFields, enumOptions } from 'liveschema'
 import { form as formDef, type FormValues, type FieldKey } from './schema'
-import { formFlowResolver } from '@form-flow/react-hook-form'
+import { liveschemaResolver } from '@liveschema/react-hook-form'
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
@@ -45,7 +45,7 @@ export function App() {
       toppings: '',
     },
     mode: 'all',
-    resolver: formFlowResolver(formDef),
+    resolver: liveschemaResolver(formDef),
     shouldUnregister: true,
   })
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { enumOptions, type FormField } from 'form-flow'
+import { enumOptions, type SchemaField } from 'liveschema'
 import type { AdoptionForm } from '../formTypes'
 import type { FieldKey } from '../schemas'
 import { RadioStep } from './RadioStep'
@@ -7,7 +7,7 @@ import { TextStep } from './TextStep'
 import { CheckboxStep } from './CheckboxStep'
 import { StepNumberInput } from './StepNumberInput'
 
-type Renderer = (form: AdoptionForm, step: FormField) => ReactNode
+type Renderer = (form: AdoptionForm, step: SchemaField) => ReactNode
 
 const text = (
   path: FieldKey,

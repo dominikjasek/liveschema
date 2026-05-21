@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { listSteps } from '@/composables/useFormWalker'
+import { listSteps } from '@/composables/useSchemaWalker'
 
 const props = defineProps<{ data: Record<string, unknown> }>()
 

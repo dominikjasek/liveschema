@@ -1,14 +1,14 @@
 {
-  "name": "@form-flow/react-hook-form",
+  "name": "@liveschema/react-hook-form",
   "version": "0.0.1",
-  "description": "react-hook-form resolver for form-flow. Builds a dynamic Standard Schema from the currently-reachable steps and validates the active fields on every cycle.",
+  "description": "react-hook-form resolver for liveschema. Builds a dynamic Standard Schema from the currently-reachable steps and validates the active fields on every cycle.",
   "type": "module",
-  "main": "./src/form-flow-resolver.ts",
-  "types": "./src/form-flow-resolver.ts",
+  "main": "./src/liveschema-resolver.ts",
+  "types": "./src/liveschema-resolver.ts",
   "exports": {
     ".": {
-      "types": "./src/form-flow-resolver.ts",
-      "import": "./src/form-flow-resolver.ts"
+      "types": "./src/liveschema-resolver.ts",
+      "import": "./src/liveschema-resolver.ts"
     }
   },
   "files": [
@@ -19,7 +19,7 @@
   },
   "peerDependencies": {
     "@hookform/resolvers": ">=5.0.0",
-    "form-flow": "workspace:*",
+    "liveschema": "workspace:*",
     "react-hook-form": ">=7.0.0"
   }
 }

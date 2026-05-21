@@ -1,11 +1,11 @@
-# form-flow
+# liveschema
 
 Build a typed, branching schema from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, Effect Schema, …). The inferred value type is a **discriminated union** over every reachable branch — and at runtime, given the current values, you get the **ordered list of currently-reachable fields**.
 
 Same definition powers:
 
 - **Conditional forms** — single-page or multi-step, the live field list re-derives as values change.
-- **Backend validation** — feed a request body through `toStandardSchema(form)` and reject shapes that don't match any reachable branch.
+- **Backend validation** — feed a request body through `toStandardSchema(schema)` and reject shapes that don't match any reachable branch.
 - **Anywhere you have branching data** — surveys, decision trees, configuration with conditional sections.
 
 The package returns _data_ (a list of fields, or a Standard Schema validator). It doesn't manage UI, navigation, errors, or form state — those belong to the consumer.
@@ -19,34 +19,34 @@ Existing tools fall into two camps that each leave something on the table:
 - **Config-driven survey libraries** (JSON schemas, visibility expressions parsed at runtime) ship their own renderer and return untyped result bags — TypeScript can't see the branches.
 - **Generic form libraries** (React Hook Form, TanStack Form, vee-validate, Formik, …) handle field state and validation, but _branching_ is left to the consumer, and there's no inference from "which branch is active" to "which fields are now required."
 
-`form-flow` fills the gap: the **schema is the source of truth**, branching is a typed builder DSL, and the inferred value type is a discriminated union — so inside a narrowed branch, fields that were optional in the union become required.
+`liveschema` fills the gap: the **schema is the source of truth**, branching is a typed builder DSL, and the inferred value type is a discriminated union — so inside a narrowed branch, fields that were optional in the union become required.
 
 ## Install
 
 ```bash
-pnpm add form-flow
+pnpm add liveschema
 # plus whichever Standard-Schema-compliant validator you prefer:
 pnpm add zod        # or: valibot, arktype, effect, ...
 ```
 
-`form-flow` has no runtime dependency on any specific validation library. Bring your own.
+`liveschema` has no runtime dependency on any specific validation library. Bring your own.
 
 ## Quick start
 
 ```ts
 import { z } from 'zod'
-import { defineSchema, activeFields, type InferForm } from 'form-flow'
+import { defineSchema, activeFields, type InferSchema } from 'liveschema'
 
-const form = defineSchema()
+const schema = defineSchema()
   .field('name', z.string().min(1))
   .field('animal', z.enum(['dog', 'cat']))
   .when({ animal: 'dog' }, (b) => b.field('dogSize', z.enum(['small', 'large'])))
   .when({ animal: 'cat' }, (b) => b.field('indoor', z.boolean()))
 
-type Values = InferForm<typeof form>
+type Values = InferSchema<typeof schema>
 
 // Given current values, get the live ordered list of reachable fields:
-const fields = activeFields(form, { name: 'Ada', animal: 'dog' })
+const fields = activeFields(schema, { name: 'Ada', animal: 'dog' })
 // [
 //   { key: 'name',    schema: <standard schema>, value: 'Ada' },
 //   { key: 'animal',  schema: <standard schema>, value: 'dog' },
@@ -84,10 +84,10 @@ OR branch — inner fields are reachable when the current values match _any_ pat
 ## Type inference
 
 ```ts
-import type { InferForm, InferField } from 'form-flow'
+import type { InferSchema, InferField } from 'liveschema'
 
-type Values = InferForm<typeof form> // discriminated union of branches
-type DogSize = InferField<typeof form, 'dogSize'> // 'small' | 'large'
+type Values = InferSchema<typeof schema> // discriminated union of branches
+type DogSize = InferField<typeof schema, 'dogSize'> // 'small' | 'large'
 ```
 
 `Values` is a discriminated union, so destructuring inside a narrowed branch sees required (not optional) fields:
@@ -104,13 +104,13 @@ Use `Partial<Values>` to model in-progress (partially-filled) state.
 
 ## Backend validation
 
-`toStandardSchema(form)` returns a single Standard Schema that validates the currently-reachable fields. Plug it into any framework that accepts Standard Schema:
+`toStandardSchema(schema)` returns a single Standard Schema that validates the currently-reachable fields. Plug it into any framework that accepts Standard Schema:
 
 ```ts
-import { toStandardSchema } from 'form-flow'
+import { toStandardSchema } from 'liveschema'
 
-const schema = toStandardSchema(form)
-const result = schema['~standard'].validate(await req.json())
+const standard = toStandardSchema(schema)
+const result = standard['~standard'].validate(await req.json())
 if (result instanceof Promise) {
   // some validator was async
 } else if (result.issues) {
@@ -125,7 +125,7 @@ if (result instanceof Promise) {
 When the user changes a branch discriminator (e.g. switches `animal` from `'dog'` to `'cat'`), previously-set values on the abandoned branch (`dogSize`) may no longer be reachable. Build a `Set` from `activeFields()` and drop the rest:
 
 ```ts
-const keep = new Set(activeFields(form, values).map((f) => f.key))
+const keep = new Set(activeFields(schema, values).map((f) => f.key))
 const cleaned = Object.fromEntries(Object.entries(values).filter(([k]) => keep.has(k)))
 ```
 
@@ -133,7 +133,7 @@ const cleaned = Object.fromEntries(Object.entries(values).filter(([k]) => keep.h
 
 ```ts
 // 1. Live field list, re-derived from current values on every render.
-const fields = activeFields(form, values)
+const fields = activeFields(schema, values)
 
 // 2. Render however you like — single page, one-field-per-screen wizard,
 //    grouped sections — keyed by `field.key`.
@@ -156,7 +156,7 @@ if (result instanceof Promise) {
 End-to-end examples:
 
 - [packages/examples/react-example](../examples/react-example) — React + TanStack Form (multi-step wizard)
-- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@form-flow/react-hook-form`)
+- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@liveschema/react-hook-form`)
 - [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
 - [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
 - [packages/examples/tanstack-form-example](../examples/tanstack-form-example) — React + TanStack Form (single-page)
@@ -164,20 +164,20 @@ End-to-end examples:
 
 ## API
 
-| Export                       | Purpose                                                                                                                                                                       |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defineSchema()`             | Start a form builder                                                                                                                                                          |
-| `.field(key, schema)`        | Declare a field (schema is any Standard Schema validator)                                                                                                                     |
-| `.when(pattern, branch)`     | Equality-gated sub-branch                                                                                                                                                     |
-| `.when(predicate, branch)`   | Predicate-gated sub-branch                                                                                                                                                    |
-| `.whenAny(patterns, branch)` | OR-gated sub-branch                                                                                                                                                           |
-| `activeFields(form, values)` | Ordered list of currently-reachable fields                                                                                                                                    |
-| `validateForm(form, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate`                                                                  |
-| `toStandardSchema(form)`     | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
-| `enumOptions(schema)`        | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects                                                                          |
-| `InferForm<F>`               | Discriminated-union value type                                                                                                                                                |
-| `InferField<F, K>`           | Type of a single field across variants                                                                                                                                        |
-| `FormField`                  | `{ key, schema, value }` returned by `activeFields`                                                                                                                           |
+| Export                           | Purpose                                                                                                                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineSchema()`                 | Start a schema builder                                                                                                                                                        |
+| `.field(key, schema)`            | Declare a field (schema is any Standard Schema validator)                                                                                                                     |
+| `.when(pattern, branch)`         | Equality-gated sub-branch                                                                                                                                                     |
+| `.when(predicate, branch)`       | Predicate-gated sub-branch                                                                                                                                                    |
+| `.whenAny(patterns, branch)`     | OR-gated sub-branch                                                                                                                                                           |
+| `activeFields(schema, values)`   | Ordered list of currently-reachable fields                                                                                                                                    |
+| `validateSchema(schema, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate`                                                                  |
+| `toStandardSchema(schema)`       | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
+| `enumOptions(schema)`            | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects                                                                          |
+| `InferSchema<F>`                 | Discriminated-union value type                                                                                                                                                |
+| `InferField<F, K>`               | Type of a single field across variants                                                                                                                                        |
+| `SchemaField`                    | `{ key, schema, value }` returned by `activeFields`                                                                                                                           |
 
 ## What this package is _not_
 

@@ -41,9 +41,9 @@ importers:
       '@tanstack/react-form':
         specifier: ^1.0.0
         version: 1.32.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../liveschema
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -72,15 +72,15 @@ importers:
 
   packages/examples/react-hook-form-example:
     dependencies:
-      '@form-flow/react-hook-form':
-        specifier: workspace:*
-        version: link:../../react-hook-form
       '@hookform/resolvers':
         specifier: ^5.0.0
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
-      form-flow:
+      '@liveschema/react-hook-form':
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../react-hook-form
+      liveschema:
+        specifier: workspace:*
+        version: link:../../liveschema
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -121,9 +121,9 @@ importers:
       felte:
         specifier: ^1.3.0
         version: 1.3.0(svelte@5.55.8(@typescript-eslint/types@8.59.3))
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../liveschema
       svelte:
         specifier: ^5.55.0
         version: 5.55.8(@typescript-eslint/types@8.59.3)
@@ -152,9 +152,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.95.0
         version: 1.170.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../liveschema
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -183,9 +183,9 @@ importers:
 
   packages/examples/vanilla-example:
     dependencies:
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../liveschema
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -202,9 +202,9 @@ importers:
       '@vee-validate/zod':
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.34(typescript@6.0.3))(zod@4.4.3)
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../../form-flow
+        version: link:../../liveschema
       vee-validate:
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.34(typescript@6.0.3))
@@ -231,7 +231,7 @@ importers:
         specifier: ^3.2.8
         version: 3.2.9(typescript@6.0.3)
 
-  packages/form-flow:
+  packages/liveschema:
     dependencies:
       '@standard-schema/spec':
         specifier: ^1.0.0
@@ -245,9 +245,9 @@ importers:
       '@standard-schema/spec':
         specifier: ^1.0.0
         version: 1.1.0
-      form-flow:
+      liveschema:
         specifier: workspace:*
-        version: link:../form-flow
+        version: link:../liveschema
       react-hook-form:
         specifier: '>=7.0.0'
         version: 7.75.0(react@19.2.6)
