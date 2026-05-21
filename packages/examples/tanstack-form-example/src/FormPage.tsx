@@ -37,13 +37,13 @@ export function FormPage() {
       onDynamic: standardSchema,
     },
     onSubmit: ({ value }) => {
-      if (value.mainCourse === "pizza") {
+      if (value.mainCourse === 'pizza') {
         if (value.pizzaCount > 8) {
           console.log(value.requestedReadyTime) // this can not be infered because of dynamic check of count
         }
       }
-      if (value.orderType === "delivery") {
-        if(value.needsNapkins) {
+      if (value.orderType === 'delivery') {
+        if (value.needsNapkins) {
           console.log(value.napkinCount) // this can not be infered because of dynamic check of needsNapkins
         }
       }
@@ -90,26 +90,22 @@ export function FormPage() {
     </form.Field>
   )
 
-  const renderRadio = (
-    name: FieldKey,
-    label: string,
-    options: readonly string[],
-  ) => (
+  const renderRadio = (name: FieldKey, label: string, options: readonly string[]) => (
     <form.Field key={name} name={name as never}>
       {(field) => (
         <div className="field">
           <span>{label}</span>
           <div className="options">
             {options.map((o) => (
-                <label key={o} className="radio">
-                  <input
-                    type="radio"
-                    checked={field.state.value === o}
-                    onChange={() => field.handleChange(o as never)}
-                  />
-                  <span>{o}</span>
-                </label>
-              ))}
+              <label key={o} className="radio">
+                <input
+                  type="radio"
+                  checked={field.state.value === o}
+                  onChange={() => field.handleChange(o as never)}
+                />
+                <span>{o}</span>
+              </label>
+            ))}
           </div>
           <FieldError errors={field.state.meta.errors} />
         </div>

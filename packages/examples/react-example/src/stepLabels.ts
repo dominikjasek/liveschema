@@ -17,8 +17,5 @@ export const stepLabels: Record<string, string> = {
 }
 
 export function humanize(field: string): string {
-  return (
-    stepLabels[field] ??
-    field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
-  )
+  return stepLabels[field] ?? field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
 }

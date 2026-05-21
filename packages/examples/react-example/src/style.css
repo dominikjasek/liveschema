@@ -8,7 +8,9 @@
   --accent-bg: rgba(59, 130, 246, 0.1);
   --accent-border: rgba(59, 130, 246, 0.5);
 
-  font: 18px/145% system-ui, sans-serif;
+  font:
+    18px/145% system-ui,
+    sans-serif;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);

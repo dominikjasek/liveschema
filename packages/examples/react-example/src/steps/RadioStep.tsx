@@ -7,12 +7,7 @@ type Props<T extends string | number> = {
   options: readonly T[]
 }
 
-export function RadioStep<T extends string | number>({
-  form,
-  path,
-  question,
-  options,
-}: Props<T>) {
+export function RadioStep<T extends string | number>({ form, path, question, options }: Props<T>) {
   return (
     <div>
       <h2>{question}</h2>

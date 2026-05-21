@@ -57,25 +57,29 @@ export function App() {
         const segs = (issue.path ?? []).map((p) =>
           typeof p === 'object' ? String(p.key) : String(p),
         )
-        const fieldName = segs.length
-          ? `${currentStep.key}.${segs.join('.')}`
-          : currentStep.key
-        form.setFieldMeta(fieldName as never, ((m: Record<string, unknown>) => ({
-          ...m,
-          errors: [issue.message],
-          errorMap: { onChange: issue.message },
-        })) as never)
+        const fieldName = segs.length ? `${currentStep.key}.${segs.join('.')}` : currentStep.key
+        form.setFieldMeta(
+          fieldName as never,
+          ((m: Record<string, unknown>) => ({
+            ...m,
+            errors: [issue.message],
+            errorMap: { onChange: issue.message },
+          })) as never,
+        )
       }
       return
     }
     // Persist parsed value (handles coercion, e.g. number).
     form.setFieldValue(currentStep.key as never, result.value as never)
     // Clear any prior errors for this step.
-    form.setFieldMeta(currentStep.key as never, ((m: Record<string, unknown>) => ({
-      ...m,
-      errors: [],
-      errorMap: {},
-    })) as never)
+    form.setFieldMeta(
+      currentStep.key as never,
+      ((m: Record<string, unknown>) => ({
+        ...m,
+        errors: [],
+        errorMap: {},
+      })) as never,
+    )
     if (clampedIndex < steps.length - 1) {
       setStepIndex(clampedIndex + 1)
     } else {
@@ -118,9 +122,7 @@ export function App() {
               <li key={i}>
                 <button
                   type="button"
-                  className={
-                    activeIndex === i ? 'active' : activeIndex > i ? 'done' : undefined
-                  }
+                  className={activeIndex === i ? 'active' : activeIndex > i ? 'done' : undefined}
                   disabled={i > activeIndex}
                   title={humanize(label)}
                   onClick={() => jumpTo(i)}

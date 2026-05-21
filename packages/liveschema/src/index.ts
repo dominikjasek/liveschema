@@ -405,7 +405,11 @@ function collectField(
   }
 }
 
-function walkSchemaNodes(nodes: SchemaNode[], values: Record<string, unknown>, out: SchemaField[]): void {
+function walkSchemaNodes(
+  nodes: SchemaNode[],
+  values: Record<string, unknown>,
+  out: SchemaField[],
+): void {
   for (const node of nodes) {
     if (node.kind === 'field') {
       out.push({ key: node.key, schema: node.schema, value: values[node.key] })

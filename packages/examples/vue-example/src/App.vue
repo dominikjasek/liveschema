@@ -20,8 +20,7 @@ type ResolvedStep = { label: string; fields: SchemaField[] }
 
 function humanize(field: string): string {
   return (
-    stepLabelMap[field] ??
-    field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+    stepLabelMap[field] ?? field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
   )
 }
 
@@ -94,9 +93,7 @@ async function goNext() {
   if (phase.value !== 'fill') return
   const step = currentStep.value
   if (!step) return
-  const results = await Promise.all(
-    step.fields.map((f) => form.validateField(f.key as never)),
-  )
+  const results = await Promise.all(step.fields.map((f) => form.validateField(f.key as never)))
   if (results.some((r) => !r.valid)) return
   // Persist the parsed (potentially coerced) value so downstream branches
   // see e.g. a real number for `pizzaCount` rather than the raw string.
@@ -180,7 +177,13 @@ function submit() {
           </div>
         </template>
 
-        <pre class="debug">{{ JSON.stringify({ values: form.values, stepIndex, steps: currentActiveFields.map((s) => s.key) }, null, 2) }}</pre>
+        <pre class="debug">{{
+          JSON.stringify(
+            { values: form.values, stepIndex, steps: currentActiveFields.map((s) => s.key) },
+            null,
+            2,
+          )
+        }}</pre>
       </div>
     </section>
   </main>

@@ -9,11 +9,7 @@ import { StepNumberInput } from './StepNumberInput'
 
 type Renderer = (form: AdoptionForm, step: SchemaField) => ReactNode
 
-const text = (
-  path: FieldKey,
-  question: string,
-  type: 'text' | 'email' = 'text',
-): Renderer =>
+const text = (path: FieldKey, question: string, type: 'text' | 'email' = 'text'): Renderer =>
   function TextRenderer(form) {
     return <TextStep form={form} path={path} question={question} type={type} />
   }
@@ -23,12 +19,7 @@ const checkbox = (path: FieldKey, question: string, confirmLabel?: string): Rend
     return <CheckboxStep form={form} path={path} question={question} confirmLabel={confirmLabel} />
   }
 
-const number = (
-  path: FieldKey,
-  question: string,
-  min?: number,
-  max?: number,
-): Renderer =>
+const number = (path: FieldKey, question: string, min?: number, max?: number): Renderer =>
   function NumberRenderer(form) {
     return <StepNumberInput form={form} path={path} question={question} min={min} max={max} />
   }
@@ -43,11 +34,7 @@ export const stepRenderers: Record<FieldKey, Renderer> = {
   email: text('email', 'Your email', 'email'),
   fullName: text('fullName', 'Your full name'),
   orderType: radio('orderType', 'How would you like to receive your order?'),
-  leaveAtDoor: checkbox(
-    'leaveAtDoor',
-    'Leave at the door if no answer?',
-    'Yes, leave at the door',
-  ),
+  leaveAtDoor: checkbox('leaveAtDoor', 'Leave at the door if no answer?', 'Yes, leave at the door'),
   hasOrderedBefore: checkbox(
     'hasOrderedBefore',
     'Have you ordered from us before?',
