@@ -1,5 +1,92 @@
-# Vue 3 + Vite
+# form-flow
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Build a typed, branching schema from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, …). The inferred value type is a discriminated union over reachable branches; at runtime, get the ordered list of currently-reachable fields.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+Works for conditional forms (single-page or multi-step), backend payload validation, and anywhere branching data lives.
+
+## Install
+
+```sh
+pnpm add form-flow zod
+```
+
+## Quick example
+
+```ts
+import { z } from 'zod'
+import { defineForm, activeFields, validateForm, type InferForm } from 'form-flow'
+
+const order = defineForm()
+  .field('email', z.email())
+  .field('orderType', z.enum(['pickup', 'delivery']))
+  .when({ orderType: 'delivery' }, (b) => b.field('leaveAtDoor', z.boolean()))
+  .field('mainCourse', z.enum(['pizza', 'salad']))
+  .when({ mainCourse: 'pizza' }, (b) =>
+    b.field('pizzaCount', z.coerce.number().int().min(1).max(20)).when(
+      (v) => Number(v.pizzaCount) >= 3,
+      (b) => b.field('requestedReadyTime', z.string()),
+    ),
+  )
+
+type Order = InferForm<typeof order>
+// → discriminated union over { orderType: 'pickup' | 'delivery' } × { mainCourse: 'pizza' | 'salad' },
+//   with `leaveAtDoor` only present in delivery variants, `pizzaCount` only in pizza, etc.
+
+// Walk the currently-reachable fields for some input.
+const fields = activeFields(order, { orderType: 'delivery', mainCourse: 'pizza', pizzaCount: 4 })
+// → [{ key: 'email', schema, value }, { key: 'orderType', ... }, { key: 'leaveAtDoor', ... },
+//    { key: 'mainCourse', ... }, { key: 'pizzaCount', ... }, { key: 'requestedReadyTime', ... }]
+
+// Flat `{ key: firstMessage }` errors for the active subset — drop into Formik / vee-validate / etc.
+const errors = validateForm(order, input)
+```
+
+## Branching constructs
+
+| Construct | Fires when |
+| --- | --- |
+| `.field(key, schema)` | always |
+| `.when({k: literal, ...}, b => ...)` | every listed key equals its literal |
+| `.whenAny([{...}, {...}], b => ...)` | any one of the patterns matches |
+| `.when(values => boolean, b => ...)` | predicate returns truthy |
+
+Equality `.when({k: lit})` narrows the inferred union (the new fields become required on the matching variant). Predicate `.when(fn)` adds the fields as optional, since TS can't prove the predicate at compile time. `.whenAny` requires-on-match, optional-on-rest.
+
+## Library integration
+
+`toStandardSchema(form)` returns a Standard Schema validator for the whole form — pass it to anything that accepts one (vee-validate, TanStack Form, `@hookform/resolvers/standard-schema`, …). Validation only ever covers the currently-reachable subset, and parsed output strips abandoned-branch values.
+
+```ts
+// vee-validate
+const form = useForm({ validationSchema: toStandardSchema(order) })
+
+// react-hook-form (via @hookform/resolvers/standard-schema)
+useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
+```
+
+## API
+
+- `defineForm()` — start a builder.
+- `.field(key, schema)`, `.when(...)`, `.whenAny(...)` — compose.
+- `activeFields(form, values)` — ordered list of currently-reachable `{ key, schema, value }`.
+- `validateForm(form, values)` — flat `{ key: firstMessage }` errors (sync unless a leaf validator is async).
+- `toStandardSchema(form)` — wrap the whole form as a single Standard Schema validator.
+- `enumOptions(schema)` — best-effort accessor for a leaf's enum options (Zod / Valibot convention).
+- Types: `InferForm<F>`, `InferField<F, K>`, `FormKeys<F>`, `FormField<K>`, `FormErrors<F>`.
+
+## Examples
+
+This monorepo ships runnable examples under [`packages/examples/`](packages/examples):
+
+- [`vanilla-example/`](packages/examples/vanilla-example) — plain DOM, progressive reveal.
+- [`vue-example/`](packages/examples/vue-example) — vee-validate, multi-step wizard with grouped steps.
+- [`react-example/`](packages/examples/react-example) — TanStack Form.
+- [`react-hook-form-example/`](packages/examples/react-hook-form-example) — react-hook-form + standard-schema resolver.
+- [`tanstack-form-example/`](packages/examples/tanstack-form-example) — TanStack Form, alternate styling.
+- [`svelte-example/`](packages/examples/svelte-example) — Svelte.
+
+Pick a flavor:
+
+```sh
+pnpm dev:vue        # or dev:react, dev:vanilla, dev:tanstack
+```
