@@ -14,9 +14,9 @@ pnpm add form-flow zod
 
 ```ts
 import { z } from 'zod'
-import { defineForm, activeFields, validateForm, type InferForm } from 'form-flow'
+import { defineSchema, activeFields, validateForm, type InferForm } from 'form-flow'
 
-const order = defineForm()
+const order = defineSchema()
   .field('email', z.email())
   .field('orderType', z.enum(['pickup', 'delivery']))
   .when({ orderType: 'delivery' }, (b) => b.field('leaveAtDoor', z.boolean()))
@@ -43,12 +43,12 @@ const errors = validateForm(order, input)
 
 ## Branching constructs
 
-| Construct | Fires when |
-| --- | --- |
-| `.field(key, schema)` | always |
+| Construct                            | Fires when                          |
+| ------------------------------------ | ----------------------------------- |
+| `.field(key, schema)`                | always                              |
 | `.when({k: literal, ...}, b => ...)` | every listed key equals its literal |
-| `.whenAny([{...}, {...}], b => ...)` | any one of the patterns matches |
-| `.when(values => boolean, b => ...)` | predicate returns truthy |
+| `.whenAny([{...}, {...}], b => ...)` | any one of the patterns matches     |
+| `.when(values => boolean, b => ...)` | predicate returns truthy            |
 
 Equality `.when({k: lit})` narrows the inferred union (the new fields become required on the matching variant). Predicate `.when(fn)` adds the fields as optional, since TS can't prove the predicate at compile time. `.whenAny` requires-on-match, optional-on-rest.
 
@@ -66,7 +66,7 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 ## API
 
-- `defineForm()` — start a builder.
+- `defineSchema()` — start a builder.
 - `.field(key, schema)`, `.when(...)`, `.whenAny(...)` — compose.
 - `activeFields(form, values)` — ordered list of currently-reachable `{ key, schema, value }`.
 - `validateForm(form, values)` — flat `{ key: firstMessage }` errors (sync unless a leaf validator is async).

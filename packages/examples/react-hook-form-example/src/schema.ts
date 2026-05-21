@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { defineForm, type InferForm, type FormKeys } from 'form-flow'
+import { defineSchema, type InferForm, type FormKeys } from 'form-flow'
 
 export const mainCourses = ['pizza', 'salad'] as const
 export const pizzaSizes = ['small', 'medium', 'large'] as const
 export const orderTypes = ['pickup', 'delivery'] as const
 
-export const form = defineForm()
+export const form = defineSchema()
   .field('email', z.email())
   .field('fullName', z.string().min(2).max(100))
   .field('orderType', z.enum(orderTypes))

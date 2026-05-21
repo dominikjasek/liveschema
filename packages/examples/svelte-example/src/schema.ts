@@ -1,6 +1,6 @@
 import { Schema } from 'effect'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
-import { defineForm, type InferForm, type FormKeys } from 'form-flow'
+import { defineSchema, type InferForm, type FormKeys } from 'form-flow'
 
 // Effect Schema → Standard Schema adapter. form-flow accepts any
 // StandardSchemaV1, so we wrap each Effect schema via the official helper.
@@ -12,10 +12,7 @@ const std = <A, I>(schema: Schema.Schema<A, I>): StandardSchemaV1<I, A> =>
 // radio renderer) read the option list without re-declaring it at the call
 // site.
 function enumStd<const Lits extends readonly [string, ...string[]]>(literals: Lits) {
-  const schema = Schema.Literal(...literals) as unknown as Schema.Schema<
-    Lits[number],
-    Lits[number]
-  >
+  const schema = Schema.Literal(...literals) as unknown as Schema.Schema<Lits[number], Lits[number]>
   const base = std(schema)
   return Object.assign(base, { options: literals })
 }
@@ -33,7 +30,7 @@ const ShortText = (min: number, max: number) =>
 const CountFromString = (min: number, max: number) =>
   Schema.NumberFromString.pipe(Schema.int(), Schema.between(min, max))
 
-export const form = defineForm()
+export const form = defineSchema()
   .field('email', std(Email))
   .field('fullName', std(ShortText(2, 100)))
   .field('orderType', enumStd(orderTypes))
@@ -44,9 +41,7 @@ export const form = defineForm()
   .when({ mainCourse: 'pizza' }, (b) =>
     b
       .when({ orderType: 'pickup' }, (b) => b.field('pizzaSize', enumStd(pizzaSizes)))
-      .when({ orderType: 'delivery' }, (b) =>
-        b.field('pizzaSize', enumStd(pizzaDeliverySizes)),
-      ),
+      .when({ orderType: 'delivery' }, (b) => b.field('pizzaSize', enumStd(pizzaDeliverySizes))),
   )
   .when({ mainCourse: 'pizza' }, (b) => b.field('toppings', std(ShortText(2, 200))))
   .when({ mainCourse: 'pizza' }, (b) =>
@@ -59,9 +54,7 @@ export const form = defineForm()
   .whenAny([{ orderType: 'delivery' }, { mainCourse: 'pizza' }], (b) =>
     b
       .field('needsNapkins', std(Schema.UndefinedOr(Schema.Boolean)))
-      .when({ needsNapkins: true }, (b) =>
-        b.field('napkinCount', std(CountFromString(1, 20))),
-      ),
+      .when({ needsNapkins: true }, (b) => b.field('napkinCount', std(CountFromString(1, 20)))),
   )
 
 export type FormValues = InferForm<typeof form>

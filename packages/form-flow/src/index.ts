@@ -1,7 +1,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 
 // ---------------------------------------------------------------------------
-// defineForm — high-level builder DSL. Schema leaves are any Standard Schema
+// defineSchema — high-level builder DSL. Schema leaves are any Standard Schema
 // validator (Zod, Valibot, ArkType, Effect Schema, ...). Structure (sequencing,
 // equality branches, predicate gates) is expressed via .field() and .when().
 // The resulting value shape is flat — no synthetic wrapper keys.
@@ -44,10 +44,11 @@ type BranchAdditions<BR extends object, Outer extends object> = Extract<BR, Oute
 // Used by WhenOrResult's non-matching branch where we add the new fields as
 // optional; per-variant Extract returns `never` there because the non-matching
 // DV doesn't share BR's path.
-type NewBranchFields<BR extends object, V extends object> =
-  [Exclude<keyof BR, keyof V>] extends [infer NK extends keyof BR]
-    ? Pick<BR, NK>
-    : never
+type NewBranchFields<BR extends object, V extends object> = [Exclude<keyof BR, keyof V>] extends [
+  infer NK extends keyof BR,
+]
+  ? Pick<BR, NK>
+  : never
 
 // Reject pattern keys that aren't in V. `P extends Partial<V>` accepts excess
 // keys structurally — and generic inference (`const P extends Partial<V>`)
@@ -95,31 +96,31 @@ type DistributeOnKey<V extends object, K extends keyof V> = V extends V
 // + `DistMulti`. `IsUnion<K>` is the cheap two-conditional union detector.
 type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
 
-type DistributeForMatch<V extends object, P extends object> =
-  keyof P & keyof V extends infer K extends keyof V
-    ? [K] extends [never]
-      ? V
-      : IsUnion<K> extends false
-        ? DistributeOnKey<V, K>
-        : UnionToTuple<K> extends infer KT extends ReadonlyArray<PropertyKey>
-          ? DistMulti<V, KT>
-          : V
-    : V
+type DistributeForMatch<V extends object, P extends object> = keyof P &
+  keyof V extends infer K extends keyof V
+  ? [K] extends [never]
+    ? V
+    : IsUnion<K> extends false
+      ? DistributeOnKey<V, K>
+      : UnionToTuple<K> extends infer KT extends ReadonlyArray<PropertyKey>
+        ? DistMulti<V, KT>
+        : V
+  : V
 
-type DistMulti<V extends object, KT extends ReadonlyArray<PropertyKey>> =
-  KT extends readonly [infer K1, ...infer Rest]
-    ? K1 extends keyof V
-      ? Rest extends ReadonlyArray<PropertyKey>
-        ? DistributeOnKey<V, K1> extends infer V1 extends object
-          ? DistMulti<V1, Rest>
-          : V
+type DistMulti<V extends object, KT extends ReadonlyArray<PropertyKey>> = KT extends readonly [
+  infer K1,
+  ...infer Rest,
+]
+  ? K1 extends keyof V
+    ? Rest extends ReadonlyArray<PropertyKey>
+      ? DistributeOnKey<V, K1> extends infer V1 extends object
+        ? DistMulti<V1, Rest>
         : V
       : V
     : V
+  : V
 
-type UnionToIntersection<U> = (U extends U ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
+type UnionToIntersection<U> = (U extends U ? (k: U) => void : never) extends (k: infer I) => void
   ? I
   : never
 type LastOf<U> =
@@ -207,7 +208,7 @@ export type FormBuilder<V extends object = object> = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export function defineForm(): FormBuilder<{}> {
+export function defineSchema(): FormBuilder<{}> {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   return makeFormBuilder([]) as unknown as FormBuilder<{}>
 }
@@ -273,7 +274,7 @@ type DistributeKeys<V> = V extends unknown ? keyof V & string : never
 export type FormKeys<F> = DistributeKeys<InferForm<F>>
 
 /**
- * Extract the accumulated value shape from a form built with `defineForm()`.
+ * Extract the accumulated value shape from a form built with `defineSchema()`.
  * The result is a discriminated union over every reachable branch path —
  * fields gated by an equality `.when({k: lit}, ...)` are required in the
  * matching variant. Use `Partial<InferForm<typeof form>>` if you're modeling
@@ -412,9 +413,7 @@ function walkFormNodes(nodes: FormNode[], values: Record<string, unknown>, out: 
       const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
       if (match) walkFormNodes(node.children, values, out)
     } else if (node.kind === 'whenAny') {
-      const match = node.patterns.some((p) =>
-        Object.entries(p).every(([k, v]) => values[k] === v),
-      )
+      const match = node.patterns.some((p) => Object.entries(p).every(([k, v]) => values[k] === v))
       if (match) walkFormNodes(node.children, values, out)
     } else {
       if (node.predicate(values)) walkFormNodes(node.children, values, out)
