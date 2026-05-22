@@ -87,9 +87,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.0.0
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
-      '@liveschema/react-hook-form':
-        specifier: workspace:*
-        version: link:../../react-hook-form
       liveschema:
         specifier: workspace:*
         version: link:../../liveschema
@@ -252,21 +249,6 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
-
-  packages/react-hook-form:
-    dependencies:
-      '@hookform/resolvers':
-        specifier: '>=5.0.0'
-        version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
-      '@standard-schema/spec':
-        specifier: ^1.0.0
-        version: 1.1.0
-      liveschema:
-        specifier: workspace:*
-        version: link:../liveschema
-      react-hook-form:
-        specifier: '>=7.0.0'
-        version: 7.75.0(react@19.2.6)
 
 packages:
 

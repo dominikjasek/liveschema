@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
-import { activeFields, enumOptions } from 'liveschema'
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
+import { activeFields, enumOptions, toStandardSchema } from 'liveschema'
 import { form as formDef, type FormValues, type FieldKey } from './schema'
-import { liveschemaResolver } from '@liveschema/react-hook-form'
+
+const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
@@ -45,7 +47,7 @@ export function App() {
       toppings: '',
     },
     mode: 'all',
-    resolver: liveschemaResolver(formDef),
+    resolver: standardSchemaResolver(standardSchema),
     shouldUnregister: true,
   })
 

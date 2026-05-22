@@ -156,7 +156,7 @@ if (result instanceof Promise) {
 End-to-end examples:
 
 - [packages/examples/react-example](../examples/react-example) — React + TanStack Form (multi-step wizard)
-- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@liveschema/react-hook-form`)
+- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`)
 - [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
 - [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
 - [packages/examples/tanstack-form-example](../examples/tanstack-form-example) — React + TanStack Form (single-page)
