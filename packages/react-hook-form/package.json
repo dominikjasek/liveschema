@@ -1,5 +1,6 @@
 {
   "name": "@liveschema/react-hook-form",
+  "private": true,
   "version": "0.0.1",
   "description": "react-hook-form resolver for liveschema. Builds a dynamic Standard Schema from the currently-reachable steps and validates the active fields on every cycle.",
   "keywords": [
