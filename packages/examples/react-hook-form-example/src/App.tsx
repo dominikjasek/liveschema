@@ -48,7 +48,7 @@ export function App() {
     },
     mode: 'all',
     resolver: standardSchemaResolver(standardSchema),
-    shouldUnregister: true,
+    shouldUnregister: false,
   })
 
   const values = useWatch({ control }) as Record<string, unknown>

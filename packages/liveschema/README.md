@@ -122,7 +122,12 @@ if (result instanceof Promise) {
 
 ## Pruning orphaned values
 
-When the user changes a branch discriminator (e.g. switches `animal` from `'dog'` to `'cat'`), previously-set values on the abandoned branch (`dogSize`) may no longer be reachable. Build a `Set` from `activeFields()` and drop the rest:
+When the user changes a branch discriminator (e.g. switches `animal` from `'dog'` to `'cat'`), previously-set values on the abandoned branch (`dogSize`) may stay in your form state. In most setups you don't need to do anything:
+
+- `toStandardSchema(schema)['~standard'].validate(values).value` is rebuilt from scratch each call and only contains keys for currently-reachable fields — so anything you submit through the standard-schema validator is pruned for free.
+- Form libraries that unmount-then-forget orphaned fields handle this for you too (react-hook-form with `shouldUnregister: true`, etc.).
+
+If you're managing raw values state yourself and want to drop orphans eagerly, build a `Set` from `activeFields()` and filter:
 
 ```ts
 const keep = new Set(activeFields(schema, values).map((f) => f.key))
