@@ -1,5 +1,0 @@
----
-'liveschema': patch
----
-
-Initial release
