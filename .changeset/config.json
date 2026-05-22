@@ -8,6 +8,7 @@
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
   "ignore": [
+    "@liveschema/react-hook-form",
     "vanilla-example",
     "vue-example",
     "react-example",
