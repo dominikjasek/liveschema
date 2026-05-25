@@ -3,13 +3,14 @@ import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from
 
 /**
  * Per-field metadata exposed to Vue consumers. The field's key is the record
- * key (no `key` property on the value); `enumOptions` is populated only for
- * leaves whose validator exposes string enum options (Zod `z.enum(...)`,
- * Valibot, etc.) and `undefined` otherwise.
+ * key (no `key` property on the value); `enumOptions` is **only present** when
+ * the field's validator exposes string enum options (Zod `z.enum(...)`,
+ * Valibot, etc.), and absent from the object entirely otherwise — so
+ * `'enumOptions' in info` cleanly discriminates enum fields from non-enum ones.
  */
 export type LiveSchemaField = {
   isActive: boolean
-  enumOptions: readonly string[] | undefined
+  enumOptions?: readonly string[]
 }
 
 export type UseLiveSchemaResult<F> = {
@@ -62,7 +63,9 @@ export function useLiveSchema<V extends object>(
   const fields = computed(() => {
     const out = {} as Record<Key, LiveSchemaField>
     for (const f of declared.value) {
-      out[f.key as Key] = { isActive: f.isActive, enumOptions: enumOptions(f.schema) }
+      const opts = enumOptions(f.schema)
+      out[f.key as Key] =
+        opts !== undefined ? { isActive: f.isActive, enumOptions: opts } : { isActive: f.isActive }
     }
     return out
   })
@@ -70,7 +73,10 @@ export function useLiveSchema<V extends object>(
   const activeFields = computed(() => {
     const out = {} as Partial<Record<Key, LiveSchemaField>>
     for (const f of declared.value) {
-      if (f.isActive) out[f.key as Key] = { isActive: true, enumOptions: enumOptions(f.schema) }
+      if (!f.isActive) continue
+      const opts = enumOptions(f.schema)
+      out[f.key as Key] =
+        opts !== undefined ? { isActive: true, enumOptions: opts } : { isActive: true }
     }
     return out
   })
