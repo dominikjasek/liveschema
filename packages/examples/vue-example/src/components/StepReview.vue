@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useLiveSchema } from '@liveschema/vue'
 import { form as orderForm } from '@/schemas'
 
 const props = defineProps<{ data: Record<string, unknown> }>()
 
-const { activeFieldKeys } = useLiveSchema(orderForm, () => props.data)
+const { activeFields } = useLiveSchema(orderForm, () => props.data)
+const activeFieldKeys = computed(() => Object.keys(activeFields.value))
 
 function display(value: unknown): string {
   if (value === undefined || value === null) return '—'

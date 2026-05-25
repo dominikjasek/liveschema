@@ -21,24 +21,32 @@ import { schema } from './schema'
 
 const form = useForm({ validationSchema: toStandardSchema(schema) })
 
-const { activeFieldKeys, fields, isActiveField } = useLiveSchema(schema, () => form.values)
+const { fields, activeFields, isActiveField } = useLiveSchema(schema, () => form.values)
 </script>
 
 <template>
   <!-- Predicate works in templates because it reads .value internally. -->
-  <PaymentRadios v-if="isActiveField('paymentMethod')" />
+  <PaymentRadios
+    v-if="isActiveField('paymentMethod')"
+    :options="fields.paymentMethod.enumOptions ?? []"
+  />
 
-  <!-- Iterate every declared field and read isActive yourself. -->
-  <Field v-for="f in fields" :key="f.key" :disabled="!f.isActive" :options="f.enumOptions ?? []" />
+  <!-- Iterate the active subset in source order. -->
+  <Field
+    v-for="(info, key) in activeFields"
+    :key="key"
+    :name="key"
+    :options="info?.enumOptions ?? []"
+  />
 </template>
 ```
 
 ### Return shape
 
-| Property          | Type                                                                              | Meaning                                                                                                                            |
-| ----------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `activeFieldKeys` | `ComputedRef<Key[]>`                                                              | Computed ref of ordered keys whose branch path matches the current values.                                                         |
-| `fields`          | `ComputedRef<{ key: Key; isActive: boolean; enumOptions?: readonly string[] }[]>` | Computed ref of every declared field, in source order; `enumOptions` is set only for enum leaves (Zod, Valibot).                   |
-| `isActiveField`   | `(key: Key) => boolean`                                                           | Plain function that reads the current `activeFieldKeys.value` — usable from templates without `.value` and from script without it. |
+| Property        | Type                                                                                        | Meaning                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`        | `ComputedRef<Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>>`          | Computed ref of every declared field, keyed by field key. Insertion order matches the schema's declaration order.                  |
+| `activeFields`  | `ComputedRef<Partial<Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>>>` | Computed ref of the active subset; inactive keys are absent. `Object.keys(activeFields.value)` gives the live ordered list.        |
+| `isActiveField` | `(key: Key) => boolean`                                                                     | Plain function that reads the current `activeFields.value` — usable from templates without `.value` and from `<script setup>` too. |
 
 Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `isActiveField('typo')` is a compile-time error.

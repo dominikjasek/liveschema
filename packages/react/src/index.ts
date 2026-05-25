@@ -2,53 +2,61 @@ import { useMemo } from 'react'
 import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from '@liveschema/core'
 
 /**
- * A field of the schema as exposed to React consumers. `enumOptions` is populated
- * only for leaves whose validator exposes string enum options (Zod `z.enum(...)`,
- * Valibot, etc.); `undefined` otherwise.
+ * Per-field metadata exposed to React consumers. The field's key is the record
+ * key (no `key` property on the value); `enumOptions` is populated only for
+ * leaves whose validator exposes string enum options (Zod `z.enum(...)`,
+ * Valibot, etc.) and `undefined` otherwise.
  */
-export type LiveSchemaField<K extends string = string> = {
-  key: K
+export type LiveSchemaField = {
   isActive: boolean
   enumOptions: readonly string[] | undefined
 }
 
 export type UseLiveSchemaResult<F> = {
-  /** Ordered keys of fields whose branch path matches the current values. */
-  activeFieldKeys: Array<SchemaKeys<F>>
-  /** Every field declared in the schema; `isActive` flags reachability. */
-  fields: Array<LiveSchemaField<SchemaKeys<F>>>
-  /** Convenience predicate equivalent to `activeFieldKeys.includes(key)`. */
+  /**
+   * Every field declared in the schema, keyed by field key. Insertion order
+   * matches the declaration order in the schema, so iteration via
+   * `Object.entries(fields)` preserves source order.
+   */
+  fields: Record<SchemaKeys<F>, LiveSchemaField>
+  /**
+   * The subset of `fields` whose branch path is currently reachable. Inactive
+   * keys are absent from the record (not present with `isActive: false`), so
+   * `Object.keys(activeFields)` gives the live ordered list of active keys.
+   */
+  activeFields: Partial<Record<SchemaKeys<F>, LiveSchemaField>>
+  /** Convenience predicate — equivalent to `key in activeFields`. */
   isActiveField: (key: SchemaKeys<F>) => boolean
 }
 
 /**
  * React hook that walks a liveschema definition against the current form values
- * and returns the active-field set in three forms (ordered keys, full field list
- * with `isActive` flags, predicate function). Drop it next to any form state
- * source — `useWatch` from react-hook-form, `useStore` from TanStack Form,
- * `useState`, etc. — and use the predicate to gate JSX:
+ * and exposes the active-field set as two records plus a predicate. Drop it
+ * next to any form state source — `useWatch` from react-hook-form, `useStore`
+ * from TanStack Form, plain `useState`, etc. — and gate JSX with the predicate:
  *
  *     const values = useWatch({ control })
  *     const { isActiveField, fields } = useLiveSchema(schema, values)
  *
- *     {isActiveField('paymentMethod') && <PaymentMethodRadios ... />}
+ *     {isActiveField('paymentMethod') && (
+ *       <PaymentMethodRadios options={fields.paymentMethod.enumOptions ?? []} />
+ *     )}
  */
 export function useLiveSchema<V extends object>(
   schema: SchemaBuilder<V>,
   values: Partial<V> | Record<string, unknown> | undefined,
 ): UseLiveSchemaResult<SchemaBuilder<V>> {
   return useMemo(() => {
+    type Key = SchemaKeys<SchemaBuilder<V>>
     const declared = declaredFields(schema, (values ?? {}) as Record<string, unknown>)
-    const fields = declared.map((f) => ({
-      key: f.key,
-      isActive: f.isActive,
-      enumOptions: enumOptions(f.schema),
-    })) as Array<LiveSchemaField<SchemaKeys<SchemaBuilder<V>>>>
-    const activeFieldKeys = declared.filter((f) => f.isActive).map((f) => f.key) as Array<
-      SchemaKeys<SchemaBuilder<V>>
-    >
-    const activeSet = new Set<string>(activeFieldKeys)
-    const isActiveField = (key: SchemaKeys<SchemaBuilder<V>>) => activeSet.has(key as string)
-    return { activeFieldKeys, fields, isActiveField }
+    const fields = {} as Record<Key, LiveSchemaField>
+    const activeFields = {} as Partial<Record<Key, LiveSchemaField>>
+    for (const f of declared) {
+      const info: LiveSchemaField = { isActive: f.isActive, enumOptions: enumOptions(f.schema) }
+      fields[f.key as Key] = info
+      if (f.isActive) activeFields[f.key as Key] = info
+    }
+    const isActiveField = (key: Key) => key in activeFields
+    return { fields, activeFields, isActiveField }
   }, [schema, values])
 }

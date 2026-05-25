@@ -53,6 +53,7 @@ export function App() {
 
   const values = useWatch({ control })
   const { fields, isActiveField } = useLiveSchema(formDef, values)
+  const fieldEntries = Object.entries(fields) as [FieldKey, (typeof fields)[FieldKey]][]
 
   const onSubmit = handleSubmit((data) => {
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
@@ -107,7 +108,7 @@ export function App() {
       <main>
         <section className="form-single">
           <form className="form-fields" onSubmit={onSubmit}>
-            {fields.map((f) => renderField(f.key, f.enumOptions))}
+            {fieldEntries.map(([key, info]) => renderField(key, info.enumOptions))}
             <div className="actions">
               <button type="submit">Submit</button>
             </div>

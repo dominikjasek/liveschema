@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toStandardSchema } from '@liveschema/core'
-import { useLiveSchema, type LiveSchemaField } from '@liveschema/vue'
+import { useLiveSchema } from '@liveschema/vue'
 import StepReview from './components/StepReview.vue'
 import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'
 import { form as orderForm, type Order, type FieldKey } from '@/schemas'
@@ -17,7 +17,7 @@ const stepGroups: readonly StepGroup[] = [
   { label: 'Order type', keys: ['orderType', 'leaveAtDoor'] },
 ]
 
-type ResolvedStep = { label: string; fields: LiveSchemaField<FieldKey>[] }
+type ResolvedStep = { label: string; keys: FieldKey[] }
 
 function humanize(field: string): string {
   return (
@@ -25,22 +25,22 @@ function humanize(field: string): string {
   )
 }
 
-function groupSteps(active: LiveSchemaField<FieldKey>[]): ResolvedStep[] {
+function groupSteps(activeKeys: FieldKey[]): ResolvedStep[] {
   const groupOf = new Map<string, StepGroup>()
   for (const grp of stepGroups) for (const k of grp.keys) groupOf.set(k, grp)
   const out: ResolvedStep[] = []
   const placed = new Set<StepGroup>()
-  for (const field of active) {
-    const grp = groupOf.get(field.key)
+  for (const key of activeKeys) {
+    const grp = groupOf.get(key)
     if (grp) {
       if (placed.has(grp)) continue
       placed.add(grp)
       out.push({
         label: grp.label,
-        fields: active.filter((f) => grp.keys.includes(f.key)),
+        keys: activeKeys.filter((k) => grp.keys.includes(k)),
       })
     } else {
-      out.push({ label: humanize(field.key), fields: [field] })
+      out.push({ label: humanize(key), keys: [key] })
     }
   }
   return out
@@ -54,13 +54,11 @@ const form = useForm<Order>({
   validationSchema: toStandardSchema(orderForm),
 })
 
-const { activeFieldKeys, fields } = useLiveSchema(orderForm, () => form.values)
+const { fields, activeFields } = useLiveSchema(orderForm, () => form.values)
 
-const activeFieldsList = computed<LiveSchemaField<FieldKey>[]>(() =>
-  fields.value.filter((f) => f.isActive),
-)
+const activeFieldKeys = computed<FieldKey[]>(() => Object.keys(activeFields.value) as FieldKey[])
 
-const currentSteps = computed<ResolvedStep[]>(() => groupSteps(activeFieldsList.value))
+const currentSteps = computed<ResolvedStep[]>(() => groupSteps(activeFieldKeys.value))
 
 const currentStep = computed<ResolvedStep | undefined>(() => {
   if (phase.value !== 'fill') return undefined
@@ -82,7 +80,12 @@ watch(
 const currentBindings = computed<StepBinding[]>(() => {
   const step = currentStep.value
   if (!step) return []
-  return step.fields.map(resolveStep).filter((b): b is StepBinding => !!b)
+  return step.keys
+    .map((k) => {
+      const info = fields.value[k]
+      return info ? resolveStep(k, info) : undefined
+    })
+    .filter((b): b is StepBinding => !!b)
 })
 
 const stepLabels = computed(() => [...currentSteps.value.map((s) => s.label), 'Review'])
@@ -96,13 +99,13 @@ async function goNext() {
   if (phase.value !== 'fill') return
   const step = currentStep.value
   if (!step) return
-  const results = await Promise.all(step.fields.map((f) => form.validateField(f.key as never)))
+  const results = await Promise.all(step.keys.map((k) => form.validateField(k as never)))
   if (results.some((r) => !r.valid)) return
   // Persist the parsed (potentially coerced) value so downstream branches
   // see e.g. a real number for `pizzaCount` rather than the raw string.
-  step.fields.forEach((f, i) => {
+  step.keys.forEach((k, i) => {
     const value = results[i].value
-    if (value !== undefined) form.setFieldValue(f.key as never, value as never)
+    if (value !== undefined) form.setFieldValue(k as never, value as never)
   })
   if (stepIndex.value < currentSteps.value.length - 1) {
     stepIndex.value++

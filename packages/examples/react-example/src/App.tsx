@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { activeFields, type SchemaField } from '@liveschema/core'
-import { useLiveSchema, type LiveSchemaField } from '@liveschema/react'
-import { form as formDef, type FieldKey, type Order } from './schemas'
+import { useLiveSchema } from '@liveschema/react'
+import { form as formDef, type Order } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
 import { humanize } from './stepLabels'
@@ -41,12 +41,8 @@ export function App() {
   const steps: SchemaField[] = useMemo(() => activeFields(formDef, values), [values])
 
   // useLiveSchema gives us enumOptions baked in for renderers that need them.
+  // `fields` is a Record<Key, {isActive, enumOptions}> — keyed lookup, no .find().
   const { fields } = useLiveSchema(formDef, values)
-  const fieldByKey = useMemo(() => {
-    const m = new Map<string, LiveSchemaField<FieldKey>>()
-    for (const f of fields) m.set(f.key, f)
-    return m
-  }, [fields])
 
   // Clamp stepIndex if a branch change shrinks the step list. Stored
   // stepIndex may drift out of range; reads always go through clampedIndex.
@@ -119,7 +115,7 @@ export function App() {
   const renderer = currentStep
     ? stepRenderers[currentStep.key as keyof typeof stepRenderers]
     : undefined
-  const currentField = currentStep ? fieldByKey.get(currentStep.key) : undefined
+  const currentField = currentStep ? fields[currentStep.key as keyof typeof fields] : undefined
 
   return (
     <>

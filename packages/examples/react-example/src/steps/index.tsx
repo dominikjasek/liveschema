@@ -7,7 +7,7 @@ import { TextStep } from './TextStep'
 import { CheckboxStep } from './CheckboxStep'
 import { StepNumberInput } from './StepNumberInput'
 
-type Renderer = (form: AdoptionForm, field: LiveSchemaField<FieldKey>) => ReactNode
+type Renderer = (form: AdoptionForm, field: LiveSchemaField) => ReactNode
 
 const text = (path: FieldKey, question: string, type: 'text' | 'email' = 'text'): Renderer =>
   function TextRenderer(form) {

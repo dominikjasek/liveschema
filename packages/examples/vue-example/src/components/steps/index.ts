@@ -16,34 +16,34 @@ export type StepBinding = {
   props: Record<string, unknown>
 }
 
-type Renderer = (field: LiveSchemaField<FieldKey>) => StepBinding
+type Renderer = (key: FieldKey, field: LiveSchemaField) => StepBinding
 
 const text =
   (question: string, type: 'text' | 'email' = 'text'): Renderer =>
-  (field) => ({
+  (key) => ({
     component: TextStep,
-    props: { path: field.key, question, type },
+    props: { path: key, question, type },
   })
 
 const checkbox =
   (question: string, confirmLabel?: string): Renderer =>
-  (field) => ({
+  (key) => ({
     component: CheckboxStep,
-    props: { path: field.key, question, confirmLabel },
+    props: { path: key, question, confirmLabel },
   })
 
 const number =
   (question: string, min?: number, max?: number): Renderer =>
-  (field) => ({
+  (key) => ({
     component: NumberStep,
-    props: { path: field.key, question, min, max },
+    props: { path: key, question, min, max },
   })
 
 const radio =
   (question: string): Renderer =>
-  (field) => ({
+  (key, field) => ({
     component: RadioStep,
-    props: { path: field.key, question, options: field.enumOptions ?? [] },
+    props: { path: key, question, options: field.enumOptions ?? [] },
   })
 
 const renderers: Record<FieldKey, Renderer> = {
@@ -63,9 +63,9 @@ const renderers: Record<FieldKey, Renderer> = {
   napkinCount: number('How many extra napkins?', 1, 20),
 }
 
-export function resolveStep(field: LiveSchemaField<FieldKey>): StepBinding | undefined {
-  const renderer = renderers[field.key]
-  return renderer ? renderer(field) : undefined
+export function resolveStep(key: FieldKey, field: LiveSchemaField): StepBinding | undefined {
+  const renderer = renderers[key]
+  return renderer ? renderer(key, field) : undefined
 }
 
 export const stepLabels: Record<string, string> = {

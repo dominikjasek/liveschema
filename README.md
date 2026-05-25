@@ -65,20 +65,23 @@ Each framework package exposes a `useLiveSchema(schema, values)` that returns th
 ```ts
 import { useLiveSchema } from '@liveschema/react'
 
-const { activeFieldKeys, fields, isActiveField } = useLiveSchema(order, values)
-// activeFieldKeys: string[]   — ordered keys whose branch path matches `values`
-// fields:          {key, isActive, enumOptions}[]  — every declared field
-// isActiveField:   (key) => boolean                — predicate for JSX gating
+const { fields, activeFields, isActiveField } = useLiveSchema(order, values)
+// fields:        Record<Key, {isActive, enumOptions}>           — every declared field
+// activeFields:  Partial<Record<Key, {isActive, enumOptions}>>  — active subset (inactive keys absent)
+// isActiveField: (key) => boolean                                — predicate for JSX gating
 ```
 
 ```vue
 <script setup lang="ts">
 import { useLiveSchema } from '@liveschema/vue'
-const { activeFieldKeys, fields, isActiveField } = useLiveSchema(order, () => form.values)
+const { fields, activeFields, isActiveField } = useLiveSchema(order, () => form.values)
 </script>
 
 <template>
-  <PaymentRadios v-if="isActiveField('paymentMethod')" />
+  <PaymentRadios
+    v-if="isActiveField('paymentMethod')"
+    :options="fields.paymentMethod.enumOptions ?? []"
+  />
 </template>
 ```
 

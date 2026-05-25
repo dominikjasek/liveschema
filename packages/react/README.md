@@ -27,16 +27,18 @@ export function MyForm() {
   })
 
   const values = useWatch({ control })
-  const { activeFieldKeys, fields, isActiveField } = useLiveSchema(schema, values)
+  const { fields, activeFields, isActiveField } = useLiveSchema(schema, values)
 
   return (
     <form>
       {/* Gate JSX directly with the predicate — no manual Set tracking. */}
-      {isActiveField('paymentMethod') && <PaymentRadios />}
+      {isActiveField('paymentMethod') && (
+        <PaymentRadios options={fields.paymentMethod.enumOptions ?? []} />
+      )}
 
-      {/* Or iterate every declared field and read isActive yourself. */}
-      {fields.map((f) => (
-        <Field key={f.key} disabled={!f.isActive} options={f.enumOptions ?? []} />
+      {/* Or iterate the active subset in source order. */}
+      {Object.entries(activeFields).map(([key, info]) => (
+        <Field key={key} name={key} options={info?.enumOptions ?? []} />
       ))}
     </form>
   )
@@ -45,14 +47,14 @@ export function MyForm() {
 
 ### Return shape
 
-| Property          | Type                                                                 | Meaning                                                                                          |
-| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `activeFieldKeys` | `Key[]`                                                              | Ordered keys whose branch path matches the current values.                                       |
-| `fields`          | `{ key: Key; isActive: boolean; enumOptions?: readonly string[] }[]` | Every declared field, in source order; `enumOptions` is set only for enum leaves (Zod, Valibot). |
-| `isActiveField`   | `(key: Key) => boolean`                                              | Predicate equivalent to `activeFieldKeys.includes(key)`. Use for JSX gating.                     |
+| Property        | Type                                                                           | Meaning                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `fields`        | `Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>`          | Every declared field, keyed by field key. Insertion order matches the schema's declaration order.                              |
+| `activeFields`  | `Partial<Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>>` | The currently-reachable subset of `fields`; inactive keys are absent. `Object.keys(activeFields)` gives the live ordered list. |
+| `isActiveField` | `(key: Key) => boolean`                                                        | Predicate equivalent to `key in activeFields`. Use for JSX gating.                                                             |
 
 Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `isActiveField('typo')` is a compile-time error.
 
 ### When to reach for `@liveschema/core` directly
 
-The hook intentionally exposes a UI-shaped slice. If you need the underlying validator for incremental per-field validation, use `activeFields(schema, values)` from the core package alongside the hook.
+The hook intentionally exposes a UI-shaped slice. If you need the underlying validator for incremental per-field validation, use `activeFields(schema, values)` (the function from the core package) alongside the hook.
