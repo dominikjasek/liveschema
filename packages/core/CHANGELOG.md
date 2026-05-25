@@ -1,5 +1,11 @@
 # @liveschema/core
 
+## 1.0.0
+
+### Major Changes
+
+- 5f56592: init
+
 ## 0.1.0
 
 ### Minor Changes
