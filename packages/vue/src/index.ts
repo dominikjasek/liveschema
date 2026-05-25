@@ -1,5 +1,5 @@
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
-import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from 'liveschema'
+import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from '@liveschema/core'
 
 /**
  * A field of the schema as exposed to Vue consumers. `enumOptions` is populated

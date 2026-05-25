@@ -50,9 +50,11 @@ describe('declaredFields', () => {
 
   test('preserves source order inside nested branches', () => {
     const schema = defineSchema()
-      .field('outer', z.string())
+      .field('outer', z.enum(['on', 'off']))
       .when({ outer: 'on' }, (b) =>
-        b.field('inner1', z.string()).when({ inner1: 'x' }, (b) => b.field('inner2', z.string())),
+        b
+          .field('inner1', z.enum(['x', 'y']))
+          .when({ inner1: 'x' }, (b) => b.field('inner2', z.string())),
       )
 
     expect(declaredFields(schema, { outer: 'off' }).map((f) => f.key)).toEqual([
@@ -159,7 +161,9 @@ describe('declaredFields', () => {
     const schema = defineSchema()
       .field('outer', z.enum(['on', 'off']))
       .when({ outer: 'on' }, (b) =>
-        b.field('mid', z.string()).when({ mid: 'go' }, (b) => b.field('deep', z.string())),
+        b
+          .field('mid', z.enum(['go', 'wait']))
+          .when({ mid: 'go' }, (b) => b.field('deep', z.string())),
       )
 
     // outer=off → both inner fields inactive even if `mid` looks like 'go'.

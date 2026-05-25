@@ -10,10 +10,10 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@liveschema/core": "workspace:*",
     "@standard-schema/spec": "^1.0.0",
     "effect": "^3.21.0",
     "felte": "^1.3.0",
-    "liveschema": "workspace:*",
     "svelte": "^5.55.0"
   },
   "devDependencies": {

@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.0",
+    "@liveschema/core": "workspace:*",
     "@liveschema/react": "workspace:*",
-    "liveschema": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",

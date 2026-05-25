@@ -1,4 +1,4 @@
-import { activeFields } from 'liveschema'
+import { activeFields } from '@liveschema/core'
 import { form } from './schemas'
 import { humanize } from './stepLabels'
 

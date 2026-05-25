@@ -1,5 +1,5 @@
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
-import { activeFields, enumOptions, toStandardSchema } from 'liveschema'
+import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
 import { form as formDef, type FormValues, type FieldKey } from './schema'
 
 const labels: Record<FieldKey, string> = {

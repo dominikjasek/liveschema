@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineSchema, type InferField, type InferSchema, type SchemaKeys } from 'liveschema'
+import { defineSchema, type InferField, type InferSchema, type SchemaKeys } from '@liveschema/core'
 
 export const mainCourses = ['pizza', 'salad'] as const
 export const pizzaSizes = ['small', 'medium', 'large'] as const

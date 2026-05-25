@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { activeFields, type SchemaField } from 'liveschema'
+import { activeFields, type SchemaField } from '@liveschema/core'
 import { useLiveSchema, type LiveSchemaField } from '@liveschema/react'
 import { form as formDef, type FieldKey, type Order } from './schemas'
 import { stepRenderers } from './steps'

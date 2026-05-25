@@ -1,4 +1,4 @@
-# liveschema
+# @liveschema/core
 
 Build a typed, branching schema from any [Standard Schema](https://standardschema.dev) validators (Zod, Valibot, ArkType, Effect Schema, …). The inferred value type is a **discriminated union** over every reachable branch — and at runtime, given the current values, you get the **ordered list of currently-reachable fields**.
 
@@ -24,18 +24,21 @@ Existing tools fall into two camps that each leave something on the table:
 ## Install
 
 ```bash
-pnpm add liveschema
+pnpm add @liveschema/core
 # plus whichever Standard-Schema-compliant validator you prefer:
 pnpm add zod        # or: valibot, arktype, effect, ...
 ```
 
-`liveschema` has no runtime dependency on any specific validation library. Bring your own.
+`@liveschema/core` has no runtime dependency on any specific validation library. Bring your own.
+
+> Migrating from pre-0.1 `liveschema` (unscoped)? Replace `from '@liveschema/core'`
+> with `from '@liveschema/core'`. The runtime API is unchanged.
 
 ## Quick start
 
 ```ts
 import { z } from 'zod'
-import { defineSchema, activeFields, type InferSchema } from 'liveschema'
+import { defineSchema, activeFields, type InferSchema } from '@liveschema/core'
 
 const schema = defineSchema()
   .field('name', z.string().min(1))
@@ -84,7 +87,7 @@ OR branch — inner fields are reachable when the current values match _any_ pat
 ## Type inference
 
 ```ts
-import type { InferSchema, InferField } from 'liveschema'
+import type { InferSchema, InferField } from '@liveschema/core'
 
 type Values = InferSchema<typeof schema> // discriminated union of branches
 type DogSize = InferField<typeof schema, 'dogSize'> // 'small' | 'large'
@@ -107,7 +110,7 @@ Use `Partial<Values>` to model in-progress (partially-filled) state.
 `toStandardSchema(schema)` returns a single Standard Schema that validates the currently-reachable fields. Plug it into any framework that accepts Standard Schema:
 
 ```ts
-import { toStandardSchema } from 'liveschema'
+import { toStandardSchema } from '@liveschema/core'
 
 const standard = toStandardSchema(schema)
 const result = standard['~standard'].validate(await req.json())

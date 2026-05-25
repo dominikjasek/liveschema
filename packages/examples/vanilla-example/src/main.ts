@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { activeFields, validateSchema, type SchemaField } from 'liveschema'
+import { activeFields, validateSchema, type SchemaField } from '@liveschema/core'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement

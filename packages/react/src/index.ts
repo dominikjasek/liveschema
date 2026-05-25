@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from 'liveschema'
+import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from '@liveschema/core'
 
 /**
  * A field of the schema as exposed to React consumers. `enumOptions` is populated

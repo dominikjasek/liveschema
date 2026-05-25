@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { toStandardSchema } from 'liveschema'
+import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema, type LiveSchemaField } from '@liveschema/vue'
 import StepReview from './components/StepReview.vue'
 import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'

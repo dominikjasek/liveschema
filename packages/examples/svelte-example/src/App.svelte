@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createForm } from 'felte'
-  import { activeFields, enumOptions, toStandardSchema } from 'liveschema'
+  import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
   import { form as formDef, type FieldKey, type FormValues } from './schema'
 
   const labels: Record<FieldKey, string> = {

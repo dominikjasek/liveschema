@@ -1,6 +1,6 @@
 import { Controller, useForm, useWatch, type Control } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
-import { toStandardSchema } from 'liveschema'
+import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/react'
 import { form as formDef, type FormValues, type FieldKey } from './schema'
 

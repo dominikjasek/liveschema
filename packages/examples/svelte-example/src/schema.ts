@@ -1,6 +1,6 @@
 import { Schema } from 'effect'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
-import { defineSchema, type InferSchema, type SchemaKeys } from 'liveschema'
+import { defineSchema, type InferSchema, type SchemaKeys } from '@liveschema/core'
 
 // Effect Schema → Standard Schema adapter. liveschema accepts any
 // StandardSchemaV1, so we wrap each Effect schema via the official helper.
