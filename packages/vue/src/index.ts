@@ -1,31 +1,62 @@
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
-import { declaredFields, enumOptions, type SchemaBuilder, type SchemaKeys } from '@liveschema/core'
+import {
+  declaredFields,
+  enumOptions,
+  type InferField,
+  type SchemaBuilder,
+  type SchemaKeys,
+} from '@liveschema/core'
 
 /**
- * Per-field metadata exposed to Vue consumers. The field's key is the record
- * key (no `key` property on the value); `enumOptions` is **only present** when
- * the field's validator exposes string enum options (Zod `z.enum(...)`,
- * Valibot, etc.), and absent from the object entirely otherwise — so
- * `'enumOptions' in info` cleanly discriminates enum fields from non-enum ones.
+ * Pull the string-literal members out of T if T is a (multi-)literal string
+ * union — `'a' | 'b'`, `'a' | 'b' | undefined`. Wide `string`, booleans,
+ * numbers, plain objects, etc. all collapse to `never`. Used to decide whether
+ * a field gets an `enumOptions` property on its record entry.
+ */
+type EnumOptionsFor<T> = [Extract<T, string>] extends [never]
+  ? never
+  : string extends Extract<T, string>
+    ? never
+    : Extract<T, string>
+
+/**
+ * Per-key record entry shape. Non-enum-like fields get `{ isActive }` only —
+ * `fields.someBoolean.enumOptions` is a compile error rather than `undefined`.
+ * Enum-like fields get `enumOptions?` typed to that field's literal union.
+ *
+ * `enumOptions` stays optional even when statically detected so that edge
+ * cases that look enum-like to TS but don't expose `.options` at runtime
+ * (e.g. a Standard Schema vendor that doesn't follow the Zod convention)
+ * still surface as `undefined` instead of producing a runtime mismatch.
+ */
+export type LiveSchemaFieldFor<T> = [EnumOptionsFor<T>] extends [never]
+  ? { isActive: boolean }
+  : { isActive: boolean; enumOptions?: readonly EnumOptionsFor<T>[] }
+
+/**
+ * Open-ended supertype for code that needs a single shape to accept any field
+ * (e.g. a renderer that takes an arbitrary entry without caring which key).
+ * Both `LiveSchemaFieldFor<T>` branches are assignable to this.
  */
 export type LiveSchemaField = {
   isActive: boolean
   enumOptions?: readonly string[]
 }
 
+type FieldsRecord<F> = { [K in SchemaKeys<F>]: LiveSchemaFieldFor<InferField<F, K>> }
+
 export type UseLiveSchemaResult<F> = {
   /**
-   * Computed ref of every declared field, keyed by field key. Insertion order
-   * matches the declaration order in the schema, so iteration via
-   * `Object.entries(fields.value)` preserves source order.
+   * Computed ref of every declared field, keyed by field key. Each entry's
+   * shape is derived from that key's inferred value type: enum-like fields
+   * carry `enumOptions?`, others don't have the property at all.
    */
-  fields: ComputedRef<Record<SchemaKeys<F>, LiveSchemaField>>
+  fields: ComputedRef<FieldsRecord<F>>
   /**
    * Computed ref of the active subset. Inactive keys are absent from the
-   * record (not present with `isActive: false`), so `Object.keys(activeFields.value)`
-   * gives the live ordered list of active keys.
+   * record, so `Object.keys(activeFields.value)` gives the live ordered list.
    */
-  activeFields: ComputedRef<Partial<Record<SchemaKeys<F>, LiveSchemaField>>>
+  activeFields: ComputedRef<Partial<FieldsRecord<F>>>
   /**
    * Reactive predicate — usable from templates without `.value`, and from
    * `<script setup>` without `.value` (reads the computed ref internally).
@@ -54,34 +85,33 @@ export function useLiveSchema<V extends object>(
   schema: SchemaBuilder<V>,
   values: MaybeRefOrGetter<Partial<V> | Record<string, unknown> | undefined>,
 ): UseLiveSchemaResult<SchemaBuilder<V>> {
-  type Key = SchemaKeys<SchemaBuilder<V>>
+  type Result = UseLiveSchemaResult<SchemaBuilder<V>>
 
   const declared = computed(() =>
     declaredFields(schema, (toValue(values) ?? {}) as Record<string, unknown>),
   )
 
   const fields = computed(() => {
-    const out = {} as Record<Key, LiveSchemaField>
+    const out: Record<string, LiveSchemaField> = {}
     for (const f of declared.value) {
       const opts = enumOptions(f.schema)
-      out[f.key as Key] =
+      out[f.key] =
         opts !== undefined ? { isActive: f.isActive, enumOptions: opts } : { isActive: f.isActive }
     }
-    return out
+    return out as Result['fields']['value']
   })
 
   const activeFields = computed(() => {
-    const out = {} as Partial<Record<Key, LiveSchemaField>>
+    const out: Record<string, LiveSchemaField> = {}
     for (const f of declared.value) {
       if (!f.isActive) continue
       const opts = enumOptions(f.schema)
-      out[f.key as Key] =
-        opts !== undefined ? { isActive: true, enumOptions: opts } : { isActive: true }
+      out[f.key] = opts !== undefined ? { isActive: true, enumOptions: opts } : { isActive: true }
     }
-    return out
+    return out as Result['activeFields']['value']
   })
 
-  const isActiveField = (key: Key) => key in activeFields.value
+  const isActiveField = (key: SchemaKeys<SchemaBuilder<V>>) => key in activeFields.value
 
   return { fields, activeFields, isActiveField }
 }

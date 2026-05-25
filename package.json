@@ -12,7 +12,7 @@
     "dev:rhf": "pnpm --filter react-hook-form-example dev",
     "build": "pnpm -r --filter=\"./packages/core\" --filter=\"./packages/react\" --filter=\"./packages/vue\" build",
     "build:all": "pnpm -r build",
-    "test": "pnpm -r --filter=\"./packages/core\" test",
+    "test": "pnpm -r --filter=\"./packages/core\" --filter=\"./packages/react\" --filter=\"./packages/vue\" test",
     "typecheck": "pnpm -r --filter=\"./packages/core\" --filter=\"./packages/react\" --filter=\"./packages/vue\" typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

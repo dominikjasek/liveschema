@@ -273,15 +273,27 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.6
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@types/node@12.20.55)(vite@8.0.12(@types/node@12.20.55)(esbuild@0.27.7))
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/vue:
     devDependencies:
       '@liveschema/core':
         specifier: workspace:*
         version: link:../core
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@types/node@12.20.55)(vite@8.0.12(@types/node@12.20.55)(esbuild@0.27.7))
       vue:
         specifier: ^3.5.32
         version: 3.5.34(typescript@6.0.3)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
 packages:
 

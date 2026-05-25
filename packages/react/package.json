@@ -49,8 +49,9 @@
   },
   "scripts": {
     "build": "tsup",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "ci": "pnpm run typecheck && pnpm run build"
+    "ci": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "peerDependencies": {
     "@liveschema/core": "workspace:*",
@@ -59,6 +60,8 @@
   "devDependencies": {
     "@liveschema/core": "workspace:*",
     "@types/react": "^19.0.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "vitest": "^4.1.7",
+    "zod": "^4.4.3"
   }
 }

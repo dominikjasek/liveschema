@@ -108,7 +108,9 @@ export function App() {
       <main>
         <section className="form-single">
           <form className="form-fields" onSubmit={onSubmit}>
-            {fieldEntries.map(([key, info]) => renderField(key, info.enumOptions))}
+            {fieldEntries.map(([key, info]) =>
+              renderField(key, 'enumOptions' in info ? info.enumOptions : undefined),
+            )}
             <div className="actions">
               <button type="submit">Submit</button>
             </div>
