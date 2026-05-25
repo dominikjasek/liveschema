@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@liveschema/vue": "workspace:*",
     "@vee-validate/zod": "^4.15.1",
     "liveschema": "workspace:*",
     "vee-validate": "^4.15.1",

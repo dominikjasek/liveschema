@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
-import { activeFields, toStandardSchema, type SchemaField } from 'liveschema'
+import { toStandardSchema } from 'liveschema'
+import { useLiveSchema, type LiveSchemaField } from '@liveschema/vue'
 import StepReview from './components/StepReview.vue'
 import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'
 import { form as orderForm, type Order, type FieldKey } from '@/schemas'
@@ -16,7 +17,7 @@ const stepGroups: readonly StepGroup[] = [
   { label: 'Order type', keys: ['orderType', 'leaveAtDoor'] },
 ]
 
-type ResolvedStep = { label: string; fields: SchemaField[] }
+type ResolvedStep = { label: string; fields: LiveSchemaField<FieldKey>[] }
 
 function humanize(field: string): string {
   return (
@@ -24,7 +25,7 @@ function humanize(field: string): string {
   )
 }
 
-function groupSteps(active: SchemaField[]): ResolvedStep[] {
+function groupSteps(active: LiveSchemaField<FieldKey>[]): ResolvedStep[] {
   const groupOf = new Map<string, StepGroup>()
   for (const grp of stepGroups) for (const k of grp.keys) groupOf.set(k, grp)
   const out: ResolvedStep[] = []
@@ -36,7 +37,7 @@ function groupSteps(active: SchemaField[]): ResolvedStep[] {
       placed.add(grp)
       out.push({
         label: grp.label,
-        fields: active.filter((f) => grp.keys.includes(f.key as FieldKey)),
+        fields: active.filter((f) => grp.keys.includes(f.key)),
       })
     } else {
       out.push({ label: humanize(field.key), fields: [field] })
@@ -53,11 +54,13 @@ const form = useForm<Order>({
   validationSchema: toStandardSchema(orderForm),
 })
 
-const currentActiveFields = computed<SchemaField[]>(() =>
-  activeFields(orderForm, form.values as Record<string, unknown>),
+const { activeFieldKeys, fields } = useLiveSchema(orderForm, () => form.values)
+
+const activeFieldsList = computed<LiveSchemaField<FieldKey>[]>(() =>
+  fields.value.filter((f) => f.isActive),
 )
 
-const currentSteps = computed<ResolvedStep[]>(() => groupSteps(currentActiveFields.value))
+const currentSteps = computed<ResolvedStep[]>(() => groupSteps(activeFieldsList.value))
 
 const currentStep = computed<ResolvedStep | undefined>(() => {
   if (phase.value !== 'fill') return undefined
@@ -178,11 +181,7 @@ function submit() {
         </template>
 
         <pre class="debug">{{
-          JSON.stringify(
-            { values: form.values, stepIndex, steps: currentActiveFields.map((s) => s.key) },
-            null,
-            2,
-          )
+          JSON.stringify({ values: form.values, stepIndex, steps: activeFieldKeys }, null, 2)
         }}</pre>
       </div>
     </section>

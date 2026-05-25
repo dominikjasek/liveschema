@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
-import { Controller, useForm, useWatch, type Control, type Path } from 'react-hook-form'
+import { Controller, useForm, useWatch, type Control } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
-import { activeFields, enumOptions, toStandardSchema } from 'liveschema'
+import { toStandardSchema } from 'liveschema'
+import { useLiveSchema } from '@liveschema/react'
 import { form as formDef, type FormValues, type FieldKey } from './schema'
 
 const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
@@ -51,8 +51,8 @@ export function App() {
     shouldUnregister: false,
   })
 
-  const values = useWatch({ control }) as Record<string, unknown>
-  const fields = useMemo(() => activeFields(formDef, values), [values])
+  const values = useWatch({ control })
+  const { fields, isActiveField } = useLiveSchema(formDef, values)
 
   const onSubmit = handleSubmit((data) => {
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
@@ -60,20 +60,19 @@ export function App() {
 
   const fieldErrors = errors as Partial<Record<FieldKey, { message?: string }>>
 
-  function renderField(key: FieldKey, schema: ReturnType<typeof activeFields>[number]['schema']) {
-    const path = key as Path<FormValues>
+  function renderField(key: FieldKey, enumOpts: readonly string[] | undefined) {
+    if (!isActiveField(key)) return null
     const errorMsg = fieldErrors[key]?.message
     const label = labels[key]
 
-    const options = enumOptions(schema)
-    if (options) {
+    if (enumOpts) {
       return (
         <ControllerRadio
           key={key}
           control={control}
-          name={path}
+          name={key}
           label={label}
-          options={options}
+          options={enumOpts}
           errorMsg={errorMsg}
         />
       )
@@ -84,7 +83,7 @@ export function App() {
         <ControllerCheckbox
           key={key}
           control={control}
-          name={path}
+          name={key}
           label={label}
           errorMsg={errorMsg}
         />
@@ -94,7 +93,7 @@ export function App() {
     return (
       <label key={key} className="field">
         <span>{label}</span>
-        <input className="text-input" type="text" {...register(path)} />
+        <input className="text-input" type="text" {...register(key)} />
         {errorMsg && <p className="error">{errorMsg}</p>}
       </label>
     )
@@ -108,7 +107,7 @@ export function App() {
       <main>
         <section className="form-single">
           <form className="form-fields" onSubmit={onSubmit}>
-            {fields.map((f) => renderField(f.key as FieldKey, f.schema))}
+            {fields.map((f) => renderField(f.key, f.enumOptions))}
             <div className="actions">
               <button type="submit">Submit</button>
             </div>
@@ -122,7 +121,7 @@ export function App() {
 
 type ControllerRadioProps = {
   control: Control<FormValues>
-  name: Path<FormValues>
+  name: FieldKey
   label: string
   options: readonly string[]
   errorMsg?: string
@@ -157,7 +156,7 @@ function ControllerRadio({ control, name, label, options, errorMsg }: Controller
 
 type ControllerCheckboxProps = {
   control: Control<FormValues>
-  name: Path<FormValues>
+  name: FieldKey
   label: string
   errorMsg?: string
 }

@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { enumOptions, type SchemaField } from 'liveschema'
+import type { LiveSchemaField } from '@liveschema/vue'
 import TextStep from './TextStep.vue'
 import RadioStep from './RadioStep.vue'
 import CheckboxStep from './CheckboxStep.vue'
@@ -8,42 +8,42 @@ import type { FieldKey } from '@/schemas'
 
 /**
  * Resolves a form field to the Vue component + props that should render it.
- * Reads the schema for radio options so `pizzaSize` picks up the
- * delivery-specific enum (excluding `large`).
+ * Reads the field's enumOptions for radios (e.g. delivery `pizzaSize` excludes
+ * `large`) — useLiveSchema bakes the right schema into each entry.
  */
 export type StepBinding = {
   component: Component
   props: Record<string, unknown>
 }
 
-type Renderer = (step: SchemaField) => StepBinding
+type Renderer = (field: LiveSchemaField<FieldKey>) => StepBinding
 
 const text =
   (question: string, type: 'text' | 'email' = 'text'): Renderer =>
-  (step) => ({
+  (field) => ({
     component: TextStep,
-    props: { path: step.key, question, type },
+    props: { path: field.key, question, type },
   })
 
 const checkbox =
   (question: string, confirmLabel?: string): Renderer =>
-  (step) => ({
+  (field) => ({
     component: CheckboxStep,
-    props: { path: step.key, question, confirmLabel },
+    props: { path: field.key, question, confirmLabel },
   })
 
 const number =
   (question: string, min?: number, max?: number): Renderer =>
-  (step) => ({
+  (field) => ({
     component: NumberStep,
-    props: { path: step.key, question, min, max },
+    props: { path: field.key, question, min, max },
   })
 
 const radio =
   (question: string): Renderer =>
-  (step) => ({
+  (field) => ({
     component: RadioStep,
-    props: { path: step.key, question, options: enumOptions(step.schema) ?? [] },
+    props: { path: field.key, question, options: field.enumOptions ?? [] },
   })
 
 const renderers: Record<FieldKey, Renderer> = {
@@ -63,9 +63,9 @@ const renderers: Record<FieldKey, Renderer> = {
   napkinCount: number('How many extra napkins?', 1, 20),
 }
 
-export function resolveStep(step: SchemaField): StepBinding | undefined {
-  const renderer = renderers[step.key as FieldKey]
-  return renderer ? renderer(step) : undefined
+export function resolveStep(field: LiveSchemaField<FieldKey>): StepBinding | undefined {
+  const renderer = renderers[field.key]
+  return renderer ? renderer(field) : undefined
 }
 
 export const stepLabels: Record<string, string> = {

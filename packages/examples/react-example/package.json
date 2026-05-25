@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@liveschema/react": "workspace:*",
     "@tanstack/react-form": "^1.0.0",
     "liveschema": "workspace:*",
     "react": "^19.0.0",

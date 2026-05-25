@@ -1,0 +1,63 @@
+{
+  "name": "@liveschema/vue",
+  "version": "0.0.1",
+  "description": "Vue bindings for liveschema. `useLiveSchema(schema, values)` returns computed refs for the ordered active field keys and every declared field (with `isActive` flag + enum options), plus an `isActiveField(key)` predicate for `v-if` gates.",
+  "keywords": [
+    "vue",
+    "composable",
+    "schema",
+    "conditional",
+    "form",
+    "validation",
+    "standard-schema",
+    "liveschema"
+  ],
+  "homepage": "https://github.com/dominikjasek/liveschema",
+  "bugs": {
+    "url": "https://github.com/dominikjasek/liveschema/issues"
+  },
+  "author": "Dominik Jasek <dominik@dominikjasek.cz> (https://dominikjasek.cz)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dominikjasek/liveschema.git",
+    "directory": "packages/vue"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "ci": "pnpm run typecheck && pnpm run build"
+  },
+  "peerDependencies": {
+    "liveschema": "workspace:*",
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "liveschema": "workspace:*",
+    "vue": "^3.5.32"
+  }
+}

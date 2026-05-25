@@ -305,6 +305,33 @@ export function activeFields<V extends object>(
   return out as Array<SchemaField<DistributeKeys<V>>>
 }
 
+/** A field declared anywhere in the schema, with whether its branch path matches the current values. */
+export type DeclaredField<K extends string = string> = {
+  key: K
+  schema: StandardSchemaV1
+  isActive: boolean
+  value: unknown
+}
+
+/**
+ * Every field declared in the schema, in source order, each tagged with whether its
+ * branch path is reachable given `values`. Unlike `activeFields` (which yields only
+ * reachable fields), this also surfaces fields gated behind unmatched branches —
+ * useful for UIs that want to render disabled fields rather than unmount them.
+ *
+ * Duplicate keys (same key declared in multiple branches with different schemas)
+ * are deduped by key; the active occurrence wins, otherwise the first declaration.
+ */
+export function declaredFields<V extends object>(
+  schema: SchemaBuilder<V>,
+  values: Partial<V> | Record<string, unknown>,
+): Array<DeclaredField<DistributeKeys<V>>> {
+  const out: DeclaredField[] = []
+  const seen = new Map<string, number>()
+  walkAllNodes(schema[SCHEMA_NODES], values as Record<string, unknown>, true, out, seen)
+  return out as Array<DeclaredField<DistributeKeys<V>>>
+}
+
 /** Flat `{ fieldKey: firstMessage }` shape produced by `validateSchema`. */
 export type SchemaErrors<F> = Partial<Record<SchemaKeys<F>, string>>
 
@@ -421,6 +448,42 @@ function walkSchemaNodes(
       if (match) walkSchemaNodes(node.children, values, out)
     } else {
       if (node.predicate(values)) walkSchemaNodes(node.children, values, out)
+    }
+  }
+}
+
+function walkAllNodes(
+  nodes: SchemaNode[],
+  values: Record<string, unknown>,
+  pathActive: boolean,
+  out: DeclaredField[],
+  seen: Map<string, number>,
+): void {
+  for (const node of nodes) {
+    if (node.kind === 'field') {
+      const existingIdx = seen.get(node.key)
+      const entry: DeclaredField = {
+        key: node.key,
+        schema: node.schema,
+        isActive: pathActive,
+        value: values[node.key],
+      }
+      if (existingIdx === undefined) {
+        seen.set(node.key, out.length)
+        out.push(entry)
+      } else if (pathActive && !out[existingIdx].isActive) {
+        // Prefer the active occurrence's schema (different branches may declare
+        // the same key with different validators / enum options).
+        out[existingIdx] = entry
+      }
+    } else if (node.kind === 'whenEq') {
+      const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
+      walkAllNodes(node.children, values, pathActive && match, out, seen)
+    } else if (node.kind === 'whenAny') {
+      const match = node.patterns.some((p) => Object.entries(p).every(([k, v]) => values[k] === v))
+      walkAllNodes(node.children, values, pathActive && match, out, seen)
+    } else {
+      walkAllNodes(node.children, values, pathActive && node.predicate(values), out, seen)
     }
   }
 }

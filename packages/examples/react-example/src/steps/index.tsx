@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { enumOptions, type SchemaField } from 'liveschema'
+import type { LiveSchemaField } from '@liveschema/react'
 import type { AdoptionForm } from '../formTypes'
 import type { FieldKey } from '../schemas'
 import { RadioStep } from './RadioStep'
@@ -7,7 +7,7 @@ import { TextStep } from './TextStep'
 import { CheckboxStep } from './CheckboxStep'
 import { StepNumberInput } from './StepNumberInput'
 
-type Renderer = (form: AdoptionForm, step: SchemaField) => ReactNode
+type Renderer = (form: AdoptionForm, field: LiveSchemaField<FieldKey>) => ReactNode
 
 const text = (path: FieldKey, question: string, type: 'text' | 'email' = 'text'): Renderer =>
   function TextRenderer(form) {
@@ -25,9 +25,10 @@ const number = (path: FieldKey, question: string, min?: number, max?: number): R
   }
 
 const radio = (path: FieldKey, question: string): Renderer =>
-  function RadioRenderer(form, step) {
-    const options = enumOptions(step.schema) ?? []
-    return <RadioStep form={form} path={path} question={question} options={options} />
+  function RadioRenderer(form, field) {
+    return (
+      <RadioStep form={form} path={path} question={question} options={field.enumOptions ?? []} />
+    )
   }
 
 export const stepRenderers: Record<FieldKey, Renderer> = {

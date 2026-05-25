@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { activeFields, type SchemaField } from 'liveschema'
-import { form as formDef, type Order } from './schemas'
+import { useLiveSchema, type LiveSchemaField } from '@liveschema/react'
+import { form as formDef, type FieldKey, type Order } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
 import { humanize } from './stepLabels'
@@ -36,7 +37,16 @@ export function App() {
   // Subscribe to values — every value change re-derives the step list.
   const values = useStore(form.store, (s) => s.values) as Record<string, unknown>
 
+  // Per-step validation needs the schema, so we still use activeFields here.
   const steps: SchemaField[] = useMemo(() => activeFields(formDef, values), [values])
+
+  // useLiveSchema gives us enumOptions baked in for renderers that need them.
+  const { fields } = useLiveSchema(formDef, values)
+  const fieldByKey = useMemo(() => {
+    const m = new Map<string, LiveSchemaField<FieldKey>>()
+    for (const f of fields) m.set(f.key, f)
+    return m
+  }, [fields])
 
   // Clamp stepIndex if a branch change shrinks the step list. Stored
   // stepIndex may drift out of range; reads always go through clampedIndex.
@@ -109,6 +119,7 @@ export function App() {
   const renderer = currentStep
     ? stepRenderers[currentStep.key as keyof typeof stepRenderers]
     : undefined
+  const currentField = currentStep ? fieldByKey.get(currentStep.key) : undefined
 
   return (
     <>
@@ -143,7 +154,7 @@ export function App() {
                   void goNext()
                 }}
               >
-                {currentStep && renderer ? renderer(form, currentStep) : null}
+                {currentField && renderer ? renderer(form, currentField) : null}
                 <div className="actions">
                   {clampedIndex > 0 && (
                     <button type="button" onClick={goBack}>

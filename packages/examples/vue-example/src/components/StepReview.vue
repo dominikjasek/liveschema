@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { listSteps } from '@/composables/useSchemaWalker'
+import { useLiveSchema } from '@liveschema/vue'
+import { form as orderForm } from '@/schemas'
 
 const props = defineProps<{ data: Record<string, unknown> }>()
 
-const reviewItems = () =>
-  listSteps(props.data).map((step) => ({
-    key: step.key,
-    value: step.value,
-  }))
+const { activeFieldKeys } = useLiveSchema(orderForm, () => props.data)
 
 function display(value: unknown): string {
   if (value === undefined || value === null) return '—'
@@ -28,9 +25,9 @@ function humanize(field: string): string {
 <template>
   <h2>Review</h2>
   <dl class="review">
-    <template v-for="item in reviewItems()" :key="item.key">
-      <dt>{{ humanize(item.key) }}</dt>
-      <dd>{{ display(item.value) }}</dd>
+    <template v-for="key in activeFieldKeys" :key="key">
+      <dt>{{ humanize(key) }}</dt>
+      <dd>{{ display(props.data[key]) }}</dd>
     </template>
   </dl>
 </template>
