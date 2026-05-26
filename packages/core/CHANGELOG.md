@@ -1,5 +1,11 @@
 # @liveschema/core
 
+## 2.0.0
+
+### Major Changes
+
+- 7fdf837: v1
+
 ## 1.0.0
 
 ### Major Changes

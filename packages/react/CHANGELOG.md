@@ -1,5 +1,16 @@
 # @liveschema/react
 
+## 2.0.0
+
+### Major Changes
+
+- 7fdf837: v1
+
+### Patch Changes
+
+- Updated dependencies [7fdf837]
+  - @liveschema/core@2.0.0
+
 ## 1.0.0
 
 ### Major Changes
