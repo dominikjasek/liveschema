@@ -21,7 +21,7 @@
     "ci": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run build",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm run build && changeset publish --provenance",
+    "release": "pnpm run build && changeset publish",
     "local-release": "changeset version && changeset publish",
     "prepublishOnly": "npm run ci"
   },
