@@ -1,11 +1,11 @@
 # @liveschema/vue
 
-## 2.0.0
+## 1.0.1
 
 ### Patch Changes
 
 - Updated dependencies [7fdf837]
-  - @liveschema/core@2.0.0
+  - @liveschema/core@1.0.1
 
 ## 1.0.0
 
