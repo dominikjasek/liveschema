@@ -107,3 +107,33 @@ describe('LiveSchemaFieldFor<T> helper', () => {
     }>()
   })
 })
+
+// =========================================================================
+// Regression: a predicate-form `.when((v) => …, b => b.field('k', enum))`
+// adds `k` as an optional property in every variant of the inferred value
+// type. `InferField` used to use `V extends Record<K, infer T>`, which
+// can't infer `T` through an optional property — collapsing the result to
+// `never` (and `LiveSchemaFieldFor<never>` → no `enumOptions` exposed).
+// The minimum ingredients to reproduce: a discriminated-union value type
+// (so `InferSchema` has multiple variants) plus a predicate-form `.when()`
+// that adds an enum field. The fix switched `InferField` to `K extends
+// keyof V ? V[K] : never`, which handles optional uniformly.
+// =========================================================================
+
+const _repro = defineSchema()
+  .field('kind', z.enum(['a', 'b']))
+  .field('isForFree', z.boolean())
+  .when({ kind: 'a' }, (b) => b.field('extraA', z.string()))
+  .when({ kind: 'b' }, (b) => b.field('extraB', z.string()))
+  .when(
+    (v) => !v.isForFree,
+    (b) => b.field('paymentMethod', z.enum(['invoice'])),
+  )
+
+type ReproFields = UseLiveSchemaResult<typeof _repro>['fields']
+
+describe('regression — predicate-form .when() over a discriminated union', () => {
+  test('field added by predicate-form .when() still exposes enumOptions', () => {
+    expectTypeOf<ReproFields['paymentMethod']>().toHaveProperty('enumOptions')
+  })
+})

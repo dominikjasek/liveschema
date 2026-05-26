@@ -288,12 +288,26 @@ export type InferSchema<F> = F extends SchemaBuilder<infer V> ? DistPrettify<V> 
  * when a renderer needs the type of a single field without caring which
  * branch it lives in.
  *
+ * Uses `K extends keyof V` (rather than `V extends Record<K, infer T>`) so
+ * that optional properties are picked up — fields added via predicate-form
+ * `.when((v) => …, b => b.field('k', …))` land as `k?: T` in the inferred
+ * value type, and the `Record<K, T>` form fails to infer `T` through an
+ * optional property, collapsing the whole result to `never`. `keyof V`
+ * handles both required and optional uniformly, yielding `T | undefined`
+ * for optional fields.
+ *
  * @example
  *   type SizeValue = InferField<typeof schema, 'size'>     // 'large' | 'small'
  *   type Name = InferField<typeof schema, 'ownerName'>     // string
  */
 export type InferField<F, K extends string> =
-  InferSchema<F> extends infer V ? (V extends Record<K, infer T> ? T : never) : never
+  InferSchema<F> extends infer V
+    ? V extends object
+      ? K extends keyof V
+        ? V[K]
+        : never
+      : never
+    : never
 
 /** Ordered list of currently-reachable fields given the current values. */
 export function activeFields<V extends object>(
