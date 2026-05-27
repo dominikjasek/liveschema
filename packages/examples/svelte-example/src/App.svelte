@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createForm } from 'felte'
   import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
-  import { form as formDef, type FieldKey, type FormValues } from './schema'
+  import { form as formDef, type FieldKey } from './schema'
 
   const labels: Record<FieldKey, string> = {
     email: 'Your email',
@@ -30,7 +30,7 @@
   // liveschema's Standard Schema validator over the *currently reachable*
   // fields. We feed Felte's `validate` so per-field errors come straight
   // from each Effect schema, routed by the issue's `path[0]`.
-  const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
+  const standardSchema = toStandardSchema(formDef)
 
   const { form, data, errors } = createForm<Record<string, unknown>>({
     initialValues: {
@@ -56,8 +56,6 @@
       alert(`Submitted!\n\n${JSON.stringify(values, null, 2)}`)
     },
   })
-
-  console.log("errors", errors)
 
   $: fields = activeFields(formDef, $data)
 

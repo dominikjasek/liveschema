@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
 import { activeFields, type SchemaField } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/react'
-import { form as formDef, type Order } from './schemas'
+import { form as formDef, type Order, type OrderFlat } from './schemas'
 import { stepRenderers } from './steps'
 import { StepReview } from './StepReview'
 import { humanize } from './stepLabels'
@@ -22,12 +22,15 @@ export function App() {
       mainCourse: 'pizza',
       pizzaSize: 'small',
       toppings: '',
-    } as Order,
+    } as OrderFlat,
     onSubmit: ({ value }) => {
-      alert(`Order submitted!\n\n${JSON.stringify(value, null, 2)}`)
+      // Form state is the flat shape; the validated submit value matches the
+      // discriminated `Order` union — narrow on a cast copy.
+      const data = value as Order
+      alert(`Order submitted!\n\n${JSON.stringify(data, null, 2)}`)
 
-      if (value.mainCourse === 'pizza') {
-        if (value.pizzaSize === 'large') {
+      if (data.mainCourse === 'pizza') {
+        if (data.pizzaSize === 'large') {
           console.log('big pizza')
         }
       }

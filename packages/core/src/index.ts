@@ -309,6 +309,36 @@ export type InferField<F, K extends string> =
       : never
     : never
 
+// Flat, fully-optional view of a (possibly-discriminated-union) value type:
+// every key across every variant becomes optional, typed as the union of V[K]
+// across variants where K is present. Operates on the value shape so it can be
+// used both at the schema layer (`FlatInferSchema<F>`) and as `toStandardSchema`'s
+// inferred input type without re-wrapping the SchemaBuilder.
+type FlatValue<V> = {
+  [K in V extends unknown ? keyof V & string : never]?: V extends infer U
+    ? U extends object
+      ? K extends keyof U
+        ? U[K]
+        : never
+      : never
+    : never
+}
+
+/**
+ * Flat, fully-optional view of a schema's value shape — every field declared in
+ * any branch becomes an optional key whose type is the union of `V[K]` across
+ * the variants where `K` is reachable.
+ *
+ * Use this for in-progress form state with libraries that want a single,
+ * indexable record (React Hook Form's `useForm<T>` / `FieldErrors<T>`,
+ * controlled-input wrappers, etc.) — `InferSchema` is a discriminated union
+ * over branch paths, so indexing it by a generic `SchemaKeys<F>` errors with
+ * ts(7053) because branch-gated keys aren't on every variant. `FlatInferSchema`
+ * collapses that union so any field key is indexable everywhere. Narrow back
+ * to `InferSchema<F>` at the validated-submit boundary.
+ */
+export type FlatInferSchema<F> = F extends SchemaBuilder<infer V> ? FlatValue<V> : never
+
 /** Ordered list of currently-reachable fields given the current values. */
 export function activeFields<V extends object>(
   schema: SchemaBuilder<V>,
@@ -395,12 +425,15 @@ export function validateSchema<V extends object>(
  * `@hookform/resolvers/standard-schema`, etc.) deliver each message to the
  * right field. Vendor is reported as `"liveschema"`.
  *
- * `TIn` defaults to `Partial<V>` but can be widened (e.g. to a flat partial
- * of all reachable keys) when a consumer needs a non-union input shape.
+ * Input type is the flat, fully-optional view of `V` (same shape as
+ * `FlatInferSchema<typeof schema>`) — a single record indexable by any
+ * reachable field key, rather than the discriminated union of variant-partials
+ * that `Partial<V>` collapses to. The validated output stays the precise
+ * `V` for downstream narrowing.
  */
-export function toStandardSchema<V extends object, TIn = Partial<V>>(
+export function toStandardSchema<V extends object>(
   schema: SchemaBuilder<V>,
-): StandardSchemaV1<TIn, V> {
+): StandardSchemaV1<FlatValue<V>, V> {
   return {
     '~standard': {
       version: 1,

@@ -2,9 +2,9 @@ import { Controller, useForm, useWatch, type Control } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/react'
-import { form as formDef, type FormValues, type FieldKey } from './schema'
+import { form as formDef, type FormValuesFlat, type FieldKey } from './schema'
 
-const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
+const standardSchema = toStandardSchema(formDef)
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
@@ -36,7 +36,7 @@ export function App() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<FormValuesFlat>({
     defaultValues: {
       email: '',
       fullName: '',
@@ -59,11 +59,9 @@ export function App() {
     alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
   })
 
-  const fieldErrors = errors as Partial<Record<FieldKey, { message?: string }>>
-
   function renderField(key: FieldKey, enumOpts: readonly string[] | undefined) {
     if (!isActiveField(key)) return null
-    const errorMsg = fieldErrors[key]?.message
+    const errorMsg = errors[key]?.message
     const label = labels[key]
 
     if (enumOpts) {
@@ -123,7 +121,7 @@ export function App() {
 }
 
 type ControllerRadioProps = {
-  control: Control<FormValues>
+  control: Control<FormValuesFlat>
   name: FieldKey
   label: string
   options: readonly string[]
@@ -158,7 +156,7 @@ function ControllerRadio({ control, name, label, options, errorMsg }: Controller
 }
 
 type ControllerCheckboxProps = {
-  control: Control<FormValues>
+  control: Control<FormValuesFlat>
   name: FieldKey
   label: string
   errorMsg?: string

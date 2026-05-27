@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { defineSchema, type InferSchema, type SchemaKeys } from '@liveschema/core'
+import {
+  defineSchema,
+  type FlatInferSchema,
+  type InferSchema,
+  type SchemaKeys,
+} from '@liveschema/core'
 
 export const mainCourses = ['pizza', 'salad'] as const
 export const pizzaSizes = ['small', 'medium', 'large'] as const
@@ -48,4 +53,5 @@ export const form = defineSchema()
   )
 
 export type FormValues = InferSchema<typeof form>
+export type FormValuesFlat = FlatInferSchema<typeof form>
 export type FieldKey = SchemaKeys<typeof form>

@@ -1,6 +1,11 @@
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
 import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
-import { form as formDef, type FormValues, type FieldKey } from './schema'
+import {
+  form as formDef,
+  type FormValues,
+  type FormValuesFlat,
+  type FieldKey,
+} from './schema'
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
@@ -19,7 +24,7 @@ const labels: Record<FieldKey, string> = {
   napkinCount: 'How many extra napkins?',
 }
 
-const standardSchema = toStandardSchema<FormValues, FormValues>(formDef)
+const standardSchema = toStandardSchema(formDef)
 
 export function FormPage() {
   const form = useForm({
@@ -31,23 +36,26 @@ export function FormPage() {
       mainCourse: 'pizza',
       pizzaSize: 'small',
       toppings: '',
-    } as FormValues,
+    } as FormValuesFlat,
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: standardSchema,
     },
     onSubmit: ({ value }) => {
-      if (value.mainCourse === 'pizza') {
-        if (value.pizzaCount > 8) {
-          console.log(value.requestedReadyTime) // this can not be infered because of dynamic check of count
+      // `value` is the flat form-state shape; validation guarantees the
+      // submitted data conforms to the discriminated union — narrow there.
+      const data = value as FormValues
+      if (data.mainCourse === 'pizza') {
+        if (data.pizzaCount > 8) {
+          console.log(data.requestedReadyTime) // this can not be infered because of dynamic check of count
         }
       }
-      if (value.orderType === 'delivery') {
-        if (value.needsNapkins) {
-          console.log(value.napkinCount) // this can not be infered because of dynamic check of needsNapkins
+      if (data.orderType === 'delivery') {
+        if (data.needsNapkins) {
+          console.log(data.napkinCount) // this can not be infered because of dynamic check of needsNapkins
         }
       }
-      alert(`Submitted!\n\n${JSON.stringify(value, null, 2)}`)
+      alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
     },
   })
 

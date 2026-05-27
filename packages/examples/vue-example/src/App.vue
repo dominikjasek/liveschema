@@ -9,6 +9,8 @@ import { form as orderForm, type Order, type FieldKey } from '@/schemas'
 
 type Phase = 'fill' | 'review'
 
+const orderStandardSchema = toStandardSchema(orderForm)
+
 // Wizard-level grouping: keys listed together render on a single step.
 // Any field not listed here becomes a step by itself, labeled via `stepLabelMap`.
 type StepGroup = { label: string; keys: readonly FieldKey[] }
@@ -51,7 +53,7 @@ const stepIndex = ref(0)
 
 const form = useForm<Order>({
   keepValuesOnUnmount: true,
-  validationSchema: toStandardSchema(orderForm),
+  validationSchema: orderStandardSchema,
 })
 
 const { fields, activeFields } = useLiveSchema(orderForm, () => form.values)
