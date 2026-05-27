@@ -31,9 +31,6 @@ pnpm add zod        # or: valibot, arktype, effect, ...
 
 `@liveschema/core` has no runtime dependency on any specific validation library. Bring your own.
 
-> Migrating from pre-0.1 `liveschema` (unscoped)? Replace `from '@liveschema/core'`
-> with `from '@liveschema/core'`. The runtime API is unchanged.
-
 ## Quick start
 
 ```ts
