@@ -58,6 +58,23 @@ const fields = activeFields(order, { orderType: 'delivery', mainCourse: 'pizza',
 const errors = validateSchema(order, input)
 ```
 
+## Examples
+
+This monorepo ships runnable examples under [`examples/`](examples):
+
+- [`vanilla-example/`](examples/vanilla-example) — plain DOM, progressive reveal. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
+- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [`react-example/`](examples/react-example) — `@liveschema/react` + TanStack Form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
+- [`react-hook-form-example/`](examples/react-hook-form-example) — `@liveschema/react` + react-hook-form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
+- [`tanstack-form-example/`](examples/tanstack-form-example) — TanStack Form, alternate styling. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
+- [`svelte-example/`](examples/svelte-example) — Svelte. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
+
+Pick a flavor:
+
+```sh
+pnpm dev:vue        # or dev:react, dev:rhf, dev:vanilla, dev:tanstack
+```
+
 ## React / Vue hooks
 
 Each framework package exposes a `useLiveSchema(schema, values)` that returns the same three things — adapted to the framework's reactivity model:
@@ -118,23 +135,6 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 - `toStandardSchema(schema)` — wrap the whole schema as a single Standard Schema validator.
 - `enumOptions(schema)` — best-effort accessor for a leaf's enum options (Zod / Valibot convention).
 - Types: `InferSchema<F>`, `InferField<F, K>`, `SchemaKeys<F>`, `SchemaField<K>`, `DeclaredField<K>`, `SchemaErrors<F>`.
-
-## Examples
-
-This monorepo ships runnable examples under [`examples/`](examples):
-
-- [`vanilla-example/`](examples/vanilla-example) — plain DOM, progressive reveal. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
-- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
-- [`react-example/`](examples/react-example) — `@liveschema/react` + TanStack Form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
-- [`react-hook-form-example/`](examples/react-hook-form-example) — `@liveschema/react` + react-hook-form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
-- [`tanstack-form-example/`](examples/tanstack-form-example) — TanStack Form, alternate styling. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
-- [`svelte-example/`](examples/svelte-example) — Svelte. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
-
-Pick a flavor:
-
-```sh
-pnpm dev:vue        # or dev:react, dev:rhf, dev:vanilla, dev:tanstack
-```
 
 ## Releasing
 
