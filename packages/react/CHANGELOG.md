@@ -1,5 +1,18 @@
 # @liveschema/react
 
+## 2.0.0
+
+### Major Changes
+
+- 6124eaa: update readme of core
+
+### Patch Changes
+
+- 4b5a490: update readme
+- Updated dependencies [4b5a490]
+- Updated dependencies [6124eaa]
+  - @liveschema/core@2.0.0
+
 ## 1.0.1
 
 ### Major Changes
