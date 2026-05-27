@@ -1,12 +1,7 @@
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
 import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/react'
-import {
-  form as formDef,
-  type FormValues,
-  type FormValuesFlat,
-  type FieldKey,
-} from './schema'
+import { form as formDef, type FormValues, type FormValuesFlat, type FieldKey } from './schema'
 
 const labels: Record<FieldKey, string> = {
   email: 'Your email',
