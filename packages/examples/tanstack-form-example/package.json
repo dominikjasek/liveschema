@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@liveschema/core": "workspace:*",
+    "@liveschema/react": "workspace:*",
     "@standard-schema/spec": "^1.0.0",
     "@tanstack/react-form": "^1.0.0",
     "@tanstack/react-router": "^1.95.0",

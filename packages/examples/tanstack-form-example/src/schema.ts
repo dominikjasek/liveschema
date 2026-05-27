@@ -48,7 +48,7 @@ export const form = defineSchema()
     b
       .field('needsNapkins', z.boolean().optional())
       .when({ needsNapkins: true }, (b) =>
-        b.field('napkinCount', z.coerce.number().int().min(1).max(20)),
+        b.field('napkin', z.object({ count: z.coerce.number().int().min(1).max(20) })),
       ),
   )
 

@@ -1,5 +1,6 @@
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form'
-import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
+import { toStandardSchema } from '@liveschema/core'
+import { useLiveSchema } from '@liveschema/react'
 import {
   form as formDef,
   type FormValues,
@@ -21,7 +22,7 @@ const labels: Record<FieldKey, string> = {
   requestedReadyTime: 'When should it be ready? (3+ pizzas need 30+ min prep)',
   dressingOnSide: 'Dressing on the side?',
   needsNapkins: 'Include extra napkins?',
-  napkinCount: 'How many extra napkins?',
+  napkin: 'How many extra napkins?',
 }
 
 const standardSchema = toStandardSchema(formDef)
@@ -52,7 +53,7 @@ export function FormPage() {
       }
       if (data.orderType === 'delivery') {
         if (data.needsNapkins) {
-          console.log(data.napkinCount) // this can not be infered because of dynamic check of needsNapkins
+          console.log(data.napkin.count) // this can not be infered because of dynamic check of needsNapkins
         }
       }
       alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
@@ -60,66 +61,7 @@ export function FormPage() {
   })
 
   const values = useStore(form.store, (state) => state.values)
-  const fields = activeFields(formDef, values)
-
-  const renderText = (name: FieldKey, label: string) => (
-    <form.Field key={name} name={name as never}>
-      {(field) => (
-        <label className="field">
-          <span>{label}</span>
-          <input
-            className="text-input"
-            type="text"
-            value={(field.state.value as string | undefined) ?? ''}
-            onChange={(e) => field.handleChange(e.target.value as never)}
-            onBlur={field.handleBlur}
-          />
-          <FieldError errors={field.state.meta.errors} />
-        </label>
-      )}
-    </form.Field>
-  )
-
-  const renderCheckbox = (name: FieldKey, label: string) => (
-    <form.Field key={name} name={name as never}>
-      {(field) => (
-        <div className="field">
-          <label className="confirm">
-            <input
-              type="checkbox"
-              checked={field.state.value === true}
-              onChange={(e) => field.handleChange(e.target.checked as never)}
-            />
-            <span>{label}</span>
-          </label>
-          <FieldError errors={field.state.meta.errors} />
-        </div>
-      )}
-    </form.Field>
-  )
-
-  const renderRadio = (name: FieldKey, label: string, options: readonly string[]) => (
-    <form.Field key={name} name={name as never}>
-      {(field) => (
-        <div className="field">
-          <span>{label}</span>
-          <div className="options">
-            {options.map((o) => (
-              <label key={o} className="radio">
-                <input
-                  type="radio"
-                  checked={field.state.value === o}
-                  onChange={() => field.handleChange(o as never)}
-                />
-                <span>{o}</span>
-              </label>
-            ))}
-          </div>
-          <FieldError errors={field.state.meta.errors} />
-        </div>
-      )}
-    </form.Field>
-  )
+  const { fields: activeFields } = useLiveSchema(formDef, values)
 
   return (
     <>
@@ -136,21 +78,259 @@ export function FormPage() {
               void form.handleSubmit()
             }}
           >
-            {fields.map((f) => {
-              const key = f.key
-              const label = labels[key]
-              const options = enumOptions(f.schema)
-              if (options) return renderRadio(key, label, options)
-              if (
-                key === 'leaveAtDoor' ||
-                key === 'hasOrderedBefore' ||
-                key === 'dressingOnSide' ||
-                key === 'needsNapkins'
-              ) {
-                return renderCheckbox(key, label)
-              }
-              return renderText(key, label)
-            })}
+            {activeFields.email.isActive && (
+              <form.Field name="email">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.email}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.fullName.isActive && (
+              <form.Field name="fullName">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.fullName}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.orderType.isActive && (
+              <form.Field name="orderType">
+                {(field) => (
+                  <div className="field">
+                    <span>{labels.orderType}</span>
+                    <div className="options">
+                      {(activeFields.orderType.enumOptions ?? []).map((o) => (
+                        <label key={o} className="radio">
+                          <input
+                            type="radio"
+                            checked={field.state.value === o}
+                            onChange={() => field.handleChange(o)}
+                          />
+                          <span>{o}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.leaveAtDoor.isActive && (
+              <form.Field name="leaveAtDoor">
+                {(field) => (
+                  <div className="field">
+                    <label className="confirm">
+                      <input
+                        type="checkbox"
+                        checked={field.state.value === true}
+                        onChange={(e) => field.handleChange(e.target.checked)}
+                      />
+                      <span>{labels.leaveAtDoor}</span>
+                    </label>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.hasOrderedBefore.isActive && (
+              <form.Field name="hasOrderedBefore">
+                {(field) => (
+                  <div className="field">
+                    <label className="confirm">
+                      <input
+                        type="checkbox"
+                        checked={field.state.value === true}
+                        onChange={(e) => field.handleChange(e.target.checked)}
+                      />
+                      <span>{labels.hasOrderedBefore}</span>
+                    </label>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.favoriteItem.isActive && (
+              <form.Field name="favoriteItem">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.favoriteItem}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.mainCourse.isActive && (
+              <form.Field name="mainCourse">
+                {(field) => (
+                  <div className="field">
+                    <span>{labels.mainCourse}</span>
+                    <div className="options">
+                      {(activeFields.mainCourse.enumOptions ?? []).map((o) => (
+                        <label key={o} className="radio">
+                          <input
+                            type="radio"
+                            checked={field.state.value === o}
+                            onChange={() => field.handleChange(o)}
+                          />
+                          <span>{o}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.pizzaSize.isActive && (
+              <form.Field name="pizzaSize">
+                {(field) => (
+                  <div className="field">
+                    <span>{labels.pizzaSize}</span>
+                    <div className="options">
+                      {(activeFields.pizzaSize.enumOptions ?? []).map((o) => (
+                        <label key={o} className="radio">
+                          <input
+                            type="radio"
+                            checked={field.state.value === o}
+                            onChange={() => field.handleChange(o)}
+                          />
+                          <span>{o}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.toppings.isActive && (
+              <form.Field name="toppings">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.toppings}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.pizzaCount.isActive && (
+              <form.Field name="pizzaCount">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.pizzaCount}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value as never)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.requestedReadyTime.isActive && (
+              <form.Field name="requestedReadyTime">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.requestedReadyTime}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
+            {activeFields.dressingOnSide.isActive && (
+              <form.Field name="dressingOnSide">
+                {(field) => (
+                  <div className="field">
+                    <label className="confirm">
+                      <input
+                        type="checkbox"
+                        checked={field.state.value === true}
+                        onChange={(e) => field.handleChange(e.target.checked)}
+                      />
+                      <span>{labels.dressingOnSide}</span>
+                    </label>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.needsNapkins.isActive && (
+              <form.Field name="needsNapkins">
+                {(field) => (
+                  <div className="field">
+                    <label className="confirm">
+                      <input
+                        type="checkbox"
+                        checked={field.state.value === true}
+                        onChange={(e) => field.handleChange(e.target.checked)}
+                      />
+                      <span>{labels.needsNapkins}</span>
+                    </label>
+                    <FieldError errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </form.Field>
+            )}
+            {activeFields.napkin.isActive && (
+              <form.Field name="napkin.count">
+                {(field) => (
+                  <label className="field">
+                    <span>{labels.napkin}</span>
+                    <input
+                      className="text-input"
+                      type="text"
+                      value={field.state.value ?? ''}
+                      onChange={(e) => field.handleChange(e.target.value as never)}
+                      onBlur={field.handleBlur}
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </label>
+                )}
+              </form.Field>
+            )}
             <div className="actions">
               <button type="submit">Submit</button>
             </div>
