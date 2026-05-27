@@ -163,12 +163,12 @@ if (result instanceof Promise) {
 
 End-to-end examples:
 
-- [packages/examples/react-example](../examples/react-example) — React + TanStack Form (multi-step wizard)
-- [packages/examples/react-hook-form-example](../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`)
-- [packages/examples/vue-example](../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
-- [packages/examples/svelte-example](../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
-- [packages/examples/tanstack-form-example](../examples/tanstack-form-example) — React + TanStack Form (single-page)
-- [packages/examples/vanilla-example](../examples/vanilla-example) — no form library
+- [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard)
+- [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`)
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
+- [examples/svelte-example](../../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
+- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page)
+- [examples/vanilla-example](../../examples/vanilla-example) — no form library
 
 ## API
 

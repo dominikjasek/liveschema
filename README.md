@@ -121,14 +121,14 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 ## Examples
 
-This monorepo ships runnable examples under [`packages/examples/`](packages/examples):
+This monorepo ships runnable examples under [`examples/`](examples):
 
-- [`vanilla-example/`](packages/examples/vanilla-example) — plain DOM, progressive reveal.
-- [`vue-example/`](packages/examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard.
-- [`react-example/`](packages/examples/react-example) — `@liveschema/react` + TanStack Form.
-- [`react-hook-form-example/`](packages/examples/react-hook-form-example) — `@liveschema/react` + react-hook-form.
-- [`tanstack-form-example/`](packages/examples/tanstack-form-example) — TanStack Form, alternate styling.
-- [`svelte-example/`](packages/examples/svelte-example) — Svelte.
+- [`vanilla-example/`](examples/vanilla-example) — plain DOM, progressive reveal.
+- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard.
+- [`react-example/`](examples/react-example) — `@liveschema/react` + TanStack Form.
+- [`react-hook-form-example/`](examples/react-hook-form-example) — `@liveschema/react` + react-hook-form.
+- [`tanstack-form-example/`](examples/tanstack-form-example) — TanStack Form, alternate styling.
+- [`svelte-example/`](examples/svelte-example) — Svelte.
 
 Pick a flavor:
 

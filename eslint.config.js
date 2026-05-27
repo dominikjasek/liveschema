@@ -55,7 +55,7 @@ export default [
 
   // Browser globals for app code
   {
-    files: ['packages/examples/**/*.{ts,tsx,js,jsx,vue}'],
+    files: ['examples/**/*.{ts,tsx,js,jsx,vue}'],
     languageOptions: { globals: { ...globals.browser } },
   },
 
