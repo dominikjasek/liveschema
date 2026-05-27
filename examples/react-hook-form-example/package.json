@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.0",
-    "@liveschema/core": "^1.0.1",
-    "@liveschema/react": "^1.0.1",
+    "@liveschema/core": "^1.0.2",
+    "@liveschema/react": "^1.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",

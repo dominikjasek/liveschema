@@ -1,5 +1,12 @@
 # @liveschema/core
 
+## 1.0.2
+
+### Patch Changes
+
+- 4b5a490: update readme
+- dec5ce8: update readme of core
+
 ## 1.0.1
 
 ### Major Changes
