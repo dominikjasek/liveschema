@@ -123,12 +123,12 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 This monorepo ships runnable examples under [`examples/`](examples):
 
-- [`vanilla-example/`](examples/vanilla-example) — plain DOM, progressive reveal.
-- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard.
-- [`react-example/`](examples/react-example) — `@liveschema/react` + TanStack Form.
-- [`react-hook-form-example/`](examples/react-hook-form-example) — `@liveschema/react` + react-hook-form.
-- [`tanstack-form-example/`](examples/tanstack-form-example) — TanStack Form, alternate styling.
-- [`svelte-example/`](examples/svelte-example) — Svelte.
+- [`vanilla-example/`](examples/vanilla-example) — plain DOM, progressive reveal. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
+- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [`react-example/`](examples/react-example) — `@liveschema/react` + TanStack Form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
+- [`react-hook-form-example/`](examples/react-hook-form-example) — `@liveschema/react` + react-hook-form. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
+- [`tanstack-form-example/`](examples/tanstack-form-example) — TanStack Form, alternate styling. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
+- [`svelte-example/`](examples/svelte-example) — Svelte. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
 
 Pick a flavor:
 

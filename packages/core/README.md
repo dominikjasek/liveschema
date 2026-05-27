@@ -163,12 +163,12 @@ if (result instanceof Promise) {
 
 End-to-end examples:
 
-- [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard)
-- [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`)
-- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard)
-- [examples/svelte-example](../../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page)
-- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page)
-- [examples/vanilla-example](../../examples/vanilla-example) — no form library
+- [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
+- [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [examples/svelte-example](../../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
+- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
+- [examples/vanilla-example](../../examples/vanilla-example) — no form library [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
 
 ## API
 
