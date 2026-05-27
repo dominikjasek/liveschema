@@ -1,6 +1,6 @@
 {
   "name": "@liveschema/react",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "React bindings for liveschema. `useLiveSchema(schema, values)` returns the ordered active field keys, every declared field with an `isActive` flag and enum options, and an `isActiveField(key)` predicate for conditional rendering.",
   "keywords": [
     "react",

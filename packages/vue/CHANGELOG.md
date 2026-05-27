@@ -1,5 +1,15 @@
 # @liveschema/vue
 
+## 1.0.2
+
+### Patch Changes
+
+- 4b5a490: update readme
+- dec5ce8: update readme of core
+- Updated dependencies [4b5a490]
+- Updated dependencies [dec5ce8]
+  - @liveschema/core@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@liveschema/vue",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vue bindings for liveschema. `useLiveSchema(schema, values)` returns computed refs for the ordered active field keys and every declared field (with `isActive` flag + enum options), plus an `isActiveField(key)` predicate for `v-if` gates.",
   "keywords": [
     "vue",
