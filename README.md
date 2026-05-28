@@ -62,14 +62,10 @@ const errors = validateSchema(order, input)
 
 This monorepo ships runnable examples under [`examples/`](examples):
 
-- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-217u4tgm?file=src%2Fschemas.ts)
+- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-sks7e1yx?file=src%2Fschemas.ts)
 - [`tanstack-form-example/`](examples/tanstack-form-example) — `@liveschema/react` + TanStack Form (single-page). [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/github-fcjshzse?file=src%2FFormPage.tsx)
 
-Pick a flavor:
-
-```sh
-pnpm dev:vue        # or dev:react, dev:rhf, dev:vanilla, dev:tanstack
-```
+````
 
 ## React / Vue hooks
 
@@ -82,7 +78,7 @@ const { fields, activeFields, isActiveField } = useLiveSchema(order, values)
 // fields:        Record<Key, {isActive, enumOptions}>           — every declared field
 // activeFields:  Partial<Record<Key, {isActive, enumOptions}>>  — active subset (inactive keys absent)
 // isActiveField: (key) => boolean                                — predicate for JSX gating
-```
+````
 
 ```vue
 <script setup lang="ts">
@@ -104,7 +100,7 @@ const { fields, activeFields, isActiveField } = useLiveSchema(order, () => form.
 | ------------------------------------ | ----------------------------------- |
 | `.field(key, schema)`                | always                              |
 | `.when({k: literal, ...}, b => ...)` | every listed key equals its literal |
-| `.whenAny([{...}, {...}], b => ...)` | any one of the patterns matches     |
+| `.whenAny([{...}, {...}], b => ...)` | any of patterns matches -logical OR |
 | `.when(values => boolean, b => ...)` | predicate returns truthy            |
 
 Equality `.when({k: lit})` narrows the inferred union (the new fields become required on the matching variant). Predicate `.when(fn)` adds the fields as optional, since TS can't prove the predicate at compile time. `.whenAny` requires-on-match, optional-on-rest.
@@ -134,9 +130,7 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 ## Releasing
 
-Releases are driven by [Changesets](https://github.com/changesets/changesets) and an automated GitHub Actions workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
+Releases are driven by [Changesets](https://github.com/changesets/changesets) and an automated GitHub Actions workflow using NPM Trusted Publishing ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
 
 1. After landing a PR with a changeset, the workflow opens (or updates) a "Version Packages" PR that bumps versions and updates changelogs.
 2. Merging that PR publishes the affected `@liveschema/*` packages to npm and tags the commit.
-
-The workflow needs an `NPM_TOKEN` secret with publish access to the `@liveschema` org. To release manually instead, run `pnpm run release`.
