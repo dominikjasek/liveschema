@@ -1,6 +1,6 @@
 # @liveschema/react
 
-React bindings for [`@liveschema/core`](../core).
+React bindings for [`@liveschema/core`](https://www.npmjs.com/package/@liveschema/core).
 
 ## Install
 

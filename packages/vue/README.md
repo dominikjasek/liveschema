@@ -1,6 +1,6 @@
 # @liveschema/vue
 
-Vue 3 bindings for [`@liveschema/core`](../core).
+Vue 3 bindings for [`@liveschema/core`](https://www.npmjs.com/package/@liveschema/core).
 
 ## Install
 
