@@ -50,3 +50,7 @@ const { fields, activeFields, isActiveField } = useLiveSchema(schema, () => form
 | `isActiveField` | `(key: Key) => boolean`                                                                     | Plain function that reads the current `activeFields.value` — usable from templates without `.value` and from `<script setup>` too. |
 
 Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `isActiveField('typo')` is a compile-time error.
+
+## Examples
+
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)

@@ -58,3 +58,9 @@ Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `is
 ### When to reach for `@liveschema/core` directly
 
 The hook intentionally exposes a UI-shaped slice. If you need the underlying validator for incremental per-field validation, use `activeFields(schema, values)` (the function from the core package) alongside the hook.
+
+## Examples
+
+- [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
+- [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
+- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
