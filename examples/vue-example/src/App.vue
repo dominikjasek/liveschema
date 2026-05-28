@@ -1,194 +1,183 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/vue'
-import StepReview from './components/StepReview.vue'
-import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps'
 import { form as orderForm, type Order, type FieldKey } from '@/schemas'
 
-type Phase = 'fill' | 'review'
+const labels: Record<FieldKey, string> = {
+  email: 'Your email',
+  fullName: 'Full name',
+  orderType: 'How would you like to receive your order?',
+  leaveAtDoor: 'Leave at the door if no answer?',
+  hasOrderedBefore: 'Have you ordered from us before?',
+  favoriteItem: 'Your favorite item from last time',
+  mainCourse: 'Main course',
+  pizzaSize: 'Pizza size',
+  toppings: 'Toppings (comma-separated)',
+  pizzaCount: 'How many pizzas?',
+  requestedReadyTime: 'When should it be ready? (3+ pizzas need 30+ min prep)',
+  dressingOnSide: 'Dressing on the side?',
+  needsNapkins: 'Include extra napkins?',
+  napkinCount: 'How many extra napkins?',
+}
 
 const orderStandardSchema = toStandardSchema(orderForm)
 
-// Wizard-level grouping: keys listed together render on a single step.
-// Any field not listed here becomes a step by itself, labeled via `stepLabelMap`.
-type StepGroup = { label: string; keys: readonly FieldKey[] }
-const stepGroups: readonly StepGroup[] = [
-  { label: 'Contact info', keys: ['email', 'fullName'] },
-  { label: 'Order type', keys: ['orderType', 'leaveAtDoor'] },
-]
-
-type ResolvedStep = { label: string; keys: FieldKey[] }
-
-function humanize(field: string): string {
-  return (
-    stepLabelMap[field] ?? field.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
-  )
-}
-
-function groupSteps(activeKeys: FieldKey[]): ResolvedStep[] {
-  const groupOf = new Map<string, StepGroup>()
-  for (const grp of stepGroups) for (const k of grp.keys) groupOf.set(k, grp)
-  const out: ResolvedStep[] = []
-  const placed = new Set<StepGroup>()
-  for (const key of activeKeys) {
-    const grp = groupOf.get(key)
-    if (grp) {
-      if (placed.has(grp)) continue
-      placed.add(grp)
-      out.push({
-        label: grp.label,
-        keys: activeKeys.filter((k) => grp.keys.includes(k)),
-      })
-    } else {
-      out.push({ label: humanize(key), keys: [key] })
-    }
-  }
-  return out
-}
-
-const phase = ref<Phase>('fill')
-const stepIndex = ref(0)
-
-const form = useForm<Order>({
-  keepValuesOnUnmount: true,
+const { values, defineField, errors, handleSubmit } = useForm<Order>({
   validationSchema: orderStandardSchema,
-})
-
-const { fields, activeFields } = useLiveSchema(orderForm, () => form.values)
-
-const activeFieldKeys = computed<FieldKey[]>(() => Object.keys(activeFields.value) as FieldKey[])
-
-const currentSteps = computed<ResolvedStep[]>(() => groupSteps(activeFieldKeys.value))
-
-const currentStep = computed<ResolvedStep | undefined>(() => {
-  if (phase.value !== 'fill') return undefined
-  return currentSteps.value[stepIndex.value]
-})
-
-// When an upstream choice changes, the walker yields a different ordered list
-// of steps, and the active stepIndex may now point past the last reachable
-// step. Clamp it.
-watch(
-  () => currentSteps.value.length,
-  (len) => {
-    if (phase.value === 'fill' && stepIndex.value >= len) {
-      stepIndex.value = Math.max(0, len - 1)
-    }
+  keepValuesOnUnmount: true,
+  initialValues: {
+    email: '',
+    fullName: '',
+    orderType: 'pickup',
+    hasOrderedBefore: false,
+    mainCourse: 'pizza',
+    pizzaSize: 'small',
+    toppings: '',
   },
-)
-
-const currentBindings = computed<StepBinding[]>(() => {
-  const step = currentStep.value
-  if (!step) return []
-  return step.keys
-    .map((k) => {
-      const info = fields.value[k]
-      return info ? resolveStep(k, info) : undefined
-    })
-    .filter((b): b is StepBinding => !!b)
 })
 
-const stepLabels = computed(() => [...currentSteps.value.map((s) => s.label), 'Review'])
+const [email] = defineField('email')
+const [fullName] = defineField('fullName')
+const [orderType] = defineField('orderType')
+const [leaveAtDoor] = defineField('leaveAtDoor')
+const [hasOrderedBefore] = defineField('hasOrderedBefore')
+const [favoriteItem] = defineField('favoriteItem')
+const [mainCourse] = defineField('mainCourse')
+const [pizzaSize] = defineField('pizzaSize')
+const [toppings] = defineField('toppings')
+const [pizzaCount] = defineField('pizzaCount')
+const [requestedReadyTime] = defineField('requestedReadyTime')
+const [dressingOnSide] = defineField('dressingOnSide')
+const [needsNapkins] = defineField('needsNapkins')
+const [napkinCount] = defineField('napkinCount')
 
-const activeIndex = computed(() => {
-  if (phase.value === 'review') return stepLabels.value.length - 1
-  return stepIndex.value
+const { fields: liveSchemaFields } = useLiveSchema(orderForm, values)
+
+const onSubmit = handleSubmit((data) => {
+  alert(`Submitted!\n\n${JSON.stringify(data, null, 2)}`)
 })
-
-async function goNext() {
-  if (phase.value !== 'fill') return
-  const step = currentStep.value
-  if (!step) return
-  const results = await Promise.all(step.keys.map((k) => form.validateField(k as never)))
-  if (results.some((r) => !r.valid)) return
-  // Persist the parsed (potentially coerced) value so downstream branches
-  // see e.g. a real number for `pizzaCount` rather than the raw string.
-  step.keys.forEach((k, i) => {
-    const value = results[i].value
-    if (value !== undefined) form.setFieldValue(k as never, value as never)
-  })
-  if (stepIndex.value < currentSteps.value.length - 1) {
-    stepIndex.value++
-  } else {
-    phase.value = 'review'
-  }
-}
-
-function goBack() {
-  if (phase.value === 'review') {
-    phase.value = 'fill'
-    stepIndex.value = currentSteps.value.length - 1
-    return
-  }
-  if (stepIndex.value > 0) stepIndex.value--
-}
-
-function jumpTo(i: number) {
-  if (i > activeIndex.value) return
-  if (i === stepLabels.value.length - 1) {
-    phase.value = 'review'
-  } else {
-    phase.value = 'fill'
-    stepIndex.value = i
-  }
-}
-
-function submit() {
-  alert(`Order submitted!\n\n${JSON.stringify(form.values, null, 2)}`)
-}
 </script>
 
 <template>
   <header>
-    <h1>Vue vee-validate multi-step form</h1>
+    <h1>Vue vee-validate form</h1>
   </header>
   <main>
-    <section class="form">
-      <ol class="stepper">
-        <li v-for="(label, i) in stepLabels" :key="i">
-          <button
-            type="button"
-            :class="{ active: activeIndex === i, done: activeIndex > i }"
-            :disabled="i > activeIndex"
-            :title="label"
-            @click="jumpTo(i)"
-          >
-            <span class="step-num">{{ i + 1 }}</span>
-            <span class="step-label">{{ label }}</span>
-          </button>
-        </li>
-      </ol>
+    <section class="form-single">
+      <form class="form-fields" @submit="onSubmit">
+        <label v-if="liveSchemaFields.email.isActive" class="field">
+          <span>{{ labels.email }}</span>
+          <input v-model="email" class="text-input" type="text" />
+          <p v-if="errors.email" class="error">{{ errors.email }}</p>
+        </label>
 
-      <div class="content">
-        <form v-if="phase === 'fill'" class="step" @submit.prevent="goNext">
-          <component
-            :is="binding.component"
-            v-for="binding in currentBindings"
-            :key="(binding.props as { path: string }).path"
-            v-bind="binding.props"
-          />
-          <div class="actions">
-            <button v-if="stepIndex > 0" type="button" @click="goBack">Back</button>
-            <button type="submit">
-              {{ stepIndex === currentSteps.length - 1 ? 'Review' : 'Next' }}
-            </button>
+        <label v-if="liveSchemaFields.fullName.isActive" class="field">
+          <span>{{ labels.fullName }}</span>
+          <input v-model="fullName" class="text-input" type="text" />
+          <p v-if="errors.fullName" class="error">{{ errors.fullName }}</p>
+        </label>
+
+        <div v-if="liveSchemaFields.orderType.isActive" class="field">
+          <span>{{ labels.orderType }}</span>
+          <div class="options">
+            <label v-for="o in liveSchemaFields.orderType.enumOptions ?? []" :key="o" class="radio">
+              <input v-model="orderType" type="radio" :value="o" />
+              <span>{{ o }}</span>
+            </label>
           </div>
-        </form>
+          <p v-if="errors.orderType" class="error">{{ errors.orderType }}</p>
+        </div>
 
-        <template v-else>
-          <StepReview :data="form.values" />
-          <div class="actions">
-            <button type="button" @click="goBack">Back</button>
-            <button type="button" @click="submit">Submit</button>
+        <div v-if="liveSchemaFields.leaveAtDoor.isActive" class="field">
+          <label class="confirm">
+            <input v-model="leaveAtDoor" type="checkbox" />
+            <span>{{ labels.leaveAtDoor }}</span>
+          </label>
+          <p v-if="errors.leaveAtDoor" class="error">{{ errors.leaveAtDoor }}</p>
+        </div>
+
+        <div v-if="liveSchemaFields.hasOrderedBefore.isActive" class="field">
+          <label class="confirm">
+            <input v-model="hasOrderedBefore" type="checkbox" />
+            <span>{{ labels.hasOrderedBefore }}</span>
+          </label>
+          <p v-if="errors.hasOrderedBefore" class="error">{{ errors.hasOrderedBefore }}</p>
+        </div>
+
+        <label v-if="liveSchemaFields.favoriteItem.isActive" class="field">
+          <span>{{ labels.favoriteItem }}</span>
+          <input v-model="favoriteItem" class="text-input" type="text" />
+          <p v-if="errors.favoriteItem" class="error">{{ errors.favoriteItem }}</p>
+        </label>
+
+        <div v-if="liveSchemaFields.mainCourse.isActive" class="field">
+          <span>{{ labels.mainCourse }}</span>
+          <div class="options">
+            <label v-for="o in liveSchemaFields.mainCourse.enumOptions ?? []" :key="o" class="radio">
+              <input v-model="mainCourse" type="radio" :value="o" />
+              <span>{{ o }}</span>
+            </label>
           </div>
-        </template>
+          <p v-if="errors.mainCourse" class="error">{{ errors.mainCourse }}</p>
+        </div>
 
-        <pre class="debug">{{
-          JSON.stringify({ values: form.values, stepIndex, steps: activeFieldKeys }, null, 2)
-        }}</pre>
-      </div>
+        <div v-if="liveSchemaFields.pizzaSize.isActive" class="field">
+          <span>{{ labels.pizzaSize }}</span>
+          <div class="options">
+            <label v-for="o in liveSchemaFields.pizzaSize.enumOptions ?? []" :key="o" class="radio">
+              <input v-model="pizzaSize" type="radio" :value="o" />
+              <span>{{ o }}</span>
+            </label>
+          </div>
+          <p v-if="errors.pizzaSize" class="error">{{ errors.pizzaSize }}</p>
+        </div>
+
+        <label v-if="liveSchemaFields.toppings.isActive" class="field">
+          <span>{{ labels.toppings }}</span>
+          <input v-model="toppings" class="text-input" type="text" />
+          <p v-if="errors.toppings" class="error">{{ errors.toppings }}</p>
+        </label>
+
+        <label v-if="liveSchemaFields.pizzaCount.isActive" class="field">
+          <span>{{ labels.pizzaCount }}</span>
+          <input v-model="pizzaCount" class="text-input" type="text" />
+          <p v-if="errors.pizzaCount" class="error">{{ errors.pizzaCount }}</p>
+        </label>
+
+        <label v-if="liveSchemaFields.requestedReadyTime.isActive" class="field">
+          <span>{{ labels.requestedReadyTime }}</span>
+          <input v-model="requestedReadyTime" class="text-input" type="text" />
+          <p v-if="errors.requestedReadyTime" class="error">{{ errors.requestedReadyTime }}</p>
+        </label>
+
+        <div v-if="liveSchemaFields.dressingOnSide.isActive" class="field">
+          <label class="confirm">
+            <input v-model="dressingOnSide" type="checkbox" />
+            <span>{{ labels.dressingOnSide }}</span>
+          </label>
+          <p v-if="errors.dressingOnSide" class="error">{{ errors.dressingOnSide }}</p>
+        </div>
+
+        <div v-if="liveSchemaFields.needsNapkins.isActive" class="field">
+          <label class="confirm">
+            <input v-model="needsNapkins" type="checkbox" />
+            <span>{{ labels.needsNapkins }}</span>
+          </label>
+          <p v-if="errors.needsNapkins" class="error">{{ errors.needsNapkins }}</p>
+        </div>
+
+        <label v-if="liveSchemaFields.napkinCount.isActive" class="field">
+          <span>{{ labels.napkinCount }}</span>
+          <input v-model="napkinCount" class="text-input" type="text" />
+          <p v-if="errors.napkinCount" class="error">{{ errors.napkinCount }}</p>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Submit</button>
+        </div>
+      </form>
+      <pre class="debug">{{ JSON.stringify(values, null, 2) }}</pre>
     </section>
   </main>
 </template>
@@ -198,82 +187,100 @@ header {
   text-align: center;
   margin-top: 2rem;
 }
-.form {
-  max-width: 960px;
+
+.form-single {
+  max-width: 640px;
   margin: 2rem auto;
   font-family: system-ui, sans-serif;
   text-align: left;
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
 }
-.stepper {
+
+.form-fields {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex: 0 0 180px;
+  gap: 1rem;
 }
-.stepper li {
-  list-style: none;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
-.content {
-  flex: 1;
-  min-width: 0;
+
+.field > span {
+  font-size: 0.9rem;
+  color: var(--text);
 }
-.stepper button {
+
+.text-input {
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  width: 18rem;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.radio {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
   padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  border: none;
-  background: #1f1f1f;
-  color: #888;
-  font-size: 0.85rem;
   cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  white-space: nowrap;
-  overflow: hidden;
+  text-transform: capitalize;
 }
-.step-num {
-  font-weight: 700;
-  flex-shrink: 0;
+
+.radio:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
 }
-.step-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
-.stepper button:hover:not(:disabled) {
-  filter: brightness(1.2);
-}
-.stepper button.active {
-  background: #2c5282;
-  color: white;
-}
-.stepper button.done {
-  background: #2f4f2f;
-  color: #ddd;
-}
-.stepper button:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
+
 .actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
 }
+
+.actions button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
 .debug {
-  background: #111;
-  color: #0f0;
+  background: var(--code-bg);
+  color: var(--text-h);
   padding: 0.5rem;
-  margin: 1rem 0 1rem;
+  margin: 1rem 0;
   font-size: 0.7rem;
   border-radius: 4px;
   white-space: pre-wrap;

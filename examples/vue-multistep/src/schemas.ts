@@ -11,7 +11,7 @@ export const pizzaSizes = ['small', 'medium', 'large'] as const
 export const orderTypes = ['pickup', 'delivery'] as const
 
 export const form = defineSchema()
-  .field('email', z.string().email())
+  .field('email', z.email())
   .field('fullName', z.string().min(2).max(100))
   .field('orderType', z.enum(orderTypes))
   .when({ orderType: 'delivery' }, (b) => b.field('leaveAtDoor', z.boolean()))

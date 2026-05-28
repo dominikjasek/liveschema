@@ -53,4 +53,4 @@ Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `is
 
 ## Examples
 
-- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-217u4tgm?file=src%2Fschemas.ts)
