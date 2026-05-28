@@ -13,6 +13,7 @@
     "react-example",
     "react-hook-form-example",
     "tanstack-form-example",
-    "svelte-example"
+    "svelte-example",
+    "vue-multistep-example"
   ]
 }
