@@ -1,5 +1,11 @@
 # @liveschema/core
 
+## 1.0.3
+
+### Patch Changes
+
+- cb49924: update example links
+
 ## 1.0.2
 
 ### Patch Changes
