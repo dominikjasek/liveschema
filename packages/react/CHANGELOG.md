@@ -1,5 +1,11 @@
 # @liveschema/react
 
+## 1.0.4
+
+### Patch Changes
+
+- 19c6d30: rel
+
 ## 1.0.3
 
 ### Patch Changes
