@@ -51,10 +51,10 @@ importers:
   examples/react-example:
     dependencies:
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       '@liveschema/react':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/react
       '@tanstack/react-form':
         specifier: ^1.0.0
@@ -91,10 +91,10 @@ importers:
         specifier: ^5.0.0
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       '@liveschema/react':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/react
       react:
         specifier: ^19.0.0
@@ -128,7 +128,7 @@ importers:
   examples/svelte-example:
     dependencies:
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       '@standard-schema/spec':
         specifier: ^1.0.0
@@ -159,10 +159,10 @@ importers:
   examples/tanstack-form-example:
     dependencies:
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       '@liveschema/react':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/react
       '@standard-schema/spec':
         specifier: ^1.0.0
@@ -202,7 +202,7 @@ importers:
   examples/vanilla-example:
     dependencies:
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       zod:
         specifier: ^4.4.3
@@ -218,10 +218,10 @@ importers:
   examples/vue-example:
     dependencies:
       '@liveschema/core':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/core
       '@liveschema/vue':
-        specifier: ^1.0.2
+        specifier: workspace:*
         version: link:../../packages/vue
       '@vee-validate/zod':
         specifier: ^4.15.1

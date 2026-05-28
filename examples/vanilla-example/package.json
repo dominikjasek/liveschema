@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@liveschema/core": "^1.0.2",
+    "@liveschema/core": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
