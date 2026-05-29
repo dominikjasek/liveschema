@@ -62,7 +62,8 @@ const errors = validateSchema(order, input)
 
 This monorepo ships runnable examples under [`examples/`](examples):
 
-- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-sks7e1yx?file=src%2Fschemas.ts)
+- [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, single-page. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-sks7e1yx?file=src%2Fschemas.ts)
+- [`vue-multistep/`](examples/vue-multistep) — `@liveschema/vue` + vee-validate, multi-step wizard. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-multistep)
 - [`tanstack-form-example/`](examples/tanstack-form-example) — `@liveschema/react` + TanStack Form (single-page). [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/github-fcjshzse?file=src%2FFormPage.tsx)
 
 ````

@@ -162,7 +162,8 @@ End-to-end examples:
 
 - [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
 - [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
-- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
+- [examples/vue-multistep](../../examples/vue-multistep) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-multistep)
 - [examples/svelte-example](../../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
 - [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
 - [examples/vanilla-example](../../examples/vanilla-example) — no form library [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
@@ -177,12 +178,17 @@ End-to-end examples:
 | `.when(predicate, branch)`       | Predicate-gated sub-branch                                                                                                                                                    |
 | `.whenAny(patterns, branch)`     | OR-gated sub-branch                                                                                                                                                           |
 | `activeFields(schema, values)`   | Ordered list of currently-reachable fields                                                                                                                                    |
+| `declaredFields(schema, values)` | Every declared field in source order, each tagged with `isActive` — useful when you want to render gated fields as disabled rather than unmount them                          |
 | `validateSchema(schema, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate`                                                                  |
 | `toStandardSchema(schema)`       | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
 | `enumOptions(schema)`            | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects                                                                          |
 | `InferSchema<F>`                 | Discriminated-union value type                                                                                                                                                |
 | `InferField<F, K>`               | Type of a single field across variants                                                                                                                                        |
-| `SchemaField`                    | `{ key, schema, value }` returned by `activeFields`                                                                                                                           |
+| `FlatInferSchema<F>`             | Flat, fully-optional view of the value type — single record indexable by any field key (for in-progress form state with libraries that want one shape, e.g. RHF)              |
+| `SchemaKeys<F>`                  | Union of every field key across every variant                                                                                                                                 |
+| `SchemaField<K>`                 | `{ key, schema, value }` returned by `activeFields`                                                                                                                           |
+| `DeclaredField<K>`               | `{ key, schema, isActive, value }` returned by `declaredFields`                                                                                                               |
+| `SchemaErrors<F>`                | Return shape of `validateSchema` — `Partial<Record<SchemaKeys<F>, string>>`                                                                                                   |
 
 ## What this package is _not_
 
