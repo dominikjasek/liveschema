@@ -112,9 +112,9 @@ import { toStandardSchema } from '@liveschema/core'
 const standard = toStandardSchema(schema)
 const result = standard['~standard'].validate(await req.json())
 if (result instanceof Promise) {
-  // some validator was async
+  // some validator was async — await it
 } else if (result.issues) {
-  // 422 with result.issues
+  // invalid — return result.issues to the client (e.g. 422 with the issue list)
 } else {
   // result.value is fully typed and only contains reachable fields
 }
@@ -136,18 +136,69 @@ const cleaned = Object.fromEntries(Object.entries(values).filter(([k]) => keep.h
 
 ## Rendering the active fields
 
-```ts
-// 1. Live field list, re-derived from current values on every render.
-const fields = activeFields(schema, values)
+Two rendering shapes work well; both are driven from the same schema.
 
-// 2. Render however you like — single page, one-field-per-screen wizard,
-//    grouped sections — keyed by `field.key`.
-for (const field of fields) {
-  // pick an input based on `field.schema` (radio for enums, checkbox for
-  // booleans, text input otherwise) and bind to `values[field.key]`.
+### 1. Static layout, gate each field by `isActive` (default)
+
+Most forms have a small, known set of fields with distinct markup per field. Lay out every field statically and gate visibility per-field with `isActive` from `declaredFields` (which returns every declared field tagged with whether it's currently reachable):
+
+```tsx
+const declared = declaredFields(schema, values)
+const f = Object.fromEntries(declared.map((d) => [d.key, d])) as Record<
+  FieldKey,
+  (typeof declared)[number]
+>
+
+// pseudo-JSX — one block per field, gated by isActive:
+return (
+  <>
+    {f.email.isActive && <TextInput name="email" value={values.email} />}
+    {f.orderType.isActive && (
+      <RadioGroup name="orderType" options={enumOptions(f.orderType.schema) ?? []} />
+    )}
+    {f.leaveAtDoor.isActive && <Checkbox name="leaveAtDoor" />}
+    {/* ... */}
+  </>
+)
+```
+
+If you're using `@liveschema/react` / `@liveschema/vue`, the hook returns the keyed-by-name `fields` record directly. End-to-end: [examples/tanstack-form-example/src/FormPage.tsx](../../examples/tanstack-form-example/src/FormPage.tsx).
+
+### 2. Dynamic for-loop with a renderer map
+
+When you have many similar fields (one-field-per-screen wizards, dense surveys), iterate `activeFields(...)` and dispatch each field to a small renderer keyed by field name:
+
+```tsx
+import { Fragment } from 'react'
+import type { SchemaField } from '@liveschema/core'
+
+type Renderer = (field: SchemaField<FieldKey>) => ReactNode
+
+const renderers: Record<FieldKey, Renderer> = {
+  email: (f) => <TextStep path={f.key} type="email" />,
+  fullName: (f) => <TextStep path={f.key} />,
+  orderType: (f) => <RadioStep path={f.key} options={enumOptions(f.schema) ?? []} />,
+  leaveAtDoor: (f) => <CheckboxStep path={f.key} />,
+  pizzaCount: (f) => <NumberStep path={f.key} min={1} max={20} />,
+  // ...
 }
 
-// 3. Validate a single field — useful for per-field "Next" buttons:
+return (
+  <>
+    {activeFields(schema, values).map((field) => (
+      <Fragment key={field.key}>{renderers[field.key](field)}</Fragment>
+    ))}
+  </>
+)
+```
+
+End-to-end: [examples/react-example/src/steps/index.tsx](../../examples/react-example/src/steps/index.tsx).
+
+### Per-field validation
+
+Either rendering shape can drive per-field validation — useful for "Next" buttons in wizards or blur-time validation:
+
+```ts
 const result = field.schema['~standard'].validate(values[field.key])
 if (result instanceof Promise) {
   // handle async validators
@@ -160,13 +211,8 @@ if (result instanceof Promise) {
 
 End-to-end examples:
 
-- [examples/react-example](../../examples/react-example) — React + TanStack Form (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-example)
-- [examples/react-hook-form-example](../../examples/react-hook-form-example) — React + react-hook-form (single-page, via `@hookform/resolvers/standard-schema`) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/react-hook-form-example)
-- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-example)
-- [examples/vue-multistep](../../examples/vue-multistep) — Vue 3 + vee-validate (multi-step wizard) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vue-multistep)
-- [examples/svelte-example](../../examples/svelte-example) — Svelte 5 + Felte + Effect Schema (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/svelte-example)
-- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/tanstack-form-example)
-- [examples/vanilla-example](../../examples/vanilla-example) — no form library [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/dominikjasek/liveschema/tree/master/examples/vanilla-example)
+- [examples/vue-example](../../examples/vue-example) — Vue 3 + vee-validate (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-sks7e1yx?file=src%2Fschemas.ts)
+- [examples/tanstack-form-example](../../examples/tanstack-form-example) — React + TanStack Form (single-page) [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/github-fcjshzse?file=src%2FFormPage.tsx)
 
 ## API
 
