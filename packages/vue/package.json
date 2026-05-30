@@ -1,6 +1,6 @@
 {
   "name": "@liveschema/vue",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "Vue bindings for liveschema. `useLiveSchema(schema, values)` returns computed refs for every declared field (with `isReachable` flag + enum options) and the reachable subset, plus an `isReachableField(key)` predicate for `v-if` gates.",
   "keywords": [
     "vue",

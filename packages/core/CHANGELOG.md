@@ -1,5 +1,11 @@
 # @liveschema/core
 
+## 1.1.0
+
+### Minor Changes
+
+- 1e3d626: rename active to reachable
+
 ## 1.0.3
 
 ### Patch Changes

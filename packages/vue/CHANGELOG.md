@@ -1,5 +1,16 @@
 # @liveschema/vue
 
+## 2.0.0
+
+### Minor Changes
+
+- 1e3d626: rename active to reachable
+
+### Patch Changes
+
+- Updated dependencies [1e3d626]
+  - @liveschema/core@1.1.0
+
 ## 1.0.5
 
 ### Patch Changes
