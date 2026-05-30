@@ -1,6 +1,6 @@
 {
   "name": "@liveschema/core",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Build a typed, branching schema from any Standard Schema validators. Inferred values are a discriminated union over reachable branches; at runtime, get the ordered list of currently-reachable fields. Works for conditional forms (single-page or multi-step), backend validation, and anywhere branching data lives.",
   "keywords": [
     "schema",

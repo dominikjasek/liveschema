@@ -1,6 +1,6 @@
 {
   "name": "@liveschema/react",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "React bindings for liveschema. `useLiveSchema(schema, values)` returns every declared field with an `isReachable` flag and enum options, the reachable subset, and an `isReachableField(key)` predicate for conditional rendering.",
   "keywords": [
     "react",
