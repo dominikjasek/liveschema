@@ -1,4 +1,4 @@
-import { activeFields } from '@liveschema/core'
+import { reachableFields } from '@liveschema/core'
 import { form } from './schemas'
 import { humanize } from './stepLabels'
 
@@ -14,7 +14,7 @@ function display(value: unknown): string {
 }
 
 export function StepReview({ data }: { data: Record<string, unknown> }) {
-  const items = activeFields(form, data).map((step) => ({
+  const items = reachableFields(form, data).map((step) => ({
     key: step.key,
     value: step.value,
   }))

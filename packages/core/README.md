@@ -35,7 +35,7 @@ pnpm add zod        # or: valibot, arktype, effect, ...
 
 ```ts
 import { z } from 'zod'
-import { defineSchema, activeFields, type InferSchema } from '@liveschema/core'
+import { defineSchema, reachableFields, type InferSchema } from '@liveschema/core'
 
 const schema = defineSchema()
   .field('name', z.string().min(1))
@@ -46,7 +46,7 @@ const schema = defineSchema()
 type Values = InferSchema<typeof schema>
 
 // Given current values, get the live ordered list of reachable fields:
-const fields = activeFields(schema, { name: 'Ada', animal: 'dog' })
+const fields = reachableFields(schema, { name: 'Ada', animal: 'dog' })
 // [
 //   { key: 'name',    schema: <standard schema>, value: 'Ada' },
 //   { key: 'animal',  schema: <standard schema>, value: 'dog' },
@@ -127,20 +127,20 @@ When the user changes a branch discriminator (e.g. switches `animal` from `'dog'
 - `toStandardSchema(schema)['~standard'].validate(values).value` is rebuilt from scratch each call and only contains keys for currently-reachable fields — so anything you submit through the standard-schema validator is pruned for free.
 - Form libraries that unmount-then-forget orphaned fields handle this for you too (react-hook-form with `shouldUnregister: true`, etc.).
 
-If you're managing raw values state yourself and want to drop orphans eagerly, build a `Set` from `activeFields()` and filter:
+If you're managing raw values state yourself and want to drop orphans eagerly, build a `Set` from `reachableFields()` and filter:
 
 ```ts
-const keep = new Set(activeFields(schema, values).map((f) => f.key))
+const keep = new Set(reachableFields(schema, values).map((f) => f.key))
 const cleaned = Object.fromEntries(Object.entries(values).filter(([k]) => keep.has(k)))
 ```
 
-## Rendering the active fields
+## Rendering the reachable fields
 
 Two rendering shapes work well; both are driven from the same schema.
 
-### 1. Static layout, gate each field by `isActive` (default)
+### 1. Static layout, gate each field by `isReachable` (default)
 
-Most forms have a small, known set of fields with distinct markup per field. Lay out every field statically and gate visibility per-field with `isActive` from `declaredFields` (which returns every declared field tagged with whether it's currently reachable):
+Most forms have a small, known set of fields with distinct markup per field. Lay out every field statically and gate visibility per-field with `isReachable` from `declaredFields` (which returns every declared field tagged with whether it's currently reachable):
 
 ```tsx
 const declared = declaredFields(schema, values)
@@ -149,14 +149,14 @@ const f = Object.fromEntries(declared.map((d) => [d.key, d])) as Record<
   (typeof declared)[number]
 >
 
-// pseudo-JSX — one block per field, gated by isActive:
+// pseudo-JSX — one block per field, gated by isReachable:
 return (
   <>
-    {f.email.isActive && <TextInput name="email" value={values.email} />}
-    {f.orderType.isActive && (
+    {f.email.isReachable && <TextInput name="email" value={values.email} />}
+    {f.orderType.isReachable && (
       <RadioGroup name="orderType" options={enumOptions(f.orderType.schema) ?? []} />
     )}
-    {f.leaveAtDoor.isActive && <Checkbox name="leaveAtDoor" />}
+    {f.leaveAtDoor.isReachable && <Checkbox name="leaveAtDoor" />}
     {/* ... */}
   </>
 )
@@ -166,7 +166,7 @@ If you're using `@liveschema/react` / `@liveschema/vue`, the hook returns the ke
 
 ### 2. Dynamic for-loop with a renderer map
 
-When you have many similar fields (one-field-per-screen wizards, dense surveys), iterate `activeFields(...)` and dispatch each field to a small renderer keyed by field name:
+When you have many similar fields (one-field-per-screen wizards, dense surveys), iterate `reachableFields(...)` and dispatch each field to a small renderer keyed by field name:
 
 ```tsx
 import { Fragment } from 'react'
@@ -185,7 +185,7 @@ const renderers: Record<FieldKey, Renderer> = {
 
 return (
   <>
-    {activeFields(schema, values).map((field) => (
+    {reachableFields(schema, values).map((field) => (
       <Fragment key={field.key}>{renderers[field.key](field)}</Fragment>
     ))}
   </>
@@ -216,29 +216,29 @@ End-to-end examples:
 
 ## API
 
-| Export                           | Purpose                                                                                                                                                                       |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defineSchema()`                 | Start a schema builder                                                                                                                                                        |
-| `.field(key, schema)`            | Declare a field (schema is any Standard Schema validator)                                                                                                                     |
-| `.when(pattern, branch)`         | Equality-gated sub-branch                                                                                                                                                     |
-| `.when(predicate, branch)`       | Predicate-gated sub-branch                                                                                                                                                    |
-| `.whenAny(patterns, branch)`     | OR-gated sub-branch                                                                                                                                                           |
-| `activeFields(schema, values)`   | Ordered list of currently-reachable fields                                                                                                                                    |
-| `declaredFields(schema, values)` | Every declared field in source order, each tagged with `isActive` — useful when you want to render gated fields as disabled rather than unmount them                          |
-| `validateSchema(schema, values)` | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate`                                                                  |
-| `toStandardSchema(schema)`       | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
-| `enumOptions(schema)`            | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects                                                                          |
-| `InferSchema<F>`                 | Discriminated-union value type                                                                                                                                                |
-| `InferField<F, K>`               | Type of a single field across variants                                                                                                                                        |
-| `FlatInferSchema<F>`             | Flat, fully-optional view of the value type — single record indexable by any field key (for in-progress form state with libraries that want one shape, e.g. RHF)              |
-| `SchemaKeys<F>`                  | Union of every field key across every variant                                                                                                                                 |
-| `SchemaField<K>`                 | `{ key, schema, value }` returned by `activeFields`                                                                                                                           |
-| `DeclaredField<K>`               | `{ key, schema, isActive, value }` returned by `declaredFields`                                                                                                               |
-| `SchemaErrors<F>`                | Return shape of `validateSchema` — `Partial<Record<SchemaKeys<F>, string>>`                                                                                                   |
+| Export                            | Purpose                                                                                                                                                                       |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineSchema()`                  | Start a schema builder                                                                                                                                                        |
+| `.field(key, schema)`             | Declare a field (schema is any Standard Schema validator)                                                                                                                     |
+| `.when(pattern, branch)`          | Equality-gated sub-branch                                                                                                                                                     |
+| `.when(predicate, branch)`        | Predicate-gated sub-branch                                                                                                                                                    |
+| `.whenAny(patterns, branch)`      | OR-gated sub-branch                                                                                                                                                           |
+| `reachableFields(schema, values)` | Ordered list of currently-reachable fields                                                                                                                                    |
+| `declaredFields(schema, values)`  | Every declared field in source order, each tagged with `isReachable` — useful when you want to render gated fields as disabled rather than unmount them                       |
+| `validateSchema(schema, values)`  | `{ key: firstMessage }` errors for reachable fields — plug straight into Formik/vee-validate/etc. `validate`                                                                  |
+| `toStandardSchema(schema)`        | One Standard Schema validating the currently-reachable fields — for TanStack Form's `onDynamic`, react-hook-form's standard-schema resolver, backend request validation, etc. |
+| `enumOptions(schema)`             | Best-effort enum option list (`undefined` for non-enum schemas) — handy for rendering radios/selects                                                                          |
+| `InferSchema<F>`                  | Discriminated-union value type                                                                                                                                                |
+| `InferField<F, K>`                | Type of a single field across variants                                                                                                                                        |
+| `FlatInferSchema<F>`              | Flat, fully-optional view of the value type — single record indexable by any field key (for in-progress form state with libraries that want one shape, e.g. RHF)              |
+| `SchemaKeys<F>`                   | Union of every field key across every variant                                                                                                                                 |
+| `SchemaField<K>`                  | `{ key, schema, value }` returned by `reachableFields`                                                                                                                        |
+| `DeclaredField<K>`                | `{ key, schema, isReachable, value }` returned by `declaredFields`                                                                                                            |
+| `SchemaErrors<F>`                 | Return shape of `validateSchema` — `Partial<Record<SchemaKeys<F>, string>>`                                                                                                   |
 
 ## What this package is _not_
 
-- **Not a form library** — bring your own (TanStack Form, vee-validate, React Hook Form, plain state). The package gives you the active-field list; you keep the values.
+- **Not a form library** — bring your own (TanStack Form, vee-validate, React Hook Form, plain state). The package gives you the reachable-field list; you keep the values.
 - **Not a UI library** — render however you want, keyed by `field.key`.
 - **Doesn't track navigation or phase** (e.g. "fill" vs "review", current-step index) — that's all in the consumer.
 - **Doesn't route validation errors into form-library field state** — the consumer does that with the issues from `field.schema['~standard'].validate(values[field.key])`.

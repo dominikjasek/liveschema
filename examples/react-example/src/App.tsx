@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm, useStore } from '@tanstack/react-form'
-import { activeFields, type SchemaField } from '@liveschema/core'
+import { reachableFields, type SchemaField } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/react'
 import { form as formDef, type Order, type OrderFlat } from './schemas'
 import { stepRenderers } from './steps'
@@ -40,11 +40,11 @@ export function App() {
   // Subscribe to values — every value change re-derives the step list.
   const values = useStore(form.store, (s) => s.values) as Record<string, unknown>
 
-  // Per-step validation needs the schema, so we still use activeFields here.
-  const steps: SchemaField[] = useMemo(() => activeFields(formDef, values), [values])
+  // Per-step validation needs the schema, so we still use reachableFields here.
+  const steps: SchemaField[] = useMemo(() => reachableFields(formDef, values), [values])
 
   // useLiveSchema gives us enumOptions baked in for renderers that need them.
-  // `fields` is a Record<Key, {isActive, enumOptions}> — keyed lookup, no .find().
+  // `fields` is a Record<Key, {isReachable, enumOptions}> — keyed lookup, no .find().
   const { fields } = useLiveSchema(formDef, values)
 
   // Clamp stepIndex if a branch change shrinks the step list. Stored

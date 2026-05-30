@@ -27,17 +27,17 @@ export function MyForm() {
   })
 
   const values = useWatch({ control })
-  const { fields, activeFields, isActiveField } = useLiveSchema(schema, values)
+  const { fields, reachableFields, isReachableField } = useLiveSchema(schema, values)
 
   return (
     <form>
       {/* Gate JSX directly with the predicate — no manual Set tracking. */}
-      {isActiveField('paymentMethod') && (
+      {isReachableField('paymentMethod') && (
         <PaymentRadios options={fields.paymentMethod.enumOptions ?? []} />
       )}
 
-      {/* Or iterate the active subset in source order. */}
-      {Object.entries(activeFields).map(([key, info]) => (
+      {/* Or iterate the reachable subset in source order. */}
+      {Object.entries(reachableFields).map(([key, info]) => (
         <Field key={key} name={key} options={info?.enumOptions ?? []} />
       ))}
     </form>
@@ -47,17 +47,17 @@ export function MyForm() {
 
 ### Return shape
 
-| Property        | Type                                                                           | Meaning                                                                                                                        |
-| --------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `fields`        | `Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>`          | Every declared field, keyed by field key. Insertion order matches the schema's declaration order.                              |
-| `activeFields`  | `Partial<Record<Key, { isActive: boolean; enumOptions?: readonly string[] }>>` | The currently-reachable subset of `fields`; inactive keys are absent. `Object.keys(activeFields)` gives the live ordered list. |
-| `isActiveField` | `(key: Key) => boolean`                                                        | Predicate equivalent to `key in activeFields`. Use for JSX gating.                                                             |
+| Property           | Type                                                                              | Meaning                                                                                                                              |
+| ------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `fields`           | `Record<Key, { isReachable: boolean; enumOptions?: readonly string[] }>`          | Every declared field, keyed by field key. Insertion order matches the schema's declaration order.                                    |
+| `reachableFields`  | `Partial<Record<Key, { isReachable: boolean; enumOptions?: readonly string[] }>>` | The currently-reachable subset of `fields`; unreachable keys are absent. `Object.keys(reachableFields)` gives the live ordered list. |
+| `isReachableField` | `(key: Key) => boolean`                                                           | Predicate equivalent to `key in reachableFields`. Use for JSX gating.                                                                |
 
-Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `isActiveField('typo')` is a compile-time error.
+Keys are typed using `SchemaKeys<typeof schema>` from `@liveschema/core`, so `isReachableField('typo')` is a compile-time error.
 
 ### When to reach for `@liveschema/core` directly
 
-The hook intentionally exposes a UI-shaped slice. If you need the underlying validator for incremental per-field validation, use `activeFields(schema, values)` (the function from the core package) alongside the hook.
+The hook intentionally exposes a UI-shaped slice. If you need the underlying validator for incremental per-field validation, use `reachableFields(schema, values)` (the function from the core package) alongside the hook.
 
 ## Examples
 

@@ -20,7 +20,7 @@ type EnumOptionsFor<T> = [Extract<T, string>] extends [never]
     : Extract<T, string>
 
 /**
- * Per-key record entry shape. Non-enum-like fields get `{ isActive }` only —
+ * Per-key record entry shape. Non-enum-like fields get `{ isReachable }` only —
  * `fields.someBoolean.enumOptions` is a compile error rather than `undefined`.
  * Enum-like fields get `enumOptions?` typed to that field's literal union.
  *
@@ -30,8 +30,8 @@ type EnumOptionsFor<T> = [Extract<T, string>] extends [never]
  * still surface as `undefined` instead of producing a runtime mismatch.
  */
 export type LiveSchemaFieldFor<T> = [EnumOptionsFor<T>] extends [never]
-  ? { isActive: boolean }
-  : { isActive: boolean; enumOptions?: readonly EnumOptionsFor<T>[] }
+  ? { isReachable: boolean }
+  : { isReachable: boolean; enumOptions?: readonly EnumOptionsFor<T>[] }
 
 /**
  * Open-ended supertype for code that needs a single shape to accept any field
@@ -39,7 +39,7 @@ export type LiveSchemaFieldFor<T> = [EnumOptionsFor<T>] extends [never]
  * Both `LiveSchemaFieldFor<T>` branches are assignable to this.
  */
 export type LiveSchemaField = {
-  isActive: boolean
+  isReachable: boolean
   enumOptions?: readonly string[]
 }
 
@@ -53,28 +53,28 @@ export type UseLiveSchemaResult<F> = {
    */
   fields: ComputedRef<FieldsRecord<F>>
   /**
-   * Computed ref of the active subset. Inactive keys are absent from the
-   * record, so `Object.keys(activeFields.value)` gives the live ordered list.
+   * Computed ref of the reachable subset. Unreachable keys are absent from the
+   * record, so `Object.keys(reachableFields.value)` gives the live ordered list.
    */
-  activeFields: ComputedRef<Partial<FieldsRecord<F>>>
+  reachableFields: ComputedRef<Partial<FieldsRecord<F>>>
   /**
    * Reactive predicate — usable from templates without `.value`, and from
    * `<script setup>` without `.value` (reads the computed ref internally).
    */
-  isActiveField: (key: SchemaKeys<F>) => boolean
+  isReachableField: (key: SchemaKeys<F>) => boolean
 }
 
 /**
  * Vue composable that walks a liveschema definition against a reactive form
- * state and exposes the active-field set as two computed records plus a
+ * state and exposes the reachable-field set as two computed records plus a
  * predicate. Pair it with any reactive value source — vee-validate's
  * `useForm`, a `ref`, a `reactive`, or a getter:
  *
  *     const form = useForm({ validationSchema: toStandardSchema(schema) })
- *     const { isActiveField, fields } = useLiveSchema(schema, () => form.values)
+ *     const { isReachableField, fields } = useLiveSchema(schema, () => form.values)
  *
  *     <PaymentMethodRadios
- *       v-if="isActiveField('paymentMethod')"
+ *       v-if="isReachableField('paymentMethod')"
  *       :options="fields.paymentMethod.enumOptions ?? []"
  *     />
  *
@@ -96,22 +96,25 @@ export function useLiveSchema<V extends object>(
     for (const f of declared.value) {
       const opts = enumOptions(f.schema)
       out[f.key] =
-        opts !== undefined ? { isActive: f.isActive, enumOptions: opts } : { isActive: f.isActive }
+        opts !== undefined
+          ? { isReachable: f.isReachable, enumOptions: opts }
+          : { isReachable: f.isReachable }
     }
     return out as Result['fields']['value']
   })
 
-  const activeFields = computed(() => {
+  const reachableFields = computed(() => {
     const out: Record<string, LiveSchemaField> = {}
     for (const f of declared.value) {
-      if (!f.isActive) continue
+      if (!f.isReachable) continue
       const opts = enumOptions(f.schema)
-      out[f.key] = opts !== undefined ? { isActive: true, enumOptions: opts } : { isActive: true }
+      out[f.key] =
+        opts !== undefined ? { isReachable: true, enumOptions: opts } : { isReachable: true }
     }
-    return out as Result['activeFields']['value']
+    return out as Result['reachableFields']['value']
   })
 
-  const isActiveField = (key: SchemaKeys<SchemaBuilder<V>>) => key in activeFields.value
+  const isReachableField = (key: SchemaKeys<SchemaBuilder<V>>) => key in reachableFields.value
 
-  return { fields, activeFields, isActiveField }
+  return { fields, reachableFields, isReachableField }
 }

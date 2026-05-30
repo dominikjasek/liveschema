@@ -30,7 +30,7 @@
 ### Minor Changes
 
 - Renamed from `liveschema` to `@liveschema/core` so all packages live under the `@liveschema` npm org. Replace `from 'liveschema'` with `from '@liveschema/core'`; the runtime API is unchanged.
-- New `declaredFields(schema, values)` walker — returns every declared field tagged with an `isActive` flag (vs. `activeFields` which only yields reachable ones). Used by the new framework wrappers but exported for direct use too.
+- New `declaredFields(schema, values)` walker — returns every declared field tagged with an `isReachable` flag (vs. `reachableFields` which only yields reachable ones). Used by the new framework wrappers but exported for direct use too.
 
 ## 0.0.2
 

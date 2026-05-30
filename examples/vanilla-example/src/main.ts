@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { activeFields, validateSchema, type SchemaField } from '@liveschema/core'
+import { reachableFields, validateSchema, type SchemaField } from '@liveschema/core'
 import { form } from './schema'
 
 const formEl = document.getElementById('form') as HTMLFormElement
@@ -107,7 +107,7 @@ function renderSubmit(): HTMLElement {
 
 function render(): void {
   const focusState = captureFocus()
-  const steps = activeFields(form, values)
+  const steps = reachableFields(form, values)
   formEl.replaceChildren(...steps.map(renderField), renderSubmit())
   renderValues()
   restoreFocus(focusState)

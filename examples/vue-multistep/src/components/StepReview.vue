@@ -5,8 +5,8 @@ import { form as orderForm } from '@/schemas'
 
 const props = defineProps<{ data: Record<string, unknown> }>()
 
-const { activeFields } = useLiveSchema(orderForm, () => props.data)
-const activeFieldKeys = computed(() => Object.keys(activeFields.value))
+const { reachableFields } = useLiveSchema(orderForm, () => props.data)
+const reachableFieldKeys = computed(() => Object.keys(reachableFields.value))
 
 function display(value: unknown): string {
   if (value === undefined || value === null) return '—'
@@ -27,7 +27,7 @@ function humanize(field: string): string {
 <template>
   <h2>Review</h2>
   <dl class="review">
-    <template v-for="key in activeFieldKeys" :key="key">
+    <template v-for="key in reachableFieldKeys" :key="key">
       <dt>{{ humanize(key) }}</dt>
       <dd>{{ display(props.data[key]) }}</dd>
     </template>

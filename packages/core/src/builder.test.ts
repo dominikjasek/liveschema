@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, test } from 'vitest'
 import { z } from 'zod'
 import {
-  activeFields,
+  reachableFields,
   declaredFields,
   defineSchema,
   type InferSchema,
@@ -9,9 +9,9 @@ import {
 } from './index'
 
 describe('builder — defineSchema', () => {
-  test('produces an empty active-field list for a schema with no .field calls', () => {
+  test('produces an empty reachable-field list for a schema with no .field calls', () => {
     const empty = defineSchema()
-    expect(activeFields(empty, {})).toEqual([])
+    expect(reachableFields(empty, {})).toEqual([])
     expect(declaredFields(empty, {})).toEqual([])
   })
 
@@ -20,27 +20,27 @@ describe('builder — defineSchema', () => {
       .field('b', z.string())
       .field('a', z.string())
       .field('c', z.string())
-    expect(activeFields(schema, {}).map((f) => f.key)).toEqual(['b', 'a', 'c'])
+    expect(reachableFields(schema, {}).map((f) => f.key)).toEqual(['b', 'a', 'c'])
   })
 
   test('is immutable — chaining returns a new builder without mutating the previous one', () => {
     const base = defineSchema().field('a', z.string())
     const extended = base.field('b', z.string())
 
-    expect(activeFields(base, {}).map((f) => f.key)).toEqual(['a'])
-    expect(activeFields(extended, {}).map((f) => f.key)).toEqual(['a', 'b'])
+    expect(reachableFields(base, {}).map((f) => f.key)).toEqual(['a'])
+    expect(reachableFields(extended, {}).map((f) => f.key)).toEqual(['a', 'b'])
   })
 
-  test('threads field values through to the active-fields output', () => {
+  test('threads field values through to the reachable-fields output', () => {
     const schema = defineSchema().field('email', z.string()).field('count', z.number())
-    const fields = activeFields(schema, { email: 'a@b.co', count: 5 })
+    const fields = reachableFields(schema, { email: 'a@b.co', count: 5 })
     expect(fields.find((f) => f.key === 'email')?.value).toBe('a@b.co')
     expect(fields.find((f) => f.key === 'count')?.value).toBe(5)
   })
 
   test('keeps each field carrying its own Standard Schema validator', () => {
     const schema = defineSchema().field('email', z.email())
-    const f = activeFields(schema, { email: 'not-an-email' })[0]
+    const f = reachableFields(schema, { email: 'not-an-email' })[0]
     const result = f.schema['~standard'].validate('not-an-email')
     if (result instanceof Promise) throw new Error('expected sync')
     expect(result.issues).toBeTruthy()

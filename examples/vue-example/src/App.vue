@@ -66,19 +66,19 @@ const onSubmit = handleSubmit((data) => {
   <main>
     <section class="form-single">
       <form class="form-fields" @submit="onSubmit">
-        <label v-if="liveSchemaFields.email.isActive" class="field">
+        <label v-if="liveSchemaFields.email.isReachable" class="field">
           <span>{{ labels.email }}</span>
           <input v-model="email" class="text-input" type="text" />
           <p v-if="errors.email" class="error">{{ errors.email }}</p>
         </label>
 
-        <label v-if="liveSchemaFields.fullName.isActive" class="field">
+        <label v-if="liveSchemaFields.fullName.isReachable" class="field">
           <span>{{ labels.fullName }}</span>
           <input v-model="fullName" class="text-input" type="text" />
           <p v-if="errors.fullName" class="error">{{ errors.fullName }}</p>
         </label>
 
-        <div v-if="liveSchemaFields.orderType.isActive" class="field">
+        <div v-if="liveSchemaFields.orderType.isReachable" class="field">
           <span>{{ labels.orderType }}</span>
           <div class="options">
             <label v-for="o in liveSchemaFields.orderType.enumOptions ?? []" :key="o" class="radio">
@@ -89,7 +89,7 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.orderType" class="error">{{ errors.orderType }}</p>
         </div>
 
-        <div v-if="liveSchemaFields.leaveAtDoor.isActive" class="field">
+        <div v-if="liveSchemaFields.leaveAtDoor.isReachable" class="field">
           <label class="confirm">
             <input v-model="leaveAtDoor" type="checkbox" />
             <span>{{ labels.leaveAtDoor }}</span>
@@ -97,7 +97,7 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.leaveAtDoor" class="error">{{ errors.leaveAtDoor }}</p>
         </div>
 
-        <div v-if="liveSchemaFields.hasOrderedBefore.isActive" class="field">
+        <div v-if="liveSchemaFields.hasOrderedBefore.isReachable" class="field">
           <label class="confirm">
             <input v-model="hasOrderedBefore" type="checkbox" />
             <span>{{ labels.hasOrderedBefore }}</span>
@@ -105,16 +105,20 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.hasOrderedBefore" class="error">{{ errors.hasOrderedBefore }}</p>
         </div>
 
-        <label v-if="liveSchemaFields.favoriteItem.isActive" class="field">
+        <label v-if="liveSchemaFields.favoriteItem.isReachable" class="field">
           <span>{{ labels.favoriteItem }}</span>
           <input v-model="favoriteItem" class="text-input" type="text" />
           <p v-if="errors.favoriteItem" class="error">{{ errors.favoriteItem }}</p>
         </label>
 
-        <div v-if="liveSchemaFields.mainCourse.isActive" class="field">
+        <div v-if="liveSchemaFields.mainCourse.isReachable" class="field">
           <span>{{ labels.mainCourse }}</span>
           <div class="options">
-            <label v-for="o in liveSchemaFields.mainCourse.enumOptions ?? []" :key="o" class="radio">
+            <label
+              v-for="o in liveSchemaFields.mainCourse.enumOptions ?? []"
+              :key="o"
+              class="radio"
+            >
               <input v-model="mainCourse" type="radio" :value="o" />
               <span>{{ o }}</span>
             </label>
@@ -122,7 +126,7 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.mainCourse" class="error">{{ errors.mainCourse }}</p>
         </div>
 
-        <div v-if="liveSchemaFields.pizzaSize.isActive" class="field">
+        <div v-if="liveSchemaFields.pizzaSize.isReachable" class="field">
           <span>{{ labels.pizzaSize }}</span>
           <div class="options">
             <label v-for="o in liveSchemaFields.pizzaSize.enumOptions ?? []" :key="o" class="radio">
@@ -133,25 +137,25 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.pizzaSize" class="error">{{ errors.pizzaSize }}</p>
         </div>
 
-        <label v-if="liveSchemaFields.toppings.isActive" class="field">
+        <label v-if="liveSchemaFields.toppings.isReachable" class="field">
           <span>{{ labels.toppings }}</span>
           <input v-model="toppings" class="text-input" type="text" />
           <p v-if="errors.toppings" class="error">{{ errors.toppings }}</p>
         </label>
 
-        <label v-if="liveSchemaFields.pizzaCount.isActive" class="field">
+        <label v-if="liveSchemaFields.pizzaCount.isReachable" class="field">
           <span>{{ labels.pizzaCount }}</span>
           <input v-model="pizzaCount" class="text-input" type="text" />
           <p v-if="errors.pizzaCount" class="error">{{ errors.pizzaCount }}</p>
         </label>
 
-        <label v-if="liveSchemaFields.requestedReadyTime.isActive" class="field">
+        <label v-if="liveSchemaFields.requestedReadyTime.isReachable" class="field">
           <span>{{ labels.requestedReadyTime }}</span>
           <input v-model="requestedReadyTime" class="text-input" type="text" />
           <p v-if="errors.requestedReadyTime" class="error">{{ errors.requestedReadyTime }}</p>
         </label>
 
-        <div v-if="liveSchemaFields.dressingOnSide.isActive" class="field">
+        <div v-if="liveSchemaFields.dressingOnSide.isReachable" class="field">
           <label class="confirm">
             <input v-model="dressingOnSide" type="checkbox" />
             <span>{{ labels.dressingOnSide }}</span>
@@ -159,7 +163,7 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.dressingOnSide" class="error">{{ errors.dressingOnSide }}</p>
         </div>
 
-        <div v-if="liveSchemaFields.needsNapkins.isActive" class="field">
+        <div v-if="liveSchemaFields.needsNapkins.isReachable" class="field">
           <label class="confirm">
             <input v-model="needsNapkins" type="checkbox" />
             <span>{{ labels.needsNapkins }}</span>
@@ -167,7 +171,7 @@ const onSubmit = handleSubmit((data) => {
           <p v-if="errors.needsNapkins" class="error">{{ errors.needsNapkins }}</p>
         </div>
 
-        <label v-if="liveSchemaFields.napkinCount.isActive" class="field">
+        <label v-if="liveSchemaFields.napkinCount.isReachable" class="field">
           <span>{{ labels.napkinCount }}</span>
           <input v-model="napkinCount" class="text-input" type="text" />
           <p v-if="errors.napkinCount" class="error">{{ errors.napkinCount }}</p>

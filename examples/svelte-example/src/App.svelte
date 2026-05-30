@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createForm } from 'felte'
-  import { activeFields, enumOptions, toStandardSchema } from '@liveschema/core'
+  import { reachableFields, enumOptions, toStandardSchema } from '@liveschema/core'
   import { form as formDef, type FieldKey } from './schema'
 
   const labels: Record<FieldKey, string> = {
@@ -57,7 +57,7 @@
     },
   })
 
-  $: fields = activeFields(formDef, $data)
+  $: fields = reachableFields(formDef, $data)
 
   function fieldError(key: string): string | undefined {
     const e = ($errors as Record<string, unknown>)[key]

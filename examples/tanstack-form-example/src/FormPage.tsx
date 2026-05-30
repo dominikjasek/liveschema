@@ -56,7 +56,7 @@ export function FormPage() {
   })
 
   const values = useStore(form.store, (state) => state.values)
-  const { fields: activeFields } = useLiveSchema(formDef, values)
+  const { fields } = useLiveSchema(formDef, values)
 
   return (
     <>
@@ -73,7 +73,7 @@ export function FormPage() {
               void form.handleSubmit()
             }}
           >
-            {activeFields.email.isActive && (
+            {fields.email.isReachable && (
               <form.Field name="email">
                 {(field) => (
                   <label className="field">
@@ -90,7 +90,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.fullName.isActive && (
+            {fields.fullName.isReachable && (
               <form.Field name="fullName">
                 {(field) => (
                   <label className="field">
@@ -107,13 +107,13 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.orderType.isActive && (
+            {fields.orderType.isReachable && (
               <form.Field name="orderType">
                 {(field) => (
                   <div className="field">
                     <span>{labels.orderType}</span>
                     <div className="options">
-                      {(activeFields.orderType.enumOptions ?? []).map((o) => (
+                      {(fields.orderType.enumOptions ?? []).map((o) => (
                         <label key={o} className="radio">
                           <input
                             type="radio"
@@ -129,7 +129,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.leaveAtDoor.isActive && (
+            {fields.leaveAtDoor.isReachable && (
               <form.Field name="leaveAtDoor">
                 {(field) => (
                   <div className="field">
@@ -146,7 +146,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.hasOrderedBefore.isActive && (
+            {fields.hasOrderedBefore.isReachable && (
               <form.Field name="hasOrderedBefore">
                 {(field) => (
                   <div className="field">
@@ -163,7 +163,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.favoriteItem.isActive && (
+            {fields.favoriteItem.isReachable && (
               <form.Field name="favoriteItem">
                 {(field) => (
                   <label className="field">
@@ -180,13 +180,13 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.mainCourse.isActive && (
+            {fields.mainCourse.isReachable && (
               <form.Field name="mainCourse">
                 {(field) => (
                   <div className="field">
                     <span>{labels.mainCourse}</span>
                     <div className="options">
-                      {(activeFields.mainCourse.enumOptions ?? []).map((o) => (
+                      {(fields.mainCourse.enumOptions ?? []).map((o) => (
                         <label key={o} className="radio">
                           <input
                             type="radio"
@@ -202,13 +202,13 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.pizzaSize.isActive && (
+            {fields.pizzaSize.isReachable && (
               <form.Field name="pizzaSize">
                 {(field) => (
                   <div className="field">
                     <span>{labels.pizzaSize}</span>
                     <div className="options">
-                      {(activeFields.pizzaSize.enumOptions ?? []).map((o) => (
+                      {(fields.pizzaSize.enumOptions ?? []).map((o) => (
                         <label key={o} className="radio">
                           <input
                             type="radio"
@@ -224,7 +224,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.toppings.isActive && (
+            {fields.toppings.isReachable && (
               <form.Field name="toppings">
                 {(field) => (
                   <label className="field">
@@ -241,7 +241,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.pizzaCount.isActive && (
+            {fields.pizzaCount.isReachable && (
               <form.Field name="pizzaCount">
                 {(field) => (
                   <label className="field">
@@ -258,7 +258,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.requestedReadyTime.isActive && (
+            {fields.requestedReadyTime.isReachable && (
               <form.Field name="requestedReadyTime">
                 {(field) => (
                   <label className="field">
@@ -275,7 +275,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.dressingOnSide.isActive && (
+            {fields.dressingOnSide.isReachable && (
               <form.Field name="dressingOnSide">
                 {(field) => (
                   <div className="field">
@@ -292,7 +292,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.needsNapkins.isActive && (
+            {fields.needsNapkins.isReachable && (
               <form.Field name="needsNapkins">
                 {(field) => (
                   <div className="field">
@@ -309,7 +309,7 @@ export function FormPage() {
                 )}
               </form.Field>
             )}
-            {activeFields.napkin.isActive && (
+            {fields.napkin.isReachable && (
               <form.Field name="napkin.count">
                 {(field) => (
                   <label className="field">

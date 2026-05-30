@@ -20,7 +20,7 @@ type EnumOptionsFor<T> = [Extract<T, string>] extends [never]
     : Extract<T, string>
 
 /**
- * Per-key record entry shape. Non-enum-like fields get `{ isActive }` only —
+ * Per-key record entry shape. Non-enum-like fields get `{ isReachable }` only —
  * `fields.someBoolean.enumOptions` is a compile error rather than `undefined`.
  * Enum-like fields get `enumOptions?` typed to that field's literal union.
  *
@@ -30,8 +30,8 @@ type EnumOptionsFor<T> = [Extract<T, string>] extends [never]
  * still surface as `undefined` instead of producing a runtime mismatch.
  */
 export type LiveSchemaFieldFor<T> = [EnumOptionsFor<T>] extends [never]
-  ? { isActive: boolean }
-  : { isActive: boolean; enumOptions?: readonly EnumOptionsFor<T>[] }
+  ? { isReachable: boolean }
+  : { isReachable: boolean; enumOptions?: readonly EnumOptionsFor<T>[] }
 
 /**
  * Open-ended supertype for code that needs a single shape to accept any field
@@ -39,7 +39,7 @@ export type LiveSchemaFieldFor<T> = [EnumOptionsFor<T>] extends [never]
  * Both `LiveSchemaFieldFor<T>` branches are assignable to this.
  */
 export type LiveSchemaField = {
-  isActive: boolean
+  isReachable: boolean
   enumOptions?: readonly string[]
 }
 
@@ -53,26 +53,26 @@ export type UseLiveSchemaResult<F> = {
    */
   fields: FieldsRecord<F>
   /**
-   * The subset of `fields` whose branch path is currently reachable. Inactive
-   * keys are absent from the record, so `Object.keys(activeFields)` gives the
-   * live ordered list of active keys.
+   * The subset of `fields` whose branch path is currently reachable. Unreachable
+   * keys are absent from the record, so `Object.keys(reachableFields)` gives the
+   * live ordered list of reachable keys.
    */
-  activeFields: Partial<FieldsRecord<F>>
-  /** Convenience predicate — equivalent to `key in activeFields`. */
-  isActiveField: (key: SchemaKeys<F>) => boolean
+  reachableFields: Partial<FieldsRecord<F>>
+  /** Convenience predicate — equivalent to `key in reachableFields`. */
+  isReachableField: (key: SchemaKeys<F>) => boolean
 }
 
 /**
  * React hook that walks a liveschema definition against the current form
- * values and exposes the active-field set as two records plus a predicate.
+ * values and exposes the reachable-field set as two records plus a predicate.
  * Drop it next to any form state source — `useWatch` from react-hook-form,
  * `useStore` from TanStack Form, plain `useState`, etc. — and gate JSX with
  * the predicate:
  *
  *     const values = useWatch({ control })
- *     const { isActiveField, fields } = useLiveSchema(schema, values)
+ *     const { isReachableField, fields } = useLiveSchema(schema, values)
  *
- *     {isActiveField('paymentMethod') && (
+ *     {isReachableField('paymentMethod') && (
  *       <PaymentMethodRadios options={fields.paymentMethod.enumOptions ?? []} />
  *     )}
  */
@@ -83,20 +83,22 @@ export function useLiveSchema<V extends object>(
   return useMemo(() => {
     const declared = declaredFields(schema, (values ?? {}) as Record<string, unknown>)
     const fields: Record<string, LiveSchemaField> = {}
-    const activeFields: Record<string, LiveSchemaField> = {}
+    const reachableFields: Record<string, LiveSchemaField> = {}
     for (const f of declared) {
       const opts = enumOptions(f.schema)
       const info: LiveSchemaField =
-        opts !== undefined ? { isActive: f.isActive, enumOptions: opts } : { isActive: f.isActive }
+        opts !== undefined
+          ? { isReachable: f.isReachable, enumOptions: opts }
+          : { isReachable: f.isReachable }
       fields[f.key] = info
-      if (f.isActive) activeFields[f.key] = info
+      if (f.isReachable) reachableFields[f.key] = info
     }
     type Result = UseLiveSchemaResult<SchemaBuilder<V>>
-    const isActiveField = (key: SchemaKeys<SchemaBuilder<V>>) => key in activeFields
+    const isReachableField = (key: SchemaKeys<SchemaBuilder<V>>) => key in reachableFields
     return {
       fields: fields as Result['fields'],
-      activeFields: activeFields as Result['activeFields'],
-      isActiveField,
+      reachableFields: reachableFields as Result['reachableFields'],
+      isReachableField,
     }
   }, [schema, values])
 }

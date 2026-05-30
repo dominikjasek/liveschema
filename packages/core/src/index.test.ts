@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, test } from 'vitest'
 import { z } from 'zod'
 import {
   defineSchema,
-  activeFields,
+  reachableFields,
   validateSchema,
   toStandardSchema,
   type InferSchema,
@@ -19,14 +19,16 @@ const order = defineSchema()
     b.field('pizzaCount', z.coerce.number().int().min(1).max(20)),
   )
 
-describe('activeFields', () => {
+describe('reachableFields', () => {
   test('returns the unconditional fields when no branches match', () => {
-    const keys = activeFields(order, { orderType: 'pickup', mainCourse: 'salad' }).map((f) => f.key)
+    const keys = reachableFields(order, { orderType: 'pickup', mainCourse: 'salad' }).map(
+      (f) => f.key,
+    )
     expect(keys).toEqual(['email', 'orderType', 'mainCourse'])
   })
 
   test('reveals an equality branch when its discriminator matches', () => {
-    const keys = activeFields(order, { orderType: 'delivery', mainCourse: 'pizza' }).map(
+    const keys = reachableFields(order, { orderType: 'delivery', mainCourse: 'pizza' }).map(
       (f) => f.key,
     )
     expect(keys).toEqual(['email', 'orderType', 'leaveAtDoor', 'mainCourse', 'pizzaCount'])

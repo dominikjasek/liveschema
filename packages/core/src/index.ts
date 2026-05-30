@@ -340,7 +340,7 @@ type FlatValue<V> = {
 export type FlatInferSchema<F> = F extends SchemaBuilder<infer V> ? FlatValue<V> : never
 
 /** Ordered list of currently-reachable fields given the current values. */
-export function activeFields<V extends object>(
+export function reachableFields<V extends object>(
   schema: SchemaBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
 ): Array<SchemaField<DistributeKeys<V>>> {
@@ -353,18 +353,18 @@ export function activeFields<V extends object>(
 export type DeclaredField<K extends string = string> = {
   key: K
   schema: StandardSchemaV1
-  isActive: boolean
+  isReachable: boolean
   value: unknown
 }
 
 /**
  * Every field declared in the schema, in source order, each tagged with whether its
- * branch path is reachable given `values`. Unlike `activeFields` (which yields only
+ * branch path is reachable given `values`. Unlike `reachableFields` (which yields only
  * reachable fields), this also surfaces fields gated behind unmatched branches —
  * useful for UIs that want to render disabled fields rather than unmount them.
  *
  * Duplicate keys (same key declared in multiple branches with different schemas)
- * are deduped by key; the active occurrence wins, otherwise the first declaration.
+ * are deduped by key; the reachable occurrence wins, otherwise the first declaration.
  */
 export function declaredFields<V extends object>(
   schema: SchemaBuilder<V>,
@@ -384,17 +384,17 @@ export type SchemaErrors<F> = Partial<Record<SchemaKeys<F>, string>>
  * `{ fieldKey: firstMessage }` record (empty when valid), suitable for use
  * directly as a Formik / Final Form / vee-validate `validate` function.
  *
- * Synchronous unless any active validator returns a Promise, in which case
+ * Synchronous unless any reachable validator returns a Promise, in which case
  * the whole call resolves asynchronously. Only the first issue per field is
  * surfaced; consumers that need nested paths or every issue should fall back
- * to `activeFields` and call each field's Standard Schema validator directly.
+ * to `reachableFields` and call each field's Standard Schema validator directly.
  */
 export function validateSchema<V extends object>(
   schema: SchemaBuilder<V>,
   values: Partial<V> | Record<string, unknown>,
 ): SchemaErrors<SchemaBuilder<V>> | Promise<SchemaErrors<SchemaBuilder<V>>> {
   const data = values as Record<string, unknown>
-  const fields = activeFields(schema, data)
+  const fields = reachableFields(schema, data)
   const errors: Record<string, string> = {}
   const pending: Array<Promise<void>> = []
 
@@ -418,7 +418,7 @@ export function validateSchema<V extends object>(
 /**
  * Build a single Standard Schema validator for a liveschema schema. Each
  * `validate(value)` call re-evaluates which fields are reachable given the
- * current `value`, then validates each active field against its own schema.
+ * current `value`, then validates each reachable field against its own schema.
  *
  * Issues are tagged with the field's key as the first path segment, so
  * consumers that route errors by path (TanStack Form's `onDynamic`,
@@ -440,7 +440,7 @@ export function toStandardSchema<V extends object>(
       vendor: 'liveschema',
       validate(input) {
         const data = (input ?? {}) as Record<string, unknown>
-        const fields = activeFields(schema, data)
+        const fields = reachableFields(schema, data)
         const issues: StandardSchemaV1.Issue[] = []
         const out: Record<string, unknown> = {}
         const pending: Array<Promise<void>> = []
@@ -502,7 +502,7 @@ function walkSchemaNodes(
 function walkAllNodes(
   nodes: SchemaNode[],
   values: Record<string, unknown>,
-  pathActive: boolean,
+  pathReachable: boolean,
   out: DeclaredField[],
   seen: Map<string, number>,
 ): void {
@@ -512,25 +512,25 @@ function walkAllNodes(
       const entry: DeclaredField = {
         key: node.key,
         schema: node.schema,
-        isActive: pathActive,
+        isReachable: pathReachable,
         value: values[node.key],
       }
       if (existingIdx === undefined) {
         seen.set(node.key, out.length)
         out.push(entry)
-      } else if (pathActive && !out[existingIdx].isActive) {
-        // Prefer the active occurrence's schema (different branches may declare
+      } else if (pathReachable && !out[existingIdx].isReachable) {
+        // Prefer the reachable occurrence's schema (different branches may declare
         // the same key with different validators / enum options).
         out[existingIdx] = entry
       }
     } else if (node.kind === 'whenEq') {
       const match = Object.entries(node.pattern).every(([k, v]) => values[k] === v)
-      walkAllNodes(node.children, values, pathActive && match, out, seen)
+      walkAllNodes(node.children, values, pathReachable && match, out, seen)
     } else if (node.kind === 'whenAny') {
       const match = node.patterns.some((p) => Object.entries(p).every(([k, v]) => values[k] === v))
-      walkAllNodes(node.children, values, pathActive && match, out, seen)
+      walkAllNodes(node.children, values, pathReachable && match, out, seen)
     } else {
-      walkAllNodes(node.children, values, pathActive && node.predicate(values), out, seen)
+      walkAllNodes(node.children, values, pathReachable && node.predicate(values), out, seen)
     }
   }
 }

@@ -52,7 +52,7 @@ export function App() {
   })
 
   const values = useWatch({ control })
-  const { fields, isActiveField } = useLiveSchema(formDef, values)
+  const { fields, isReachableField } = useLiveSchema(formDef, values)
   const fieldEntries = Object.entries(fields) as [FieldKey, (typeof fields)[FieldKey]][]
 
   const onSubmit = handleSubmit((data) => {
@@ -60,7 +60,7 @@ export function App() {
   })
 
   function renderField(key: FieldKey, enumOpts: readonly string[] | undefined) {
-    if (!isActiveField(key)) return null
+    if (!isReachableField(key)) return null
     const errorMsg = errors[key]?.message
     const label = labels[key]
 

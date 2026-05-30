@@ -4,7 +4,11 @@ import { useForm } from 'vee-validate'
 import { toStandardSchema } from '@liveschema/core'
 import { useLiveSchema } from '@liveschema/vue'
 import StepReview from './components/StepReview.vue'
-import { resolveStep, stepLabels as stepLabelMap, type StepBinding } from './components/steps/index.ts'
+import {
+  resolveStep,
+  stepLabels as stepLabelMap,
+  type StepBinding,
+} from './components/steps/index.ts'
 import { form as orderForm, type Order, type FieldKey } from '@/schemas'
 
 type Phase = 'fill' | 'review'
@@ -56,11 +60,13 @@ const form = useForm<Order>({
   validationSchema: orderStandardSchema,
 })
 
-const { fields, activeFields } = useLiveSchema(orderForm, () => form.values)
+const { fields, reachableFields } = useLiveSchema(orderForm, () => form.values)
 
-const activeFieldKeys = computed<FieldKey[]>(() => Object.keys(activeFields.value) as FieldKey[])
+const reachableFieldKeys = computed<FieldKey[]>(
+  () => Object.keys(reachableFields.value) as FieldKey[],
+)
 
-const currentSteps = computed<ResolvedStep[]>(() => groupSteps(activeFieldKeys.value))
+const currentSteps = computed<ResolvedStep[]>(() => groupSteps(reachableFieldKeys.value))
 
 const currentStep = computed<ResolvedStep | undefined>(() => {
   if (phase.value !== 'fill') return undefined
@@ -186,7 +192,7 @@ function submit() {
         </template>
 
         <pre class="debug">{{
-          JSON.stringify({ values: form.values, stepIndex, steps: activeFieldKeys }, null, 2)
+          JSON.stringify({ values: form.values, stepIndex, steps: reachableFieldKeys }, null, 2)
         }}</pre>
       </div>
     </section>

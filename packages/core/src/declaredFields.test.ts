@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { declaredFields, defineSchema } from './index'
 
 describe('declaredFields', () => {
-  test('returns every field, marking unreachable ones isActive: false', () => {
+  test('returns every field, marking unreachable ones isReachable: false', () => {
     const schema = defineSchema()
       .field('email', z.string())
       .field('orderType', z.enum(['pickup', 'delivery']))
@@ -13,32 +13,32 @@ describe('declaredFields', () => {
 
     const fields = declaredFields(schema, { orderType: 'pickup', mainCourse: 'salad' })
 
-    expect(fields.map((f) => ({ key: f.key, isActive: f.isActive }))).toEqual([
-      { key: 'email', isActive: true },
-      { key: 'orderType', isActive: true },
-      { key: 'leaveAtDoor', isActive: false },
-      { key: 'mainCourse', isActive: true },
-      { key: 'pizzaCount', isActive: false },
+    expect(fields.map((f) => ({ key: f.key, isReachable: f.isReachable }))).toEqual([
+      { key: 'email', isReachable: true },
+      { key: 'orderType', isReachable: true },
+      { key: 'leaveAtDoor', isReachable: false },
+      { key: 'mainCourse', isReachable: true },
+      { key: 'pizzaCount', isReachable: false },
     ])
   })
 
-  test('flips isActive as branches become reachable', () => {
+  test('flips isReachable as branches become reachable', () => {
     const schema = defineSchema()
       .field('orderType', z.enum(['pickup', 'delivery']))
       .when({ orderType: 'delivery' }, (b) => b.field('leaveAtDoor', z.boolean()))
 
     expect(
       declaredFields(schema, { orderType: 'pickup' }).find((f) => f.key === 'leaveAtDoor')
-        ?.isActive,
+        ?.isReachable,
     ).toBe(false)
 
     expect(
       declaredFields(schema, { orderType: 'delivery' }).find((f) => f.key === 'leaveAtDoor')
-        ?.isActive,
+        ?.isReachable,
     ).toBe(true)
   })
 
-  test('preserves source order across active and inactive entries', () => {
+  test('preserves source order across reachable and unreachable entries', () => {
     const schema = defineSchema()
       .field('a', z.string())
       .when({ a: 'x' }, (b) => b.field('b', z.string()))
@@ -64,7 +64,7 @@ describe('declaredFields', () => {
     ])
   })
 
-  test('dedupes a key declared in multiple branches; the active occurrence wins', () => {
+  test('dedupes a key declared in multiple branches; the reachable occurrence wins', () => {
     // pizzaSize has different enum options in pickup vs delivery branches.
     const schema = defineSchema()
       .field('orderType', z.enum(['pickup', 'delivery']))
@@ -75,7 +75,7 @@ describe('declaredFields', () => {
 
     const pickupFields = declaredFields(schema, { orderType: 'pickup' })
     const pickupPizza = pickupFields.find((f) => f.key === 'pizzaSize')
-    expect(pickupPizza?.isActive).toBe(true)
+    expect(pickupPizza?.isReachable).toBe(true)
     expect((pickupPizza?.schema as { options?: readonly string[] }).options).toEqual([
       'small',
       'medium',
@@ -84,7 +84,7 @@ describe('declaredFields', () => {
 
     const deliveryFields = declaredFields(schema, { orderType: 'delivery' })
     const deliveryPizza = deliveryFields.find((f) => f.key === 'pizzaSize')
-    expect(deliveryPizza?.isActive).toBe(true)
+    expect(deliveryPizza?.isReachable).toBe(true)
     expect((deliveryPizza?.schema as { options?: readonly string[] }).options).toEqual([
       'small',
       'medium',
@@ -95,7 +95,7 @@ describe('declaredFields', () => {
     expect(deliveryFields.filter((f) => f.key === 'pizzaSize')).toHaveLength(1)
   })
 
-  test('falls back to the first declaration when no occurrence is active', () => {
+  test('falls back to the first declaration when no occurrence is reachable', () => {
     const schema = defineSchema()
       .field('orderType', z.enum(['pickup', 'delivery']))
       .when({ orderType: 'pickup' }, (b) => b.field('size', z.enum(['s', 'm', 'l'])))
@@ -104,7 +104,7 @@ describe('declaredFields', () => {
     // Neither branch fires (orderType is unset).
     const fields = declaredFields(schema, {})
     const size = fields.find((f) => f.key === 'size')
-    expect(size?.isActive).toBe(false)
+    expect(size?.isReachable).toBe(false)
     expect((size?.schema as { options?: readonly string[] }).options).toEqual(['s', 'm', 'l'])
   })
 
@@ -118,20 +118,21 @@ describe('declaredFields', () => {
     expect(fields.find((f) => f.key === 'orderType')?.value).toBe('pickup')
   })
 
-  test('handles whenAny by marking the child active when any pattern matches', () => {
+  test('handles whenAny by marking the child reachable when any pattern matches', () => {
     const schema = defineSchema()
       .field('a', z.string())
       .field('b', z.string())
       .whenAny([{ a: 'x' }, { b: 'y' }], (b) => b.field('extra', z.string()))
 
     expect(
-      declaredFields(schema, { a: 'x', b: 'other' }).find((f) => f.key === 'extra')?.isActive,
+      declaredFields(schema, { a: 'x', b: 'other' }).find((f) => f.key === 'extra')?.isReachable,
     ).toBe(true)
     expect(
-      declaredFields(schema, { a: 'other', b: 'y' }).find((f) => f.key === 'extra')?.isActive,
+      declaredFields(schema, { a: 'other', b: 'y' }).find((f) => f.key === 'extra')?.isReachable,
     ).toBe(true)
     expect(
-      declaredFields(schema, { a: 'other', b: 'other' }).find((f) => f.key === 'extra')?.isActive,
+      declaredFields(schema, { a: 'other', b: 'other' }).find((f) => f.key === 'extra')
+        ?.isReachable,
     ).toBe(false)
   })
 
@@ -143,10 +144,10 @@ describe('declaredFields', () => {
         (b) => b.field('extra', z.string()),
       )
 
-    expect(declaredFields(schema, { count: 1 }).find((f) => f.key === 'extra')?.isActive).toBe(
+    expect(declaredFields(schema, { count: 1 }).find((f) => f.key === 'extra')?.isReachable).toBe(
       false,
     )
-    expect(declaredFields(schema, { count: 10 }).find((f) => f.key === 'extra')?.isActive).toBe(
+    expect(declaredFields(schema, { count: 10 }).find((f) => f.key === 'extra')?.isReachable).toBe(
       true,
     )
   })
@@ -156,8 +157,8 @@ describe('declaredFields', () => {
     expect(declaredFields(schema, {})).toEqual([])
   })
 
-  test('treats inactive parents as gating inactive children', () => {
-    // Inner branch can only ever be active when the outer is active.
+  test('treats unreachable parents as gating unreachable children', () => {
+    // Inner branch can only ever be reachable when the outer is reachable.
     const schema = defineSchema()
       .field('outer', z.enum(['on', 'off']))
       .when({ outer: 'on' }, (b) =>
@@ -166,9 +167,9 @@ describe('declaredFields', () => {
           .when({ mid: 'go' }, (b) => b.field('deep', z.string())),
       )
 
-    // outer=off → both inner fields inactive even if `mid` looks like 'go'.
+    // outer=off → both inner fields unreachable even if `mid` looks like 'go'.
     const fields = declaredFields(schema, { outer: 'off', mid: 'go' })
-    expect(fields.find((f) => f.key === 'mid')?.isActive).toBe(false)
-    expect(fields.find((f) => f.key === 'deep')?.isActive).toBe(false)
+    expect(fields.find((f) => f.key === 'mid')?.isReachable).toBe(false)
+    expect(fields.find((f) => f.key === 'deep')?.isReachable).toBe(false)
   })
 })

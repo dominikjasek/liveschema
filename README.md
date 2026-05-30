@@ -6,11 +6,11 @@ Works for conditional forms (single-page or multi-step), backend payload validat
 
 ## Packages
 
-| Package                               | npm                 | Purpose                                                                                                     |
-| ------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [`@liveschema/core`](packages/core)   | `@liveschema/core`  | `defineSchema()` builder + walker (`activeFields`, `declaredFields`, `validateSchema`, `toStandardSchema`). |
-| [`@liveschema/react`](packages/react) | `@liveschema/react` | `useLiveSchema(schema, values)` hook returning `activeFieldKeys`, `fields`, `isActiveField`.                |
-| [`@liveschema/vue`](packages/vue)     | `@liveschema/vue`   | Same shape as the React hook, but as a Vue composable returning computed refs.                              |
+| Package                               | npm                 | Purpose                                                                                                        |
+| ------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| [`@liveschema/core`](packages/core)   | `@liveschema/core`  | `defineSchema()` builder + walker (`reachableFields`, `declaredFields`, `validateSchema`, `toStandardSchema`). |
+| [`@liveschema/react`](packages/react) | `@liveschema/react` | `useLiveSchema(schema, values)` hook returning `fields`, `reachableFields`, `isReachableField`.                |
+| [`@liveschema/vue`](packages/vue)     | `@liveschema/vue`   | Same shape as the React hook, but as a Vue composable returning computed refs.                                 |
 
 ## Install
 
@@ -31,7 +31,7 @@ pnpm add @liveschema/core @liveschema/vue zod     # Vue
 
 ```ts
 import { z } from 'zod'
-import { defineSchema, activeFields, validateSchema, type InferSchema } from '@liveschema/core'
+import { defineSchema, reachableFields, validateSchema, type InferSchema } from '@liveschema/core'
 
 const order = defineSchema()
   .field('email', z.email())
@@ -50,11 +50,11 @@ type Order = InferSchema<typeof order>
 //   with `leaveAtDoor` only present in delivery variants, `pizzaCount` only in pizza, etc.
 
 // Walk the currently-reachable fields for some input.
-const fields = activeFields(order, { orderType: 'delivery', mainCourse: 'pizza', pizzaCount: 4 })
+const fields = reachableFields(order, { orderType: 'delivery', mainCourse: 'pizza', pizzaCount: 4 })
 // → [{ key: 'email', schema, value }, { key: 'orderType', ... }, { key: 'leaveAtDoor', ... },
 //    { key: 'mainCourse', ... }, { key: 'pizzaCount', ... }, { key: 'requestedReadyTime', ... }]
 
-// Flat `{ key: firstMessage }` errors for the active subset — drop into Formik / vee-validate / etc.
+// Flat `{ key: firstMessage }` errors for the reachable subset — drop into Formik / vee-validate / etc.
 const errors = validateSchema(order, input)
 ```
 
@@ -65,8 +65,6 @@ This monorepo ships runnable examples under [`examples/`](examples):
 - [`vue-example/`](examples/vue-example) — `@liveschema/vue` + vee-validate, single-page. [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/dominikjasek-liveschema-sks7e1yx?file=src%2Fschemas.ts)
 - [`tanstack-form-example/`](examples/tanstack-form-example) — `@liveschema/react` + TanStack Form (single-page). [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/github-fcjshzse?file=src%2FFormPage.tsx)
 
-````
-
 ## React / Vue hooks
 
 Each framework package exposes a `useLiveSchema(schema, values)` that returns the same three things — adapted to the framework's reactivity model:
@@ -74,21 +72,21 @@ Each framework package exposes a `useLiveSchema(schema, values)` that returns th
 ```ts
 import { useLiveSchema } from '@liveschema/react'
 
-const { fields, activeFields, isActiveField } = useLiveSchema(order, values)
-// fields:        Record<Key, {isActive, enumOptions}>           — every declared field
-// activeFields:  Partial<Record<Key, {isActive, enumOptions}>>  — active subset (inactive keys absent)
-// isActiveField: (key) => boolean                                — predicate for JSX gating
-````
+const { fields, reachableFields, isReachableField } = useLiveSchema(order, values)
+// fields:           Record<Key, {isReachable, enumOptions}>           — every declared field
+// reachableFields:  Partial<Record<Key, {isReachable, enumOptions}>>  — reachable subset (unreachable keys absent)
+// isReachableField: (key) => boolean                                  — predicate for JSX gating
+```
 
 ```vue
 <script setup lang="ts">
 import { useLiveSchema } from '@liveschema/vue'
-const { fields, activeFields, isActiveField } = useLiveSchema(order, () => form.values)
+const { fields, reachableFields, isReachableField } = useLiveSchema(order, () => form.values)
 </script>
 
 <template>
   <PaymentRadios
-    v-if="isActiveField('paymentMethod')"
+    v-if="isReachableField('paymentMethod')"
     :options="fields.paymentMethod.enumOptions ?? []"
   />
 </template>
@@ -121,8 +119,8 @@ useForm({ resolver: standardSchemaResolver(toStandardSchema(order)) })
 
 - `defineSchema()` — start a builder.
 - `.field(key, schema)`, `.when(...)`, `.whenAny(...)` — compose.
-- `activeFields(schema, values)` — ordered list of currently-reachable `{ key, schema, value }`.
-- `declaredFields(schema, values)` — every declared field, tagged with `isActive`.
+- `reachableFields(schema, values)` — ordered list of currently-reachable `{ key, schema, value }`.
+- `declaredFields(schema, values)` — every declared field, tagged with `isReachable`.
 - `validateSchema(schema, values)` — flat `{ key: firstMessage }` errors (sync unless a leaf validator is async).
 - `toStandardSchema(schema)` — wrap the whole schema as a single Standard Schema validator.
 - `enumOptions(schema)` — best-effort accessor for a leaf's enum options (Zod / Valibot convention).

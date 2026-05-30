@@ -17,30 +17,30 @@ const _schema = defineSchema()
 
 type Result = UseLiveSchemaResult<typeof _schema>
 type Fields = Result['fields']
-type ActiveFields = Result['activeFields']
+type ReachableFields = Result['reachableFields']
 
 describe('useLiveSchema return types — fields record', () => {
-  test('non-enum fields expose only `isActive` (no enumOptions on the record entry)', () => {
-    expectTypeOf<Fields['email']>().toEqualTypeOf<{ isActive: boolean }>()
-    expectTypeOf<Fields['agreed']>().toEqualTypeOf<{ isActive: boolean }>()
-    expectTypeOf<Fields['age']>().toEqualTypeOf<{ isActive: boolean }>()
+  test('non-enum fields expose only `isReachable` (no enumOptions on the record entry)', () => {
+    expectTypeOf<Fields['email']>().toEqualTypeOf<{ isReachable: boolean }>()
+    expectTypeOf<Fields['agreed']>().toEqualTypeOf<{ isReachable: boolean }>()
+    expectTypeOf<Fields['age']>().toEqualTypeOf<{ isReachable: boolean }>()
   })
 
   test('enum fields carry `enumOptions?` narrowed to the schema literals', () => {
     expectTypeOf<Fields['orderType']>().toEqualTypeOf<{
-      isActive: boolean
+      isReachable: boolean
       enumOptions?: readonly ('pickup' | 'delivery')[]
     }>()
 
     expectTypeOf<Fields['mainCourse']>().toEqualTypeOf<{
-      isActive: boolean
+      isReachable: boolean
       enumOptions?: readonly ('pizza' | 'salad')[]
     }>()
   })
 
   test('enum fields declared inside a branch are still narrowed', () => {
     expectTypeOf<Fields['size']>().toEqualTypeOf<{
-      isActive: boolean
+      isReachable: boolean
       enumOptions?: readonly ('s' | 'm' | 'l')[]
     }>()
   })
@@ -64,45 +64,45 @@ describe('useLiveSchema return types — fields record', () => {
   })
 })
 
-describe('useLiveSchema return types — activeFields record', () => {
-  test('activeFields is the Partial of fields — inactive keys may be absent', () => {
-    expectTypeOf<ActiveFields>().toEqualTypeOf<Partial<Fields>>()
+describe('useLiveSchema return types — reachableFields record', () => {
+  test('reachableFields is the Partial of fields — unreachable keys may be absent', () => {
+    expectTypeOf<ReachableFields>().toEqualTypeOf<Partial<Fields>>()
   })
 
   test('looked-up entries carry the same per-key shape but may be undefined', () => {
-    expectTypeOf<ActiveFields['email']>().toEqualTypeOf<{ isActive: boolean } | undefined>()
-    expectTypeOf<ActiveFields['orderType']>().toEqualTypeOf<
-      { isActive: boolean; enumOptions?: readonly ('pickup' | 'delivery')[] } | undefined
+    expectTypeOf<ReachableFields['email']>().toEqualTypeOf<{ isReachable: boolean } | undefined>()
+    expectTypeOf<ReachableFields['orderType']>().toEqualTypeOf<
+      { isReachable: boolean; enumOptions?: readonly ('pickup' | 'delivery')[] } | undefined
     >()
   })
 })
 
-describe('useLiveSchema return types — isActiveField', () => {
+describe('useLiveSchema return types — isReachableField', () => {
   test('only accepts keys declared in the schema', () => {
-    expectTypeOf<Result['isActiveField']>()
+    expectTypeOf<Result['isReachableField']>()
       .parameter(0)
       .toEqualTypeOf<'email' | 'age' | 'agreed' | 'orderType' | 'mainCourse' | 'size'>()
   })
 })
 
 describe('LiveSchemaFieldFor<T> helper', () => {
-  test('non-enum types produce `{ isActive }` only', () => {
-    expectTypeOf<LiveSchemaFieldFor<boolean>>().toEqualTypeOf<{ isActive: boolean }>()
-    expectTypeOf<LiveSchemaFieldFor<number>>().toEqualTypeOf<{ isActive: boolean }>()
-    expectTypeOf<LiveSchemaFieldFor<string>>().toEqualTypeOf<{ isActive: boolean }>()
-    expectTypeOf<LiveSchemaFieldFor<Date>>().toEqualTypeOf<{ isActive: boolean }>()
+  test('non-enum types produce `{ isReachable }` only', () => {
+    expectTypeOf<LiveSchemaFieldFor<boolean>>().toEqualTypeOf<{ isReachable: boolean }>()
+    expectTypeOf<LiveSchemaFieldFor<number>>().toEqualTypeOf<{ isReachable: boolean }>()
+    expectTypeOf<LiveSchemaFieldFor<string>>().toEqualTypeOf<{ isReachable: boolean }>()
+    expectTypeOf<LiveSchemaFieldFor<Date>>().toEqualTypeOf<{ isReachable: boolean }>()
   })
 
   test('literal string unions produce `enumOptions?` narrowed to the union', () => {
     expectTypeOf<LiveSchemaFieldFor<'a' | 'b'>>().toEqualTypeOf<{
-      isActive: boolean
+      isReachable: boolean
       enumOptions?: readonly ('a' | 'b')[]
     }>()
   })
 
   test('optional literal unions (T | undefined) still produce enumOptions', () => {
     expectTypeOf<LiveSchemaFieldFor<'a' | 'b' | undefined>>().toEqualTypeOf<{
-      isActive: boolean
+      isReachable: boolean
       enumOptions?: readonly ('a' | 'b')[]
     }>()
   })
